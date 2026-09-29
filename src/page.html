@@ -109,6 +109,10 @@ nav.lessons { position: static; }
 .verdict { font-weight: 700; margin-top: -4px; }
 .ans { transition: filter 0.25s; }
 .ans.veiled { filter: blur(7px); user-select: none; pointer-events: none; }
+.live { display: grid; gap: 8px; margin-top: 6px; }
+.live .bc-wrap { max-height: 340px; overflow-y: auto; }
+.dim { color: var(--muted); }
+.errtext { color: var(--bad); }
 .verdict.wait { color: var(--muted); font-weight: 400; font-size: 0.9rem; }
 .linkbtn { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-size: 0.88rem; justify-self: start; }
 
@@ -363,6 +367,43 @@ const OPS = {
   LIST_APPEND: "Append to a list (inside a comprehension)",
   MAKE_FUNCTION: "Create a function object",
   IMPORT_NAME: "Import a module",
+  IMPORT_FROM: "Take one name out of the module on top",
+  SET_FUNCTION_ATTRIBUTE: "Attach defaults or annotations to a function",
+  LOAD_BUILD_CLASS: "Push the helper that builds a class",
+  LIST_EXTEND: "Add all these items to the list below",
+  SWAP: "Swap two items on the stack",
+  LOAD_FAST_AND_CLEAR: "Set aside the outer value of a comprehension variable",
+  STORE_FAST_LOAD_FAST: "Store a local, then load one",
+  CALL_KW: "Call the function; the tuple on top names the keyword arguments",
+  CALL_FUNCTION_EX: "Call the function with unpacked * or ** arguments",
+  UNPACK_SEQUENCE: "Split a sequence into its items, first item on top",
+  UNPACK_EX: "Split a sequence around a starred name",
+  CONVERT_VALUE: "Apply str(), repr() or ascii() for an f-string",
+  FORMAT_WITH_SPEC: "Format a value with a format spec like :.2f",
+  CONTAINS_OP: "Test in or not in, push True or False",
+  IS_OP: "Test is or is not, push True or False",
+  UNARY_NOT: "Push the opposite truth value",
+  UNARY_INVERT: "Flip every bit of the top item",
+  BUILD_SET: "Pack the top items into a set",
+  BUILD_SLICE: "Build a slice like 1:3",
+  BINARY_SLICE: "Take a slice of the container",
+  STORE_SLICE: "Assign into a slice of the container",
+  STORE_ATTR: "Do  object.name = value",
+  DELETE_NAME: "Forget a name",
+  DELETE_SUBSCR: "Do  del container[key]",
+  JUMP_FORWARD: "Skip ahead (past an else branch, for example)",
+  POP_JUMP_IF_NONE: "If the top item is None, jump ahead",
+  POP_JUMP_IF_NOT_NONE: "If the top item is not None, jump ahead",
+  LOAD_COMMON_CONSTANT: "Push a built-in like AssertionError",
+  RAISE_VARARGS: "Raise the exception on top",
+  MAP_ADD: "Add a key and value to a dict (inside a comprehension)",
+  SET_ADD: "Add to a set (inside a comprehension)",
+  DICT_UPDATE: "Merge a dict into the one below",
+  DICT_MERGE: "Merge keyword arguments into the dict below",
+  LOAD_FAST_LOAD_FAST: "Look up two local variables",
+  STORE_FAST_STORE_FAST: "Store into two local variables",
+  LOAD_FAST_CHECK: "Look up a local variable that might not be set yet",
+  DELETE_FAST: "Forget a local variable",
 };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 function cleanArg(op, a) {
@@ -411,19 +452,25 @@ function renderPile(el, items, prev, fmt, eq) {
   } else final();
   return { popped, pushed };
 }
+// steps[k] = { stack, note, i?, line?, error? }: i is the instruction the step ran (defaults to k; a live trace
+// revisits instructions in loops), line the source line, error the message if that instruction failed.
 function stepper(root, instrs, steps, onStep) {
   let i = -1, shown = [];
   const tbl = root.querySelector(".bc-slot"), pile = root.querySelector(".stack-slot"), op = root.querySelector(".op-slot");
   const noteEl = root.querySelector(".note-slot");
   const prev = root.querySelector("[data-act=prev]"), next = root.querySelector("[data-act=next]"), reset = root.querySelector("[data-act=reset]");
   function draw() {
-    tbl.innerHTML = bcTable(instrs, { hot: i });
-    const st = i < 0 ? [] : steps[i].stack;
+    const s = i < 0 ? null : steps[i], hot = s ? (s.i ?? i) : -1;
+    tbl.innerHTML = bcTable(instrs, { hot });
+    const wrap = tbl.querySelector(".bc-wrap"), row = tbl.querySelector("tr.hot");
+    if (row && wrap.scrollHeight > wrap.clientHeight) wrap.scrollTop = row.offsetTop - wrap.clientHeight / 2;
+    const st = s ? s.stack : [];
     const d = renderPile(pile, st, shown, v => `<span>${esc(v)}</span>`);
     shown = st.slice();
-    op.innerHTML = i < 0 ? "" : [d.popped.length ? `<span class="pop">pop ${d.popped.map(esc).join(", ")}</span>` : "", d.pushed.length ? `<span class="push">push ${d.pushed.map(esc).join(", ")}</span>` : ""].filter(Boolean).join(" ");
-    noteEl.textContent = i < 0 ? "Press Step to run the first instruction." : steps[i].note;
-    prev.disabled = i < 0; next.disabled = i >= instrs.length - 1;
+    op.innerHTML = s ? [d.popped.length ? `<span class="pop">pop ${d.popped.map(esc).join(", ")}</span>` : "", d.pushed.length ? `<span class="push">push ${d.pushed.map(esc).join(", ")}</span>` : ""].filter(Boolean).join(" ") : "";
+    const text = s ? (s.note || OPS[instrs[hot][0]] || "") : "Press Step to run the first instruction.";
+    noteEl.innerHTML = (s && s.line ? `<span class="dim">Line ${s.line}.</span> ` : "") + esc(text) + (s && s.error ? ` <span class="errtext">${esc(s.error)}</span>` : "");
+    prev.disabled = i < 0; next.disabled = i >= steps.length - 1;
     if (onStep) onStep(i);
   }
   prev.onclick = () => { i--; draw(); };
@@ -499,9 +546,24 @@ function wireTry(el) {
       try { r = await runPy(box.querySelector(".try-src").value, st); }
       catch (e) { st.textContent = ""; out.innerHTML = `<div class="out err">Python couldn't start here: ${esc(e && e.message ? e.message : e)}</div>`; return; }
       st.textContent = "";
-      out.innerHTML = runOutput(r) + (r.instrs.length ? `<details class="peek"><summary>Bytecode</summary>${bcTable(r.instrs)}</details>` : "");
+      out.innerHTML = runOutput(r);
+      liveViews(out, r, box.querySelector(".try-src").value);
     };
   });
+}
+// After a run: the code's own bytecode with a stepper driven by the real trace, and the call stack when the
+// code called its own functions. Always visible: seeing the bytecode is the point.
+function liveViews(out, r, src) {
+  const calls = r.frames && r.frames.some(s => s.frames.length > 1);
+  let html = "";
+  const trace = r.trace && r.trace.length ? r.trace : null;
+  if (trace) html += `<div class="live"><span class="eyebrow">Step through your code's bytecode</span><div class="st">${stepperShell}</div><p class="note">These instructions and values come from the Python running in this page. One simplification: the interpreter also keeps a few placeholder slots on its stack, and those are left out.</p></div>`;
+  else if (r.instrs.length) html += `<div class="live"><span class="eyebrow">Your code's bytecode</span>${bcTable(r.instrs)}<p class="note">Stepping isn't available for this code: ${esc(r.trace_why || "")}.</p></div>`;
+  else if (!r.error) html += `<div class="live"><p class="note">No instructions: Python worked this out while compiling and kept only the result (constant folding).</p></div>`;
+  if (calls) html += `<div class="live"><span class="eyebrow">Step through the calls</span><div class="fs-live"></div><p class="note">Recorded from the real run: each step is one line, with every frame that existed at that moment.</p></div>`;
+  out.insertAdjacentHTML("beforeend", html);
+  if (trace) stepper(out.querySelector(".st"), r.instrs, trace);
+  if (calls) frameStepper(out.querySelector(".fs-live"), src, r.frames.map(s => ({ ...s, note: esc(s.note) })));
 }
 function runOutput(r) {
   return (r.stdout ? `<div class="out">${esc(r.stdout)}</div>` : "") +
@@ -551,7 +613,7 @@ LESSONS.push({
           <div class="stackl">
             <div>${tagPill("py")}<p><b>The language</b> and the program that runs it (usually CPython). Syntax like <code>=</code>, <code>and</code>, <code>for</code>, and built-in types like int, float and list. The same everywhere.</p></div>
             <div>${tagPill("std")}<p><b>Modules that ship with Python</b>, such as <code>math</code>, <code>json</code> and <code>csv</code>. Always available with <code>import</code>.</p></div>
-            <div><div class="row">${tagPill("np")}${tagPill("pd")}</div><p><b>Packages</b> other people wrote, installed separately with <code>pip</code> or <code>conda</code>. They add new kinds of objects, like arrays and DataFrames, and decide what operators like <code>+</code> and <code>&amp;</code> do with them. Much of NumPy isn't written in Python at all but in C, compiled ahead of time.</p></div>
+            <div><div class="row">${tagPill("np")}${tagPill("pd")}</div><p><b>Packages</b> other people wrote, installed separately with <code>pip</code> or <code>conda</code>. They add new kinds of values, like arrays and DataFrames, and decide what operators like <code>+</code> and <code>&amp;</code> do with them. Much of NumPy isn't written in Python at all but in C, compiled ahead of time.</p></div>
             <div>${tagPill("jp")}<p><b>Tools</b> that run Python for you: Jupyter, Colab, VS Code. They aren't Python; they send your code to it.</p></div>
           </div>
           <p class="note">From here on, every example carries a tag showing which layer it comes from.</p>
@@ -586,19 +648,19 @@ LESSONS.push({
       render(el) {
         el.innerHTML = `
           ${codeBlock("total = price * qty", "py")}
-          <p>Python doesn't run that line directly. It first translates it into four <b>bytecode</b> instructions, listed below. While running them it keeps a <b>stack</b>: a pile of values where each instruction takes from the top or puts something on top.</p>
+          <p>Python doesn't run that line directly. It first translates it into four small <b>bytecode</b> instructions. Each one does one simple thing:</p>
+          ${bcTable(DATA.t1)}
+          <p>Two words in that table: Python calls every value it works with an <b>object</b>, and <code>price</code>, <code>qty</code> and <code>total</code> are <b>names</b> attached to objects. The next lesson looks at names and objects closely; for now, "the object named price" just means the value that <code>price</code> refers to.</p>
+          <p>To run them, Python keeps a <b>stack</b>: a pile of values. An instruction can <b>push</b> a value, which puts it on top of the pile, or <b>pop</b> a value, which takes the top one off. Instructions only ever touch the top. That is what lets each one be so simple: it never has to say where its inputs are, because they are always the most recently pushed values.</p>
           ${predict("With <code>price = 2.5</code> and <code>qty = 4</code>, what's on the stack just before the last instruction, <code>STORE_NAME</code>, runs?", ["2.5 and 4", "10.0", "Nothing"])}
           ${reveal(`
-            <p>10.0. <code>BINARY_OP *</code> popped both numbers and pushed their product. <code>STORE_NAME</code> then pops it and names it <code>total</code>.</p>
-            <div class="st">${stepperShell}</div>
+            <p class="ans">10.0. The two <code>LOAD_NAME</code>s pushed 2.5 and 4. <code>BINARY_OP *</code> popped both and pushed their product. <code>STORE_NAME</code> then pops that and gives it the name <code>total</code>. Step through it and watch the pile:</p>
+            <div class="st ans">${stepperShell}</div>
+            <p>Now change the code and run it. Your version's bytecode appears underneath, with its own stepper.</p>
             ${tryIt("price = 2.5\nqty = 4\ntotal = price * qty\ntotal", null, "py")}`)}`;
         wirePredict(el, 1);
-        stepper(el.querySelector(".st"), DATA.t1, [
-          { stack: ["2.5"], note: "Find the object named price and push it." },
-          { stack: ["2.5", "4"], note: "Push the object named qty." },
-          { stack: ["10.0"], note: "Pop both, multiply, push the result." },
-          { stack: [], note: "Pop the result and give it the name total." },
-        ]);
+        const notes1 = ["Find the object named price and push it.", "Find the object named qty and push it.", "Pop both, multiply them, push the result.", "Pop the result and give it the name total."];
+        stepper(el.querySelector(".st"), DATA.t1, DATA.t1_stacks.map((stack, k) => ({ stack, note: notes1[k] })));
         wireTry(el);
       }
     },
@@ -610,9 +672,9 @@ LESSONS.push({
           <p>These two cells worked earlier because cell 2 ran first, then cell 1.</p>
           <div class="cell"><span class="in" id="n1">In [2]:</span><pre class="code">total = sum(prices)</pre></div>
           <div class="cell"><span class="in" id="n2">In [1]:</span><pre class="code">prices = [4.5, 3.0, 12.25]</pre></div>
-          ${predict("You restart the kernel and click Run All, which runs top to bottom. What happens?", ["It works, same as before", "NameError on cell 1"])}
+          ${predict("You restart the kernel and click Run All, which runs top to bottom. What happens?", ["It works, same as before", "Cell 1 uses the old prices", "Cell 1 fails: nothing called prices exists yet"])}
           ${reveal(`
-            <p>Restarting empties the kernel's memory, so cell 1 asks for <code>prices</code> before anything has made it. Try it:</p>
+            <p>Cell 1 fails. Restarting empties the kernel's memory, so cell 1 asks for <code>prices</code> before anything has made it. Python reports a name it can't find as a <code>NameError</code>; for now read that as "no such name". Errors get a lesson of their own later. Try it:</p>
             <div class="row"><button class="btn" data-run="0">Run cell 1</button><button class="btn" data-run="1">Run cell 2</button><button class="btn" id="restart">Restart kernel</button><button class="btn" id="runall">Run all</button></div>
             <div id="nbout"></div>
             <div class="memory" id="mem"></div>
@@ -637,7 +699,7 @@ LESSONS.push({
         el.querySelector("#restart").onclick = restart;
         el.querySelector("#runall").onclick = () => { if (run(0)) run(1); };
         drawMem();
-        wirePredict(el, 1, () => { restart(); run(0); });
+        wirePredict(el, 2, () => { restart(); run(0); });
       }
     },
   ]
@@ -653,12 +715,13 @@ LESSONS.push({
       layer: "Memory", title: "= attaches a name; it never copies",
       render(el) {
         el.innerHTML = `
+          <p>Three words this lesson leans on. Every value in a Python process, from the number 5 to a whole DataFrame, is an <b>object</b>: a piece of memory that holds the value and records what type it is. A <b>name</b> (what most people call a variable) is a label attached to an object; <code>=</code> attaches the name on its left to the object on its right. A <b>method</b> is a function that belongs to an object and is called through a dot, like <code>b.append(4)</code>, which adds 4 to the end of the list. The value in the brackets is its <b>argument</b>: the input it works on.</p>
           ${codeBlock("a = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)", "py")}
           ${predict("What does print(a) show?", ["[1, 2, 3]", "[1, 2, 3, 4]"])}
           ${reveal(`
-            <div class="out">[1, 2, 3, 4]</div>
+            <div class="out ans">[1, 2, 3, 4]</div>
             <p>Step through and watch memory:</p>
-            <div id="pic"></div><label class="row"><input type="checkbox" id="copy"> Use <code>b = a.copy()</code></label><div class="st">${stepperShell}</div>`)}`;
+            <div id="pic"></div><label class="row"><input type="checkbox" id="copy"> Use <code>b = a.copy()</code></label><div class="st ans">${stepperShell}</div>`)}`;
         let stepI = -1, copy = false;
         const pic = el.querySelector("#pic");
         function draw() {
@@ -676,15 +739,9 @@ LESSONS.push({
           }
           pic.innerHTML = svg + "</svg>";
         }
-        stepper(el.querySelector(".st"), DATA.t2, [
-          { stack: ["list [1, 2, 3]"], note: "Push the object named a: the object itself, not a copy." },
-          { stack: [], note: "Give that same object a second name, b." },
-          { stack: ["list"], note: "Push the object named b. It is the one list." },
-          { stack: ["list.append"], note: "Look up the list's append method." },
-          { stack: ["list.append", "4"], note: "Push the argument, 4." },
-          { stack: ["None"], note: "Call append. The one list grows to [1, 2, 3, 4]." },
-          { stack: [], note: "Discard append's return value, None." },
-        ], i => { stepI = i; draw(); });
+        const notes2 = ["Push the object named a: the object itself, not a copy.", "Pop it and give that same object a second name, b.", "Push the object named b. It is the one list.",
+          "Pop the list and push its append method.", "Push the argument, 4.", "Call append with that argument. The one list grows to [1, 2, 3, 4]. Push what append returns: None.", "Discard the None; nothing keeps it."];
+        stepper(el.querySelector(".st"), DATA.t2, DATA.t2_stacks.map((stack, k) => ({ stack, note: notes2[k] })), i => { stepI = i; draw(); });
         el.querySelector("#copy").onchange = e => { copy = e.target.checked; if (stepI < 1) stepI = -2; draw(); };
         wirePredict(el, 1);
       }
@@ -715,6 +772,7 @@ LESSONS.push({
       layer: "Memory", title: "DataFrames follow the same rule",
       render(el) {
         el.innerHTML = `
+          <p>A pandas <b>DataFrame</b> is a table object: named columns, numbered rows. Reading the code below: the first line builds a table with two columns, <code>x</code> and <code>y</code>, three rows each. <code>df2['y'] = 9</code> puts 9 into column <code>y</code> of every row. <code>df.y</code> is column <code>y</code> on its own, and <code>.tolist()</code> turns it into a plain list so we can see it.</p>
           ${codeBlock("df = pd.DataFrame({'x': [1, -1, 2], 'y': [0, 0, 0]})\ndf2 = df\ndf2['y'] = 9\ndf.y.tolist()", "pd")}
           ${predict("You changed df2. What is df.y now?", ["[0, 0, 0]", "[9, 9, 9]"])}
           ${reveal(`
@@ -730,12 +788,20 @@ LESSONS.push({
       layer: "Memory", title: "A filter builds a new object",
       render(el) {
         el.innerHTML = `
+          <p>The second line below does three things, one after another, so read it from the inside out:</p>
+          <ul>
+            <li><code>df.x &gt; 0</code> compares every value in column <code>x</code> with 0 and gives back a column of True and False, one per row: here True, False, True. A column of booleans used this way is called a <b>mask</b>.</li>
+            <li><code>df[mask]</code> selects the rows where the mask is True. This is a <b>filter</b>: it gives you rows 1 and 3, the ones with positive <code>x</code>.</li>
+            <li><code>['y'] = 5</code> then sets column <code>y</code> to 5 in whatever the filter gave back.</li>
+          </ul>
+          <p>Read as a sentence: for the rows where x is positive, set y to 5. The question is what that does to <code>df</code>.</p>
           ${codeBlock("df = pd.DataFrame({'x': [1, -1, 2], 'y': [0, 0, 0]})\ndf[df.x > 0]['y'] = 5\ndf.y.tolist()", "pd")}
           ${predict("You want y = 5 wherever x is positive. What is df.y afterwards?", ["[5, 0, 5]", "[0, 0, 0]"])}
           ${reveal(`
             <div class="out warn">ChainedAssignmentError: A value is being set on a copy of a DataFrame or Series through chained assignment.</div>
             <div class="out">[0, 0, 0]</div>
-            <p><code>df[df.x &gt; 0]</code> builds a new, unnamed DataFrame. <code>['y'] = 5</code> writes into that one, which is thrown away at the end of the line.</p>
+            <p><code>df[df.x &gt; 0]</code> builds a new, unnamed DataFrame holding the selected rows. <code>['y'] = 5</code> writes into that one, which is thrown away at the end of the line. <code>df</code> itself never changes, and pandas warns you about it.</p>
+            <p>The fix is <code>df.loc[df.x &gt; 0, 'y'] = 5</code>. <code>.loc[rows, column]</code> names the rows and the column in one step, so pandas can write straight into <code>df</code> instead of into a copy. Step through both versions:</p>
             <div class="row"><button class="btn primary" id="s7n">Step</button><button class="btn" id="s7r">Reset</button><label class="row"><input type="checkbox" id="s7loc"> Use <code>.loc</code></label></div>
             <div id="pic7"></div><p class="note" id="n7"></p>
             <details class="peek"><summary>Bytecode: two brackets vs. .loc</summary><div class="grid2"><div>${codeBlock("df[df.x > 0]['y'] = 5", "pd")}${bcTable(DATA.t7, { hot: 6, compact: true })}</div><div>${codeBlock("df.loc[df.x > 0, 'y'] = 5", "pd")}${bcTable(DATA.t7_good, { hot: 9, compact: true })}</div></div><p class="note">Left: the highlighted subscript builds the copy, then the store writes into it. Right: one store, straight into df.</p></details>`)}`;
@@ -1359,7 +1425,8 @@ EXTRA.text = {
             <p>A path without a leading <code>/</code> is <b>relative</b>: it starts from the process's <b>working directory</b>. Jupyter usually sets that to the notebook's own folder, <code>notebooks/</code>. Two fixes:</p>
             ${codeBlock("pd.read_csv('../data/grades.csv')                  # .. means the parent folder\npd.read_csv('/Users/ana/project/data/grades.csv')  # absolute: starts at /", "pd")}
             <p class="note">On Windows, absolute paths start with a drive, like <code>C:\\Users\\ana</code>.</p>
-            ${tryIt("import os\nos.getcwd()", "See this page's working directory")}`)}`;
+            <p>You can ask any Python process where it is standing: <code>os.getcwd()</code> returns the working directory ("cwd" is short for current working directory). In a notebook on your own computer it prints the notebook's folder, such as <code>/Users/ana/project/notebooks</code>. The Python running in this page can't see your files at all: the browser gives it a small private file system of its own, and its working directory is a folder in there called <code>/home/pyodide</code>. That is what you will see below.</p>
+            ${tryIt("import os\nos.getcwd()", "Ask this page's Python where it is standing")}`)}`;
         wirePredict(el, 1);
         wireTry(el);
       }
@@ -1432,64 +1499,8 @@ EXTRA.packages = {
 })();
 LESSONS.forEach((L, i) => { L.id = "l" + (i + 1); });
 
-const PY_HELPER = `
-import ast, dis, io, json, struct, sys, contextlib, linecache, traceback
-def _decompose(src):
-    res = {"instrs": [], "stdout": "", "error": None, "value": None, "vars": []}
-    try:
-        tree = ast.parse(src, "<cell>")
-    except SyntaxError as e:
-        res["error"] = f"SyntaxError: {e.msg} (line {e.lineno})"
-        return json.dumps(res)
-    last = None
-    if tree.body and isinstance(tree.body[-1], ast.Expr):
-        last = ast.Expression(tree.body.pop().value)
-    code = compile(tree, "<cell>", "exec")
-    whole = compile(src, "<cell>", "exec")
-    for i in dis.get_instructions(whole):
-        if i.opname in ("RESUME", "NOP", "NOT_TAKEN", "CACHE"):
-            continue
-        r = i.argrepr
-        if not r and i.argval is not None and i.opname not in ("POP_TOP", "RETURN_VALUE", "GET_ITER", "END_FOR", "POP_ITER"):
-            r = repr(i.argval)
-        res["instrs"].append([i.opname, r])
-    if res["instrs"][-2:] == [["LOAD_CONST", "None"], ["RETURN_VALUE", ""]]:
-        res["instrs"] = res["instrs"][:-2]
-    ns = {}
-    out = io.StringIO()
-    try:
-        with contextlib.redirect_stdout(out):
-            exec(code, ns)
-            if last is not None:
-                v = eval(compile(last, "<cell>", "eval"), ns)
-                if v is not None:
-                    res["value"] = repr(v)[:300]
-    except Exception as e:
-        res["error"] = f"{type(e).__name__}: {e}"
-        linecache.cache["<cell>"] = (len(src), None, src.splitlines(True), "<cell>")
-        frames = [f for f in traceback.extract_tb(e.__traceback__) if f.filename == "<cell>"]
-        if frames:
-            res["tb"] = "Traceback (most recent call last):\\n" + "".join(traceback.format_list(frames)) + res["error"]
-    res["stdout"] = out.getvalue()[:2000]
-    seen = {}
-    for k, v in ns.items():
-        if k.startswith("__") or callable(v) and not isinstance(v, (list, dict)):
-            continue
-        info = {"name": k, "type": type(v).__name__, "id": hex(id(v)), "size": sys.getsizeof(v), "repr": repr(v)[:120], "same": seen.get(id(v))}
-        seen.setdefault(id(v), k)
-        if isinstance(v, float):
-            info["bits"] = format(struct.unpack(">Q", struct.pack(">d", v))[0], "064b")
-        elif isinstance(v, bool):
-            info["intbits"] = "1" if v else "0"
-        elif isinstance(v, int):
-            info["intbits"] = bin(v)
-        elif isinstance(v, str):
-            info["bytes"] = " ".join(f"{b:08b}" for b in v.encode("utf-8")[:12])
-        elif isinstance(v, list):
-            info["items"] = len(v)
-        res["vars"].append(info)
-    return json.dumps(res)
-`;
+// The Python that runs inside Pyodide lives in src/helper.py; build.py inlines it here.
+const PY_HELPER = /*PY_HELPER*/"";
 let pyPromise = null;
 function loadPython(statusEl) {
   if (pyPromise) return pyPromise;
@@ -1605,7 +1616,9 @@ total == 0.3</textarea>
     catch (e) { st.textContent = ""; stage.querySelector("#p1").innerHTML = `<div class="out err">Python couldn't start here: ${esc(e && e.message ? e.message : e)}</div>`; return; }
     st.textContent = "";
     stage.querySelector("#p1").innerHTML = runOutput(r);
-    stage.querySelector("#p2").innerHTML = r.instrs.length ? bcTable(r.instrs) : `<p class="note">The code didn't compile.</p>`;
+    const p2 = stage.querySelector("#p2");
+    p2.innerHTML = r.error && !r.instrs.length ? `<p class="note">The code didn't compile.</p>` : "";
+    liveViews(p2, r, stage.querySelector("#src").value);
     stage.querySelector("#p3").innerHTML = r.vars.length ? `<div class="tbl-wrap"><table class="data"><thead><tr><th>name</th><th>type</th><th>id</th><th>bytes</th><th>value</th></tr></thead><tbody>${r.vars.map(v => `<tr><td>${esc(v.name)}</td><td>${esc(v.type)}</td><td>${esc(v.id)}</td><td>${v.size}</td><td style="text-align:left">${esc(v.repr)}${v.same ? ` <span class="note">(same object as ${esc(v.same)})</span>` : ""}</td></tr>`).join("")}</tbody></table></div><p class="note">The id is the object's address. Two names with the same id share one object.</p>` : `<p class="note">No names were created.</p>`;
     const rows = r.vars.filter(v => v.bits || v.intbits || v.bytes).map(v => {
       if (v.bits) return `<div class="bitrow"><span class="name">${esc(v.name)} · float</span>${bitsHtml({ sign: v.bits[0], exp: v.bits.slice(1, 12), frac: v.bits.slice(12) })}</div>`;

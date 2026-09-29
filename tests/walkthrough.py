@@ -5,7 +5,8 @@
     python3 tests/walkthrough.py        # add --no-python to skip the runnable boxes
 
 Checks: no script errors; every prediction blurs its answer and reveals it; no sideways
-scrolling at phone width; runnable examples produce output (desktop pass only).
+scrolling at phone width; runnable examples produce output and a live bytecode stepper that
+steps (desktop pass only).
 """
 import sys
 from playwright.sync_api import sync_playwright
@@ -40,8 +41,19 @@ with sync_playwright() as p:
                 if RUN_PYTHON and name == "desktop" and page.locator(".try-run").count():
                     page.locator(".try-run").first.click()
                     page.locator(".try-out > *").first.wait_for(timeout=90000)
-                    if "couldn't start" in page.inner_text(".try-out"):
-                        problems.append(f"{where}: {page.inner_text('.try-out')[:120]}")
+                    text = page.inner_text(".try-out")
+                    if "couldn't start" in text:
+                        problems.append(f"{where}: {text[:120]}")
+                    elif "internal" in text:
+                        problems.append(f"{where}: tracer problem: {text[:160]}")
+                    elif page.locator(".try-out .live").count() == 0:
+                        problems.append(f"{where}: no bytecode view after running")
+                    live = page.locator(".try-out .st [data-act=next]")
+                    if live.count():
+                        before = page.inner_text(".try-out .note-slot")
+                        live.first.click()
+                        if page.inner_text(".try-out .note-slot") == before:
+                            problems.append(f"{where}: live stepper did not step")
                 if page.evaluate("document.documentElement.scrollWidth") > width:
                     problems.append(f"{where}: page scrolls sideways")
         print(f"{name}: done")

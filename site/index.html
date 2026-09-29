@@ -114,6 +114,10 @@ nav.lessons { position: static; }
 .verdict { font-weight: 700; margin-top: -4px; }
 .ans { transition: filter 0.25s; }
 .ans.veiled { filter: blur(7px); user-select: none; pointer-events: none; }
+.live { display: grid; gap: 8px; margin-top: 6px; }
+.live .bc-wrap { max-height: 340px; overflow-y: auto; }
+.dim { color: var(--muted); }
+.errtext { color: var(--bad); }
 .verdict.wait { color: var(--muted); font-weight: 400; font-size: 0.9rem; }
 .linkbtn { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-size: 0.88rem; justify-self: start; }
 
@@ -334,7 +338,7 @@ footer.foot { margin-top: 40px; color: var(--muted); font-size: 0.88rem; display
 </div>
 
 <script>
-const DATA = {"python":"3.14.0rc2","t1":[["LOAD_NAME","price"],["LOAD_NAME","qty"],["BINARY_OP","*"],["STORE_NAME","total"]],"t2":[["LOAD_NAME","a"],["STORE_NAME","b"],["LOAD_NAME","b"],["LOAD_ATTR","append + NULL|self"],["LOAD_SMALL_INT","4"],["CALL","1"],["POP_TOP",""]],"t3":[["LOAD_NAME","a"],["LOAD_NAME","b"],["BINARY_OP","+"],["STORE_NAME","x"]],"t3_folded":[["LOAD_CONST","0.30000000000000004"],["STORE_NAME","x"]],"t3_bits":{"0.1":{"sign":"0","exp":"01111111011","frac":"1001100110011001100110011001100110011001100110011010","exact":"0.1000000000000000055511151231257827021181583404541015625"},"0.2":{"sign":"0","exp":"01111111100","frac":"1001100110011001100110011001100110011001100110011010","exact":"0.200000000000000011102230246251565404236316680908203125"},"0.1 + 0.2":{"sign":"0","exp":"01111111101","frac":"0011001100110011001100110011001100110011001100110100","exact":"0.3000000000000000444089209850062616169452667236328125"},"0.3":{"sign":"0","exp":"01111111101","frac":"0011001100110011001100110011001100110011001100110011","exact":"0.299999999999999988897769753748434595763683319091796875"}},"t3_repr":"0.30000000000000004","t4_loop":[["LOAD_SMALL_INT","0"],["STORE_NAME","count"],["LOAD_NAME","values"],["GET_ITER",""],["FOR_ITER","to L3"],["STORE_NAME","v"],["LOAD_NAME","v"],["LOAD_SMALL_INT","0"],["COMPARE_OP","bool(>)"],["POP_JUMP_IF_TRUE","to L2"],["JUMP_BACKWARD","to L1"],["LOAD_NAME","count"],["LOAD_SMALL_INT","1"],["BINARY_OP","+="],["STORE_NAME","count"],["JUMP_BACKWARD","to L1"],["END_FOR",""],["POP_ITER",""]],"t4_mask":[["LOAD_NAME","arr"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_ATTR","sum + NULL|self"],["CALL","0"],["STORE_NAME","count"]],"t5":[["LOAD_NAME","df"],["LOAD_ATTR","a"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_NAME","df"],["LOAD_ATTR","b"],["LOAD_SMALL_INT","1"],["COMPARE_OP","=="],["BINARY_OP","&"],["STORE_NAME","mask"]],"t5_bad_ast":"df.a > 0 & df.b == 1","t6":[["LOAD_NAME","df"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP","!="],["BINARY_OP","[]"],["STORE_NAME","keep"]],"t6_bits":{"sign":"0","exp":"11111111111","frac":"1000000000000000000000000000000000000000000000000000","exact":"nan"},"t6_eq":[false,true,false],"t7":[["LOAD_SMALL_INT","5"],["LOAD_NAME","df"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["BINARY_OP","[]"],["LOAD_CONST","'y'"],["STORE_SUBSCR",""]],"t7_good":[["LOAD_SMALL_INT","5"],["LOAD_NAME","df"],["LOAD_ATTR","loc"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_CONST","'y'"],["BUILD_TUPLE","2"],["STORE_SUBSCR",""]],"imm":[["LOAD_NAME","x"],["STORE_NAME","y"],["LOAD_NAME","y"],["LOAD_SMALL_INT","1"],["BINARY_OP","+="],["STORE_NAME","y"]]};
+const DATA = {"python":"3.14.7","t1":[["LOAD_NAME","price"],["LOAD_NAME","qty"],["BINARY_OP","*"],["STORE_NAME","total"]],"t1_stacks":[["2.5"],["2.5","4"],["10.0"],[]],"t2":[["LOAD_NAME","a"],["STORE_NAME","b"],["LOAD_NAME","b"],["LOAD_ATTR","append + NULL|self"],["LOAD_SMALL_INT","4"],["CALL","1"],["POP_TOP",""]],"t2_stacks":[["[1, 2, 3]"],[],["[1, 2, 3]"],["list.append"],["list.append","4"],["None"],[]],"t3":[["LOAD_NAME","a"],["LOAD_NAME","b"],["BINARY_OP","+"],["STORE_NAME","x"]],"t3_folded":[["LOAD_CONST","0.30000000000000004"],["STORE_NAME","x"]],"t3_bits":{"0.1":{"sign":"0","exp":"01111111011","frac":"1001100110011001100110011001100110011001100110011010","exact":"0.1000000000000000055511151231257827021181583404541015625"},"0.2":{"sign":"0","exp":"01111111100","frac":"1001100110011001100110011001100110011001100110011010","exact":"0.200000000000000011102230246251565404236316680908203125"},"0.1 + 0.2":{"sign":"0","exp":"01111111101","frac":"0011001100110011001100110011001100110011001100110100","exact":"0.3000000000000000444089209850062616169452667236328125"},"0.3":{"sign":"0","exp":"01111111101","frac":"0011001100110011001100110011001100110011001100110011","exact":"0.299999999999999988897769753748434595763683319091796875"}},"t3_repr":"0.30000000000000004","t4_loop":[["LOAD_SMALL_INT","0"],["STORE_NAME","count"],["LOAD_NAME","values"],["GET_ITER",""],["FOR_ITER","to L3"],["STORE_NAME","v"],["LOAD_NAME","v"],["LOAD_SMALL_INT","0"],["COMPARE_OP","bool(>)"],["POP_JUMP_IF_TRUE","to L2"],["JUMP_BACKWARD","to L1"],["LOAD_NAME","count"],["LOAD_SMALL_INT","1"],["BINARY_OP","+="],["STORE_NAME","count"],["JUMP_BACKWARD","to L1"],["END_FOR",""],["POP_ITER",""]],"t4_mask":[["LOAD_NAME","arr"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_ATTR","sum + NULL|self"],["CALL","0"],["STORE_NAME","count"]],"t5":[["LOAD_NAME","df"],["LOAD_ATTR","a"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_NAME","df"],["LOAD_ATTR","b"],["LOAD_SMALL_INT","1"],["COMPARE_OP","=="],["BINARY_OP","&"],["STORE_NAME","mask"]],"t5_bad_ast":"df.a > 0 & df.b == 1","t6":[["LOAD_NAME","df"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP","!="],["BINARY_OP","[]"],["STORE_NAME","keep"]],"t6_bits":{"sign":"0","exp":"11111111111","frac":"1000000000000000000000000000000000000000000000000000","exact":"nan"},"t6_eq":[false,true,false],"t7":[["LOAD_SMALL_INT","5"],["LOAD_NAME","df"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["BINARY_OP","[]"],["LOAD_CONST","'y'"],["STORE_SUBSCR",""]],"t7_good":[["LOAD_SMALL_INT","5"],["LOAD_NAME","df"],["LOAD_ATTR","loc"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_CONST","'y'"],["BUILD_TUPLE","2"],["STORE_SUBSCR",""]],"imm":[["LOAD_NAME","x"],["STORE_NAME","y"],["LOAD_NAME","y"],["LOAD_SMALL_INT","1"],["BINARY_OP","+="],["STORE_NAME","y"]]};
 
 const OPS = {
   LOAD_NAME: "Look up this name and put its object on the stack",
@@ -373,6 +377,43 @@ const OPS = {
   LIST_APPEND: "Append to a list (inside a comprehension)",
   MAKE_FUNCTION: "Create a function object",
   IMPORT_NAME: "Import a module",
+  IMPORT_FROM: "Take one name out of the module on top",
+  SET_FUNCTION_ATTRIBUTE: "Attach defaults or annotations to a function",
+  LOAD_BUILD_CLASS: "Push the helper that builds a class",
+  LIST_EXTEND: "Add all these items to the list below",
+  SWAP: "Swap two items on the stack",
+  LOAD_FAST_AND_CLEAR: "Set aside the outer value of a comprehension variable",
+  STORE_FAST_LOAD_FAST: "Store a local, then load one",
+  CALL_KW: "Call the function; the tuple on top names the keyword arguments",
+  CALL_FUNCTION_EX: "Call the function with unpacked * or ** arguments",
+  UNPACK_SEQUENCE: "Split a sequence into its items, first item on top",
+  UNPACK_EX: "Split a sequence around a starred name",
+  CONVERT_VALUE: "Apply str(), repr() or ascii() for an f-string",
+  FORMAT_WITH_SPEC: "Format a value with a format spec like :.2f",
+  CONTAINS_OP: "Test in or not in, push True or False",
+  IS_OP: "Test is or is not, push True or False",
+  UNARY_NOT: "Push the opposite truth value",
+  UNARY_INVERT: "Flip every bit of the top item",
+  BUILD_SET: "Pack the top items into a set",
+  BUILD_SLICE: "Build a slice like 1:3",
+  BINARY_SLICE: "Take a slice of the container",
+  STORE_SLICE: "Assign into a slice of the container",
+  STORE_ATTR: "Do  object.name = value",
+  DELETE_NAME: "Forget a name",
+  DELETE_SUBSCR: "Do  del container[key]",
+  JUMP_FORWARD: "Skip ahead (past an else branch, for example)",
+  POP_JUMP_IF_NONE: "If the top item is None, jump ahead",
+  POP_JUMP_IF_NOT_NONE: "If the top item is not None, jump ahead",
+  LOAD_COMMON_CONSTANT: "Push a built-in like AssertionError",
+  RAISE_VARARGS: "Raise the exception on top",
+  MAP_ADD: "Add a key and value to a dict (inside a comprehension)",
+  SET_ADD: "Add to a set (inside a comprehension)",
+  DICT_UPDATE: "Merge a dict into the one below",
+  DICT_MERGE: "Merge keyword arguments into the dict below",
+  LOAD_FAST_LOAD_FAST: "Look up two local variables",
+  STORE_FAST_STORE_FAST: "Store into two local variables",
+  LOAD_FAST_CHECK: "Look up a local variable that might not be set yet",
+  DELETE_FAST: "Forget a local variable",
 };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 function cleanArg(op, a) {
@@ -421,19 +462,25 @@ function renderPile(el, items, prev, fmt, eq) {
   } else final();
   return { popped, pushed };
 }
+// steps[k] = { stack, note, i?, line?, error? }: i is the instruction the step ran (defaults to k; a live trace
+// revisits instructions in loops), line the source line, error the message if that instruction failed.
 function stepper(root, instrs, steps, onStep) {
   let i = -1, shown = [];
   const tbl = root.querySelector(".bc-slot"), pile = root.querySelector(".stack-slot"), op = root.querySelector(".op-slot");
   const noteEl = root.querySelector(".note-slot");
   const prev = root.querySelector("[data-act=prev]"), next = root.querySelector("[data-act=next]"), reset = root.querySelector("[data-act=reset]");
   function draw() {
-    tbl.innerHTML = bcTable(instrs, { hot: i });
-    const st = i < 0 ? [] : steps[i].stack;
+    const s = i < 0 ? null : steps[i], hot = s ? (s.i ?? i) : -1;
+    tbl.innerHTML = bcTable(instrs, { hot });
+    const wrap = tbl.querySelector(".bc-wrap"), row = tbl.querySelector("tr.hot");
+    if (row && wrap.scrollHeight > wrap.clientHeight) wrap.scrollTop = row.offsetTop - wrap.clientHeight / 2;
+    const st = s ? s.stack : [];
     const d = renderPile(pile, st, shown, v => `<span>${esc(v)}</span>`);
     shown = st.slice();
-    op.innerHTML = i < 0 ? "" : [d.popped.length ? `<span class="pop">pop ${d.popped.map(esc).join(", ")}</span>` : "", d.pushed.length ? `<span class="push">push ${d.pushed.map(esc).join(", ")}</span>` : ""].filter(Boolean).join(" ");
-    noteEl.textContent = i < 0 ? "Press Step to run the first instruction." : steps[i].note;
-    prev.disabled = i < 0; next.disabled = i >= instrs.length - 1;
+    op.innerHTML = s ? [d.popped.length ? `<span class="pop">pop ${d.popped.map(esc).join(", ")}</span>` : "", d.pushed.length ? `<span class="push">push ${d.pushed.map(esc).join(", ")}</span>` : ""].filter(Boolean).join(" ") : "";
+    const text = s ? (s.note || OPS[instrs[hot][0]] || "") : "Press Step to run the first instruction.";
+    noteEl.innerHTML = (s && s.line ? `<span class="dim">Line ${s.line}.</span> ` : "") + esc(text) + (s && s.error ? ` <span class="errtext">${esc(s.error)}</span>` : "");
+    prev.disabled = i < 0; next.disabled = i >= steps.length - 1;
     if (onStep) onStep(i);
   }
   prev.onclick = () => { i--; draw(); };
@@ -509,9 +556,24 @@ function wireTry(el) {
       try { r = await runPy(box.querySelector(".try-src").value, st); }
       catch (e) { st.textContent = ""; out.innerHTML = `<div class="out err">Python couldn't start here: ${esc(e && e.message ? e.message : e)}</div>`; return; }
       st.textContent = "";
-      out.innerHTML = runOutput(r) + (r.instrs.length ? `<details class="peek"><summary>Bytecode</summary>${bcTable(r.instrs)}</details>` : "");
+      out.innerHTML = runOutput(r);
+      liveViews(out, r, box.querySelector(".try-src").value);
     };
   });
+}
+// After a run: the code's own bytecode with a stepper driven by the real trace, and the call stack when the
+// code called its own functions. Always visible: seeing the bytecode is the point.
+function liveViews(out, r, src) {
+  const calls = r.frames && r.frames.some(s => s.frames.length > 1);
+  let html = "";
+  const trace = r.trace && r.trace.length ? r.trace : null;
+  if (trace) html += `<div class="live"><span class="eyebrow">Step through your code's bytecode</span><div class="st">${stepperShell}</div><p class="note">These instructions and values come from the Python running in this page. One simplification: the interpreter also keeps a few placeholder slots on its stack, and those are left out.</p></div>`;
+  else if (r.instrs.length) html += `<div class="live"><span class="eyebrow">Your code's bytecode</span>${bcTable(r.instrs)}<p class="note">Stepping isn't available for this code: ${esc(r.trace_why || "")}.</p></div>`;
+  else if (!r.error) html += `<div class="live"><p class="note">No instructions: Python worked this out while compiling and kept only the result (constant folding).</p></div>`;
+  if (calls) html += `<div class="live"><span class="eyebrow">Step through the calls</span><div class="fs-live"></div><p class="note">Recorded from the real run: each step is one line, with every frame that existed at that moment.</p></div>`;
+  out.insertAdjacentHTML("beforeend", html);
+  if (trace) stepper(out.querySelector(".st"), r.instrs, trace);
+  if (calls) frameStepper(out.querySelector(".fs-live"), src, r.frames.map(s => ({ ...s, note: esc(s.note) })));
 }
 function runOutput(r) {
   return (r.stdout ? `<div class="out">${esc(r.stdout)}</div>` : "") +
@@ -561,7 +623,7 @@ LESSONS.push({
           <div class="stackl">
             <div>${tagPill("py")}<p><b>The language</b> and the program that runs it (usually CPython). Syntax like <code>=</code>, <code>and</code>, <code>for</code>, and built-in types like int, float and list. The same everywhere.</p></div>
             <div>${tagPill("std")}<p><b>Modules that ship with Python</b>, such as <code>math</code>, <code>json</code> and <code>csv</code>. Always available with <code>import</code>.</p></div>
-            <div><div class="row">${tagPill("np")}${tagPill("pd")}</div><p><b>Packages</b> other people wrote, installed separately with <code>pip</code> or <code>conda</code>. They add new kinds of objects, like arrays and DataFrames, and decide what operators like <code>+</code> and <code>&amp;</code> do with them. Much of NumPy isn't written in Python at all but in C, compiled ahead of time.</p></div>
+            <div><div class="row">${tagPill("np")}${tagPill("pd")}</div><p><b>Packages</b> other people wrote, installed separately with <code>pip</code> or <code>conda</code>. They add new kinds of values, like arrays and DataFrames, and decide what operators like <code>+</code> and <code>&amp;</code> do with them. Much of NumPy isn't written in Python at all but in C, compiled ahead of time.</p></div>
             <div>${tagPill("jp")}<p><b>Tools</b> that run Python for you: Jupyter, Colab, VS Code. They aren't Python; they send your code to it.</p></div>
           </div>
           <p class="note">From here on, every example carries a tag showing which layer it comes from.</p>
@@ -596,19 +658,19 @@ LESSONS.push({
       render(el) {
         el.innerHTML = `
           ${codeBlock("total = price * qty", "py")}
-          <p>Python doesn't run that line directly. It first translates it into four <b>bytecode</b> instructions, listed below. While running them it keeps a <b>stack</b>: a pile of values where each instruction takes from the top or puts something on top.</p>
+          <p>Python doesn't run that line directly. It first translates it into four small <b>bytecode</b> instructions. Each one does one simple thing:</p>
+          ${bcTable(DATA.t1)}
+          <p>Two words in that table: Python calls every value it works with an <b>object</b>, and <code>price</code>, <code>qty</code> and <code>total</code> are <b>names</b> attached to objects. The next lesson looks at names and objects closely; for now, "the object named price" just means the value that <code>price</code> refers to.</p>
+          <p>To run them, Python keeps a <b>stack</b>: a pile of values. An instruction can <b>push</b> a value, which puts it on top of the pile, or <b>pop</b> a value, which takes the top one off. Instructions only ever touch the top. That is what lets each one be so simple: it never has to say where its inputs are, because they are always the most recently pushed values.</p>
           ${predict("With <code>price = 2.5</code> and <code>qty = 4</code>, what's on the stack just before the last instruction, <code>STORE_NAME</code>, runs?", ["2.5 and 4", "10.0", "Nothing"])}
           ${reveal(`
-            <p>10.0. <code>BINARY_OP *</code> popped both numbers and pushed their product. <code>STORE_NAME</code> then pops it and names it <code>total</code>.</p>
-            <div class="st">${stepperShell}</div>
+            <p class="ans">10.0. The two <code>LOAD_NAME</code>s pushed 2.5 and 4. <code>BINARY_OP *</code> popped both and pushed their product. <code>STORE_NAME</code> then pops that and gives it the name <code>total</code>. Step through it and watch the pile:</p>
+            <div class="st ans">${stepperShell}</div>
+            <p>Now change the code and run it. Your version's bytecode appears underneath, with its own stepper.</p>
             ${tryIt("price = 2.5\nqty = 4\ntotal = price * qty\ntotal", null, "py")}`)}`;
         wirePredict(el, 1);
-        stepper(el.querySelector(".st"), DATA.t1, [
-          { stack: ["2.5"], note: "Find the object named price and push it." },
-          { stack: ["2.5", "4"], note: "Push the object named qty." },
-          { stack: ["10.0"], note: "Pop both, multiply, push the result." },
-          { stack: [], note: "Pop the result and give it the name total." },
-        ]);
+        const notes1 = ["Find the object named price and push it.", "Find the object named qty and push it.", "Pop both, multiply them, push the result.", "Pop the result and give it the name total."];
+        stepper(el.querySelector(".st"), DATA.t1, DATA.t1_stacks.map((stack, k) => ({ stack, note: notes1[k] })));
         wireTry(el);
       }
     },
@@ -620,9 +682,9 @@ LESSONS.push({
           <p>These two cells worked earlier because cell 2 ran first, then cell 1.</p>
           <div class="cell"><span class="in" id="n1">In [2]:</span><pre class="code">total = sum(prices)</pre></div>
           <div class="cell"><span class="in" id="n2">In [1]:</span><pre class="code">prices = [4.5, 3.0, 12.25]</pre></div>
-          ${predict("You restart the kernel and click Run All, which runs top to bottom. What happens?", ["It works, same as before", "NameError on cell 1"])}
+          ${predict("You restart the kernel and click Run All, which runs top to bottom. What happens?", ["It works, same as before", "Cell 1 uses the old prices", "Cell 1 fails: nothing called prices exists yet"])}
           ${reveal(`
-            <p>Restarting empties the kernel's memory, so cell 1 asks for <code>prices</code> before anything has made it. Try it:</p>
+            <p>Cell 1 fails. Restarting empties the kernel's memory, so cell 1 asks for <code>prices</code> before anything has made it. Python reports a name it can't find as a <code>NameError</code>; for now read that as "no such name". Errors get a lesson of their own later. Try it:</p>
             <div class="row"><button class="btn" data-run="0">Run cell 1</button><button class="btn" data-run="1">Run cell 2</button><button class="btn" id="restart">Restart kernel</button><button class="btn" id="runall">Run all</button></div>
             <div id="nbout"></div>
             <div class="memory" id="mem"></div>
@@ -647,7 +709,7 @@ LESSONS.push({
         el.querySelector("#restart").onclick = restart;
         el.querySelector("#runall").onclick = () => { if (run(0)) run(1); };
         drawMem();
-        wirePredict(el, 1, () => { restart(); run(0); });
+        wirePredict(el, 2, () => { restart(); run(0); });
       }
     },
   ]
@@ -663,12 +725,13 @@ LESSONS.push({
       layer: "Memory", title: "= attaches a name; it never copies",
       render(el) {
         el.innerHTML = `
+          <p>Three words this lesson leans on. Every value in a Python process, from the number 5 to a whole DataFrame, is an <b>object</b>: a piece of memory that holds the value and records what type it is. A <b>name</b> (what most people call a variable) is a label attached to an object; <code>=</code> attaches the name on its left to the object on its right. A <b>method</b> is a function that belongs to an object and is called through a dot, like <code>b.append(4)</code>, which adds 4 to the end of the list. The value in the brackets is its <b>argument</b>: the input it works on.</p>
           ${codeBlock("a = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)", "py")}
           ${predict("What does print(a) show?", ["[1, 2, 3]", "[1, 2, 3, 4]"])}
           ${reveal(`
-            <div class="out">[1, 2, 3, 4]</div>
+            <div class="out ans">[1, 2, 3, 4]</div>
             <p>Step through and watch memory:</p>
-            <div id="pic"></div><label class="row"><input type="checkbox" id="copy"> Use <code>b = a.copy()</code></label><div class="st">${stepperShell}</div>`)}`;
+            <div id="pic"></div><label class="row"><input type="checkbox" id="copy"> Use <code>b = a.copy()</code></label><div class="st ans">${stepperShell}</div>`)}`;
         let stepI = -1, copy = false;
         const pic = el.querySelector("#pic");
         function draw() {
@@ -686,15 +749,9 @@ LESSONS.push({
           }
           pic.innerHTML = svg + "</svg>";
         }
-        stepper(el.querySelector(".st"), DATA.t2, [
-          { stack: ["list [1, 2, 3]"], note: "Push the object named a: the object itself, not a copy." },
-          { stack: [], note: "Give that same object a second name, b." },
-          { stack: ["list"], note: "Push the object named b. It is the one list." },
-          { stack: ["list.append"], note: "Look up the list's append method." },
-          { stack: ["list.append", "4"], note: "Push the argument, 4." },
-          { stack: ["None"], note: "Call append. The one list grows to [1, 2, 3, 4]." },
-          { stack: [], note: "Discard append's return value, None." },
-        ], i => { stepI = i; draw(); });
+        const notes2 = ["Push the object named a: the object itself, not a copy.", "Pop it and give that same object a second name, b.", "Push the object named b. It is the one list.",
+          "Pop the list and push its append method.", "Push the argument, 4.", "Call append with that argument. The one list grows to [1, 2, 3, 4]. Push what append returns: None.", "Discard the None; nothing keeps it."];
+        stepper(el.querySelector(".st"), DATA.t2, DATA.t2_stacks.map((stack, k) => ({ stack, note: notes2[k] })), i => { stepI = i; draw(); });
         el.querySelector("#copy").onchange = e => { copy = e.target.checked; if (stepI < 1) stepI = -2; draw(); };
         wirePredict(el, 1);
       }
@@ -725,6 +782,7 @@ LESSONS.push({
       layer: "Memory", title: "DataFrames follow the same rule",
       render(el) {
         el.innerHTML = `
+          <p>A pandas <b>DataFrame</b> is a table object: named columns, numbered rows. Reading the code below: the first line builds a table with two columns, <code>x</code> and <code>y</code>, three rows each. <code>df2['y'] = 9</code> puts 9 into column <code>y</code> of every row. <code>df.y</code> is column <code>y</code> on its own, and <code>.tolist()</code> turns it into a plain list so we can see it.</p>
           ${codeBlock("df = pd.DataFrame({'x': [1, -1, 2], 'y': [0, 0, 0]})\ndf2 = df\ndf2['y'] = 9\ndf.y.tolist()", "pd")}
           ${predict("You changed df2. What is df.y now?", ["[0, 0, 0]", "[9, 9, 9]"])}
           ${reveal(`
@@ -740,12 +798,20 @@ LESSONS.push({
       layer: "Memory", title: "A filter builds a new object",
       render(el) {
         el.innerHTML = `
+          <p>The second line below does three things, one after another, so read it from the inside out:</p>
+          <ul>
+            <li><code>df.x &gt; 0</code> compares every value in column <code>x</code> with 0 and gives back a column of True and False, one per row: here True, False, True. A column of booleans used this way is called a <b>mask</b>.</li>
+            <li><code>df[mask]</code> selects the rows where the mask is True. This is a <b>filter</b>: it gives you rows 1 and 3, the ones with positive <code>x</code>.</li>
+            <li><code>['y'] = 5</code> then sets column <code>y</code> to 5 in whatever the filter gave back.</li>
+          </ul>
+          <p>Read as a sentence: for the rows where x is positive, set y to 5. The question is what that does to <code>df</code>.</p>
           ${codeBlock("df = pd.DataFrame({'x': [1, -1, 2], 'y': [0, 0, 0]})\ndf[df.x > 0]['y'] = 5\ndf.y.tolist()", "pd")}
           ${predict("You want y = 5 wherever x is positive. What is df.y afterwards?", ["[5, 0, 5]", "[0, 0, 0]"])}
           ${reveal(`
             <div class="out warn">ChainedAssignmentError: A value is being set on a copy of a DataFrame or Series through chained assignment.</div>
             <div class="out">[0, 0, 0]</div>
-            <p><code>df[df.x &gt; 0]</code> builds a new, unnamed DataFrame. <code>['y'] = 5</code> writes into that one, which is thrown away at the end of the line.</p>
+            <p><code>df[df.x &gt; 0]</code> builds a new, unnamed DataFrame holding the selected rows. <code>['y'] = 5</code> writes into that one, which is thrown away at the end of the line. <code>df</code> itself never changes, and pandas warns you about it.</p>
+            <p>The fix is <code>df.loc[df.x &gt; 0, 'y'] = 5</code>. <code>.loc[rows, column]</code> names the rows and the column in one step, so pandas can write straight into <code>df</code> instead of into a copy. Step through both versions:</p>
             <div class="row"><button class="btn primary" id="s7n">Step</button><button class="btn" id="s7r">Reset</button><label class="row"><input type="checkbox" id="s7loc"> Use <code>.loc</code></label></div>
             <div id="pic7"></div><p class="note" id="n7"></p>
             <details class="peek"><summary>Bytecode: two brackets vs. .loc</summary><div class="grid2"><div>${codeBlock("df[df.x > 0]['y'] = 5", "pd")}${bcTable(DATA.t7, { hot: 6, compact: true })}</div><div>${codeBlock("df.loc[df.x > 0, 'y'] = 5", "pd")}${bcTable(DATA.t7_good, { hot: 9, compact: true })}</div></div><p class="note">Left: the highlighted subscript builds the copy, then the store writes into it. Right: one store, straight into df.</p></details>`)}`;
@@ -1369,7 +1435,8 @@ EXTRA.text = {
             <p>A path without a leading <code>/</code> is <b>relative</b>: it starts from the process's <b>working directory</b>. Jupyter usually sets that to the notebook's own folder, <code>notebooks/</code>. Two fixes:</p>
             ${codeBlock("pd.read_csv('../data/grades.csv')                  # .. means the parent folder\npd.read_csv('/Users/ana/project/data/grades.csv')  # absolute: starts at /", "pd")}
             <p class="note">On Windows, absolute paths start with a drive, like <code>C:\\Users\\ana</code>.</p>
-            ${tryIt("import os\nos.getcwd()", "See this page's working directory")}`)}`;
+            <p>You can ask any Python process where it is standing: <code>os.getcwd()</code> returns the working directory ("cwd" is short for current working directory). In a notebook on your own computer it prints the notebook's folder, such as <code>/Users/ana/project/notebooks</code>. The Python running in this page can't see your files at all: the browser gives it a small private file system of its own, and its working directory is a folder in there called <code>/home/pyodide</code>. That is what you will see below.</p>
+            ${tryIt("import os\nos.getcwd()", "Ask this page's Python where it is standing")}`)}`;
         wirePredict(el, 1);
         wireTry(el);
       }
@@ -1442,64 +1509,8 @@ EXTRA.packages = {
 })();
 LESSONS.forEach((L, i) => { L.id = "l" + (i + 1); });
 
-const PY_HELPER = `
-import ast, dis, io, json, struct, sys, contextlib, linecache, traceback
-def _decompose(src):
-    res = {"instrs": [], "stdout": "", "error": None, "value": None, "vars": []}
-    try:
-        tree = ast.parse(src, "<cell>")
-    except SyntaxError as e:
-        res["error"] = f"SyntaxError: {e.msg} (line {e.lineno})"
-        return json.dumps(res)
-    last = None
-    if tree.body and isinstance(tree.body[-1], ast.Expr):
-        last = ast.Expression(tree.body.pop().value)
-    code = compile(tree, "<cell>", "exec")
-    whole = compile(src, "<cell>", "exec")
-    for i in dis.get_instructions(whole):
-        if i.opname in ("RESUME", "NOP", "NOT_TAKEN", "CACHE"):
-            continue
-        r = i.argrepr
-        if not r and i.argval is not None and i.opname not in ("POP_TOP", "RETURN_VALUE", "GET_ITER", "END_FOR", "POP_ITER"):
-            r = repr(i.argval)
-        res["instrs"].append([i.opname, r])
-    if res["instrs"][-2:] == [["LOAD_CONST", "None"], ["RETURN_VALUE", ""]]:
-        res["instrs"] = res["instrs"][:-2]
-    ns = {}
-    out = io.StringIO()
-    try:
-        with contextlib.redirect_stdout(out):
-            exec(code, ns)
-            if last is not None:
-                v = eval(compile(last, "<cell>", "eval"), ns)
-                if v is not None:
-                    res["value"] = repr(v)[:300]
-    except Exception as e:
-        res["error"] = f"{type(e).__name__}: {e}"
-        linecache.cache["<cell>"] = (len(src), None, src.splitlines(True), "<cell>")
-        frames = [f for f in traceback.extract_tb(e.__traceback__) if f.filename == "<cell>"]
-        if frames:
-            res["tb"] = "Traceback (most recent call last):\\n" + "".join(traceback.format_list(frames)) + res["error"]
-    res["stdout"] = out.getvalue()[:2000]
-    seen = {}
-    for k, v in ns.items():
-        if k.startswith("__") or callable(v) and not isinstance(v, (list, dict)):
-            continue
-        info = {"name": k, "type": type(v).__name__, "id": hex(id(v)), "size": sys.getsizeof(v), "repr": repr(v)[:120], "same": seen.get(id(v))}
-        seen.setdefault(id(v), k)
-        if isinstance(v, float):
-            info["bits"] = format(struct.unpack(">Q", struct.pack(">d", v))[0], "064b")
-        elif isinstance(v, bool):
-            info["intbits"] = "1" if v else "0"
-        elif isinstance(v, int):
-            info["intbits"] = bin(v)
-        elif isinstance(v, str):
-            info["bytes"] = " ".join(f"{b:08b}" for b in v.encode("utf-8")[:12])
-        elif isinstance(v, list):
-            info["items"] = len(v)
-        res["vars"].append(info)
-    return json.dumps(res)
-`;
+// The Python that runs inside Pyodide lives in src/helper.py; build.py inlines it here.
+const PY_HELPER = "\"\"\"Python that runs inside Pyodide, in the page. build.py inlines it as the PY_HELPER string.\n\n_decompose(src) runs a cell of code and returns JSON for the page:\n  instrs   the cell's bytecode, from dis, with bookkeeping instructions removed\n  stdout, value, error, tb   the real run's output\n  vars     the names the cell created: type, id, size, repr and bit patterns\n  frames   the call stack at every line of the real run (recorded with sys.settrace)\n  trace    the value stack after every instruction, from a small interpreter that\n           executes the same bytecode on real objects. It is checked against the real\n           run; if the two disagree or the code uses something the interpreter doesn't\n           handle, trace is null and trace_why says why.\n\nTest it outside the page with python3.14 tests/test_helper.py.\n\"\"\"\nimport ast, builtins, contextlib, dis, io, json, linecache, operator, struct, sys, traceback, types\n\n_NULL = object()      # a placeholder slot on the value stack, hidden in the display\n_UNBOUND = object()   # a fast local with no value yet\nMAX_STACK_STEPS = 300\nMAX_FRAME_STEPS = 400\nSKIP = (\"RESUME\", \"NOP\", \"NOT_TAKEN\", \"CACHE\", \"EXTENDED_ARG\")\n\n\nclass _Unsupported(Exception):\n    pass\n\n\ndef _show(v, n=40):\n    \"\"\"A short label for a value on the stack or in a frame.\"\"\"\n    if v is _NULL:\n        return \"NULL\"\n    if v is _UNBOUND:\n        return \"unbound\"\n    if isinstance(v, types.ModuleType):\n        return f\"module {v.__name__}\"\n    if isinstance(v, type):\n        return f\"class {v.__name__}\"\n    if isinstance(v, types.FunctionType):\n        return f\"function {v.__name__}\"\n    if isinstance(v, types.MethodType):\n        return f\"{type(v.__self__).__name__}.{v.__func__.__name__}\"\n    if isinstance(v, (types.BuiltinFunctionType, types.MethodWrapperType)):\n        s = getattr(v, \"__self__\", None)\n        if s is None or s is builtins:\n            return v.__name__\n        if isinstance(s, types.ModuleType):\n            return f\"{s.__name__}.{v.__name__}\"\n        return f\"{type(s).__name__}.{v.__name__}\"\n    if isinstance(v, (types.MethodDescriptorType, types.WrapperDescriptorType, types.ClassMethodDescriptorType)):\n        return f\"{v.__objclass__.__name__}.{v.__name__}\"\n    if isinstance(v, types.CodeType):\n        return f\"code for {v.co_name}\"\n    if isinstance(v, (bool, int, float, complex, str, bytes, type(None), list, tuple, dict, set, frozenset, range, slice)):\n        r = repr(v)\n    else:\n        r = repr(v)\n        if r.startswith(\"<\"):\n            name = type(v).__name__\n            if name.endswith(\"iterator\"):\n                return name.replace(\"_\", \" \")\n            if name == \"generator\":\n                return \"generator\"\n            return f\"{name} object\"\n    return r if len(r) <= n else r[: n - 1] + \"\u2026\"\n\n\n# ---------- the value-stack interpreter ----------\n_BIN = {\n    \"NB_ADD\": operator.add, \"NB_AND\": operator.and_, \"NB_FLOOR_DIVIDE\": operator.floordiv, \"NB_LSHIFT\": operator.lshift,\n    \"NB_MATRIX_MULTIPLY\": operator.matmul, \"NB_MULTIPLY\": operator.mul, \"NB_REMAINDER\": operator.mod, \"NB_OR\": operator.or_,\n    \"NB_POWER\": operator.pow, \"NB_RSHIFT\": operator.rshift, \"NB_SUBTRACT\": operator.sub, \"NB_TRUE_DIVIDE\": operator.truediv,\n    \"NB_XOR\": operator.xor, \"NB_INPLACE_ADD\": operator.iadd, \"NB_INPLACE_AND\": operator.iand,\n    \"NB_INPLACE_FLOOR_DIVIDE\": operator.ifloordiv, \"NB_INPLACE_LSHIFT\": operator.ilshift, \"NB_INPLACE_MATRIX_MULTIPLY\": operator.imatmul,\n    \"NB_INPLACE_MULTIPLY\": operator.imul, \"NB_INPLACE_REMAINDER\": operator.imod, \"NB_INPLACE_OR\": operator.ior,\n    \"NB_INPLACE_POWER\": operator.ipow, \"NB_INPLACE_RSHIFT\": operator.irshift, \"NB_INPLACE_SUBTRACT\": operator.isub,\n    \"NB_INPLACE_TRUE_DIVIDE\": operator.itruediv, \"NB_INPLACE_XOR\": operator.ixor, \"NB_SUBSCR\": operator.getitem,\n}\n_CMP = {\"<\": operator.lt, \"<=\": operator.le, \"==\": operator.eq, \"!=\": operator.ne, \">\": operator.gt, \">=\": operator.ge}\n_CONVERT = {1: str, 2: repr, 3: ascii}\n_UNSUPPORTED_WHY = {\n    \"LOAD_SPECIAL\": \"a with statement\", \"BEFORE_WITH\": \"a with statement\", \"PUSH_EXC_INFO\": \"try/except\",\n    \"CHECK_EXC_MATCH\": \"try/except\", \"POP_EXCEPT\": \"try/except\", \"RERAISE\": \"try/except\",\n    \"GET_LEN\": \"a match statement\", \"MATCH_CLASS\": \"a match statement\", \"MATCH_MAPPING\": \"a match statement\",\n    \"MATCH_SEQUENCE\": \"a match statement\", \"MATCH_KEYS\": \"a match statement\", \"GET_AWAITABLE\": \"async code\",\n    \"GET_AITER\": \"async code\", \"LOAD_DEREF\": \"a nested scope\", \"STORE_DEREF\": \"a nested scope\",\n    \"MAKE_CELL\": \"a nested scope\", \"LOAD_CLOSURE\": \"a nested scope\", \"COPY_FREE_VARS\": \"a nested scope\",\n    \"DELETE_DEREF\": \"a nested scope\", \"BUILD_TEMPLATE\": \"a t-string\", \"BUILD_INTERPOLATION\": \"a t-string\",\n}\n\n\ndef _display_indices(full):\n    \"\"\"Map each instruction's position to its row in the displayed table, or None.\"\"\"\n    shown = [k for k, ins in enumerate(full) if ins.opname not in SKIP]\n    if len(shown) >= 2 and full[shown[-2]].opname == \"LOAD_CONST\" and full[shown[-2]].argval is None and full[shown[-1]].opname == \"RETURN_VALUE\":\n        shown = shown[:-2]\n    return {k: d for d, k in enumerate(shown)}\n\n\ndef _instrs(full):\n    rows = []\n    for k in sorted(_display_indices(full), key=lambda k: k):\n        i = full[k]\n        r = i.argrepr\n        if isinstance(i.argval, types.CodeType):\n            r = f\"code for {i.argval.co_name}\"\n        elif not r and i.argval is not None and i.opname not in (\"POP_TOP\", \"RETURN_VALUE\", \"GET_ITER\", \"END_FOR\", \"POP_ITER\"):\n            r = repr(i.argval)\n        rows.append([i.opname, r])\n    return rows\n\n\ndef _run_stack(code, ns):\n    \"\"\"Execute module-level bytecode on real objects, recording the stack after each instruction.\n\n    Returns (steps, why). steps is None when the code uses something unsupported, and why says what.\n    A step is {\"i\": table row, \"line\": source line, \"stack\": labels, \"note\": text} plus \"error\" on the last\n    step if the code raised.\n    \"\"\"\n    full = list(dis.get_instructions(code, show_caches=False))\n    at = {ins.offset: k for k, ins in enumerate(full)}\n    disp = _display_indices(full)\n    handlers = list(dis._parse_exception_table(code))\n    fast = [_UNBOUND] * code.co_nlocals\n    stack, steps = [], []\n    pc = 0\n\n    def pop():\n        return stack.pop()\n\n    def push(v):\n        stack.append(v)\n\n    def take(n):\n        if n == 0:\n            return []\n        items = stack[-n:]\n        del stack[-n:]\n        return items\n\n    def call(fn, self_or_null, args, kwargs=None):\n        if self_or_null is not _NULL:\n            args = [self_or_null] + list(args)\n        return fn(*args, **(kwargs or {}))\n\n    while pc < len(full):\n        ins = full[pc]\n        op, arg, val = ins.opname, ins.arg, ins.argval\n        before = len(stack)\n        snapshot = [_show(v) for v in stack if v is not _NULL]\n        jumped = False\n        note = \"\"\n        nxt = pc + 1\n        try:\n            if op in SKIP:\n                pass\n            elif op == \"LOAD_CONST\":\n                push(val); note = f\"Push the constant {_show(val)}.\"\n            elif op == \"LOAD_SMALL_INT\":\n                push(arg); note = f\"Push the constant {arg}.\"\n            elif op == \"LOAD_NAME\" or op == \"LOAD_GLOBAL\":\n                if val in ns:\n                    v = ns[val]\n                elif hasattr(builtins, val):\n                    v = getattr(builtins, val)\n                else:\n                    raise NameError(f\"name '{val}' is not defined\")\n                push(v)\n                if op == \"LOAD_GLOBAL\" and arg & 1:\n                    push(_NULL)\n                note = f\"Find the object named {val} and push it.\"\n            elif op in (\"STORE_NAME\", \"STORE_GLOBAL\"):\n                v = pop(); ns[val] = v; note = f\"Pop {_show(v)} and give it the name {val}.\"\n            elif op in (\"DELETE_NAME\", \"DELETE_GLOBAL\"):\n                del ns[val]; note = f\"Forget the name {val}.\"\n            elif op in (\"LOAD_FAST\", \"LOAD_FAST_BORROW\", \"LOAD_FAST_CHECK\"):\n                v = fast[arg]\n                if v is _UNBOUND:\n                    raise UnboundLocalError(f\"cannot access local variable '{val}' where it is not associated with a value\")\n                push(v); note = f\"Push the value of {val}.\"\n            elif op == \"LOAD_FAST_AND_CLEAR\":\n                v = fast[arg]; push(_NULL if v is _UNBOUND else v); fast[arg] = _UNBOUND\n                note = f\"Set aside any outer value of {val}; the comprehension gets its own.\"\n            elif op in (\"LOAD_FAST_LOAD_FAST\", \"LOAD_FAST_BORROW_LOAD_FAST_BORROW\"):\n                for idx in (arg >> 4, arg & 15):\n                    v = fast[idx]\n                    if v is _UNBOUND:\n                        raise UnboundLocalError(f\"cannot access local variable '{code.co_varnames[idx]}' where it is not associated with a value\")\n                    push(v)\n                note = f\"Push the values of {val[0]} and {val[1]}.\"\n            elif op == \"STORE_FAST\":\n                v = pop(); fast[arg] = _UNBOUND if v is _NULL else v; note = f\"Pop {_show(v)} and store it as {val}.\"\n            elif op == \"STORE_FAST_STORE_FAST\":\n                fast[arg >> 4] = pop(); fast[arg & 15] = pop(); note = f\"Store the top two as {val[0]} and {val[1]}.\"\n            elif op == \"STORE_FAST_LOAD_FAST\":\n                fast[arg >> 4] = pop(); push(fast[arg & 15]); note = f\"Store the top as {val[0]}, then push {val[1]}.\"\n            elif op == \"DELETE_FAST\":\n                fast[arg] = _UNBOUND\n            elif op == \"POP_TOP\":\n                v = pop(); note = f\"Discard {_show(v)}; nothing keeps it.\"\n            elif op == \"PUSH_NULL\":\n                push(_NULL); note = \"Push a placeholder slot the call will use (hidden here).\"\n            elif op == \"COPY\":\n                push(stack[-arg]); note = f\"Push a second reference to {_show(stack[-1])}.\"\n            elif op == \"SWAP\":\n                stack[-1], stack[-arg] = stack[-arg], stack[-1]; note = f\"Swap the top with the item {arg - 1} below it.\"\n            elif op == \"BINARY_OP\":\n                name, sym = dis._nb_ops[arg]\n                rhs = pop(); lhs = pop(); push(_BIN[name](lhs, rhs))\n                note = (f\"Pop the key and the container, push {_show(lhs)}[{_show(rhs)}].\" if name == \"NB_SUBSCR\"\n                        else f\"Pop both, compute {_show(lhs)} {sym.rstrip('=') if sym.endswith('=') and sym != '==' else sym} {_show(rhs)}, push the result.\")\n            elif op == \"BINARY_SLICE\":\n                stop = pop(); start = pop(); c = pop(); push(c[start:stop]); note = \"Pop the bounds and the container, push the slice.\"\n            elif op == \"STORE_SLICE\":\n                stop = pop(); start = pop(); c = pop(); v = pop(); c[start:stop] = v; note = \"Assign into a slice of the container.\"\n            elif op == \"STORE_SUBSCR\":\n                key = pop(); c = pop(); v = pop(); note = f\"Set {_show(c)}[{_show(key)}] = {_show(v)}.\"; c[key] = v\n            elif op == \"DELETE_SUBSCR\":\n                key = pop(); c = pop(); del c[key]; note = \"Delete an item from the container.\"\n            elif op == \"LOAD_ATTR\":\n                obj = pop(); v = getattr(obj, val); push(v)\n                if arg & 1:\n                    push(_NULL); note = f\"Look up the method {val} on {_show(obj)}.\"\n                else:\n                    note = f\"Look up .{val} on {_show(obj)} and push it.\"\n            elif op == \"STORE_ATTR\":\n                obj = pop(); v = pop(); setattr(obj, val, v); note = f\"Set .{val} on {_show(obj)}.\"\n            elif op == \"DELETE_ATTR\":\n                obj = pop(); delattr(obj, val)\n            elif op == \"COMPARE_OP\":\n                rhs = pop(); lhs = pop(); r = _CMP[val](lhs, rhs)\n                if ins.argrepr.startswith(\"bool(\"):\n                    r = bool(r)\n                push(r); note = f\"Pop both, test {_show(lhs)} {val} {_show(rhs)}, push {_show(r)}.\"\n            elif op == \"CONTAINS_OP\":\n                rhs = pop(); lhs = pop(); r = lhs in rhs; push(not r if arg else r); note = f\"Pop both, test whether {_show(lhs)} is {'not ' if arg else ''}in {_show(rhs)}.\"\n            elif op == \"IS_OP\":\n                rhs = pop(); lhs = pop(); r = lhs is rhs; push(not r if arg else r); note = f\"Pop both, test whether they are {'not ' if arg else ''}the same object.\"\n            elif op == \"TO_BOOL\":\n                stack[-1] = bool(stack[-1]); note = f\"Turn the top item into {stack[-1]}.\"\n            elif op == \"UNARY_NEGATIVE\":\n                stack[-1] = -stack[-1]; note = \"Negate the top item.\"\n            elif op == \"UNARY_NOT\":\n                stack[-1] = not stack[-1]; note = \"Replace the top item with its opposite truth value.\"\n            elif op == \"UNARY_INVERT\":\n                stack[-1] = ~stack[-1]; note = \"Invert the bits of the top item.\"\n            elif op in (\"BUILD_TUPLE\", \"BUILD_LIST\", \"BUILD_SET\"):\n                items = take(arg); v = {\"BUILD_TUPLE\": tuple, \"BUILD_LIST\": list, \"BUILD_SET\": set}[op](items); push(v)\n                note = f\"Pop {arg} item{'s' if arg != 1 else ''} and push them packed as a new {type(v).__name__}.\"\n            elif op == \"BUILD_MAP\":\n                items = take(2 * arg); push(dict(zip(items[::2], items[1::2]))); note = f\"Pop {arg} key/value pair{'s' if arg != 1 else ''} and push a new dict.\"\n            elif op == \"BUILD_STRING\":\n                push(\"\".join(take(arg))); note = f\"Join {arg} pieces into one string.\"\n            elif op == \"BUILD_SLICE\":\n                push(slice(*take(arg)))\n            elif op == \"LIST_APPEND\":\n                v = pop(); stack[-arg].append(v); note = f\"Append {_show(v)} to the list being built.\"\n            elif op == \"SET_ADD\":\n                v = pop(); stack[-arg].add(v)\n            elif op == \"MAP_ADD\":\n                v = pop(); k = pop(); stack[-arg][k] = v\n            elif op == \"LIST_EXTEND\":\n                v = pop(); stack[-arg].extend(v); note = \"Extend the list with these items.\"\n            elif op == \"SET_UPDATE\":\n                v = pop(); stack[-arg].update(v)\n            elif op in (\"DICT_UPDATE\", \"DICT_MERGE\"):\n                v = pop(); stack[-arg].update(v)\n            elif op == \"UNPACK_SEQUENCE\":\n                items = list(pop())\n                if len(items) != arg:\n                    raise ValueError(f\"{'too many' if len(items) > arg else 'not enough'} values to unpack (expected {arg}, got {len(items)})\")\n                for v in reversed(items):\n                    push(v)\n                note = f\"Pop the sequence and push its {arg} items, first item on top.\"\n            elif op == \"UNPACK_EX\":\n                b, a = arg & 0xFF, arg >> 8\n                items = list(pop())\n                if len(items) < a + b:\n                    raise ValueError(f\"not enough values to unpack (expected at least {a + b}, got {len(items)})\")\n                parts = items[:b] + [items[b:len(items) - a]] + (items[len(items) - a:] if a else [])\n                for v in reversed(parts):\n                    push(v)\n                note = f\"Pop the sequence and push its parts: {b} first item{'s' if b != 1 else ''}, the rest as a list{f', then {a} last' if a else ''}.\"\n            elif op == \"FORMAT_SIMPLE\":\n                v = pop(); push(v if type(v) is str else format(v)); note = f\"Format {_show(v)} as text.\"\n            elif op == \"FORMAT_WITH_SPEC\":\n                spec = pop(); v = pop(); push(format(v, spec)); note = f\"Format {_show(v)} with the spec {spec!r}.\"\n            elif op == \"CONVERT_VALUE\":\n                stack[-1] = _CONVERT[arg](stack[-1]); note = f\"Convert the top item with {_CONVERT[arg].__name__}().\"\n            elif op == \"CALL\":\n                args = take(arg); sn = pop(); fn = pop(); r = call(fn, sn, args); push(r)\n                note = f\"Call {_show(fn)} with {arg} argument{'s' if arg != 1 else ''}; push what it returns, {_show(r)}.\"\n            elif op == \"CALL_KW\":\n                names = pop(); args = take(arg); k = len(names)\n                kwargs = dict(zip(names, args[arg - k:])); sn = pop(); fn = pop(); r = call(fn, sn, args[:arg - k], kwargs); push(r)\n                note = f\"Call {_show(fn)} with {arg} argument{'s' if arg != 1 else ''} ({k} by keyword); push {_show(r)}.\"\n            elif op == \"CALL_FUNCTION_EX\":\n                kw = pop(); a = pop(); sn = pop(); fn = pop()\n                r = call(fn, sn, list(a), {} if kw is _NULL else dict(kw)); push(r)\n                note = f\"Call {_show(fn)} with unpacked arguments; push {_show(r)}.\"\n            elif op == \"GET_ITER\":\n                stack[-1] = iter(stack[-1]); note = \"Replace the top item with an iterator that hands out its items one at a time.\"\n            elif op == \"FOR_ITER\":\n                try:\n                    v = next(stack[-1]); push(v); note = f\"Ask the iterator for the next item: {_show(v)}.\"\n                except StopIteration:\n                    jumped = True; nxt = at[val] + 1  # exhausted: skip END_FOR, land on POP_ITER\n                    note = \"The iterator is empty: leave the loop.\"\n            elif op == \"END_FOR\":\n                pop()\n            elif op == \"POP_ITER\":\n                pop(); note = \"Discard the finished iterator.\"\n            elif op in (\"JUMP_FORWARD\", \"JUMP_BACKWARD\", \"JUMP_BACKWARD_NO_INTERRUPT\"):\n                jumped = True; nxt = at[val]; note = \"Jump back to the top of the loop.\" if \"BACKWARD\" in op else \"Skip ahead.\"\n            elif op in (\"POP_JUMP_IF_FALSE\", \"POP_JUMP_IF_TRUE\", \"POP_JUMP_IF_NONE\", \"POP_JUMP_IF_NOT_NONE\"):\n                v = pop()\n                go = {\"POP_JUMP_IF_FALSE\": not v, \"POP_JUMP_IF_TRUE\": bool(v), \"POP_JUMP_IF_NONE\": v is None, \"POP_JUMP_IF_NOT_NONE\": v is not None}[op]\n                if go:\n                    jumped = True; nxt = at[val]\n                note = f\"Pop {_show(v)}: {'jump' if go else 'carry on to the next instruction'}.\"\n            elif op == \"RETURN_VALUE\":\n                pop(); note = \"The end of the cell.\"; nxt = len(full)\n            elif op == \"IMPORT_NAME\":\n                fromlist = pop(); level = pop(); m = builtins.__import__(val, ns, ns, fromlist, level); push(m)\n                note = f\"Load the module {val} (running it first if this is its first import) and push it.\"\n            elif op == \"IMPORT_FROM\":\n                m = stack[-1]\n                try:\n                    v = getattr(m, val)\n                except AttributeError:\n                    v = sys.modules[f\"{m.__name__}.{val}\"]\n                push(v); note = f\"Push {val} from the module.\"\n            elif op == \"MAKE_FUNCTION\":\n                c = pop(); f = types.FunctionType(c, ns); push(f); note = f\"Wrap the code of {c.co_name} in a function object. Nothing inside it runs yet.\"\n            elif op == \"SET_FUNCTION_ATTRIBUTE\":\n                f = pop(); a = pop()\n                if arg == 1:\n                    f.__defaults__ = a\n                elif arg == 2:\n                    f.__kwdefaults__ = a\n                elif arg == 4:\n                    f.__annotations__ = a\n                elif arg == 16:\n                    f.__annotate__ = a\n                else:\n                    raise _Unsupported(\"a nested scope\")\n                push(f); note = f\"Attach the {ins.argrepr} to the function.\"\n            elif op == \"LOAD_BUILD_CLASS\":\n                push(builtins.__build_class__); note = \"Push the built-in helper that builds classes.\"\n            elif op == \"LOAD_COMMON_CONSTANT\":\n                push(dis._common_constants[arg]); note = f\"Push {ins.argrepr}.\"\n            elif op == \"RAISE_VARARGS\":\n                if arg == 1:\n                    raise pop()\n                if arg == 2:\n                    cause = pop(); exc = pop(); raise exc from cause\n                raise _Unsupported(\"a bare raise\")\n            elif op == \"CALL_INTRINSIC_1\":\n                which = dis._intrinsic_1_descs[arg]\n                if which == \"INTRINSIC_PRINT\":\n                    v = pop(); sys.displayhook(v); push(None)\n                elif which == \"INTRINSIC_IMPORT_STAR\":\n                    m = pop()\n                    for k in getattr(m, \"__all__\", [n for n in dir(m) if not n.startswith(\"_\")]):\n                        ns[k] = getattr(m, k)\n                    push(None)\n                elif which == \"INTRINSIC_UNARY_POSITIVE\":\n                    stack[-1] = +stack[-1]\n                elif which == \"INTRINSIC_LIST_TO_TUPLE\":\n                    stack[-1] = tuple(stack[-1])\n                else:\n                    raise _Unsupported(which.replace(\"INTRINSIC_\", \"\").lower())\n            else:\n                raise _Unsupported(_UNSUPPORTED_WHY.get(op, op))\n        except _Unsupported as u:\n            return None, f\"it uses {u}\"\n        except Exception as e:\n            if any(h.start <= ins.offset < h.end for h in handlers):\n                return None, \"it uses try/except or with, and something raised inside it\"\n            if pc in disp:\n                steps.append({\"i\": disp[pc], \"line\": ins.line_number, \"stack\": snapshot, \"note\": \"This instruction failed.\",\n                              \"error\": f\"{type(e).__name__}: {e}\"})\n            return steps, None\n        expected = dis.stack_effect(ins.opcode, arg, jump=jumped) if op not in SKIP else 0\n        if op == \"FOR_ITER\" and jumped:\n            expected = 0  # the iterator stays; END_FOR is skipped and POP_ITER drops it\n        elif op == \"RETURN_VALUE\":\n            expected = -1  # dis counts the returned value as still there\n        if len(stack) - before != expected:\n            return None, f\"the stepper hit an internal mismatch at {op}\"\n        if pc in disp:\n            steps.append({\"i\": disp[pc], \"line\": ins.line_number, \"stack\": [_show(v) for v in stack if v is not _NULL], \"note\": note})\n            if len(steps) >= MAX_STACK_STEPS:\n                steps[-1][\"note\"] += f\" Stopped here after {MAX_STACK_STEPS} instructions.\"\n                steps[-1][\"truncated\"] = True\n                return steps, None\n        pc = nxt\n    return steps, None\n\n\n# ---------- the call-stack recorder (real execution under sys.settrace) ----------\ndef _trace_frames(run):\n    steps = []\n    fresh, failing = set(), set()\n    module, failed = [], []\n\n    def label(f):\n        return \"top level\" if f.f_code.co_name == \"<module>\" else f.f_code.co_name\n\n    def names(f):\n        return [[k, _show(v)] for k, v in list(f.f_locals.items())\n                if not k.startswith(\"__\") and not isinstance(v, types.ModuleType)]\n\n    def chain(f):\n        out = []\n        while f is not None:\n            if f.f_code.co_filename == \"<cell>\":\n                out.append(f)\n            f = f.f_back\n        return out[::-1]\n\n    def record(frames, line, note):\n        if len(steps) >= MAX_FRAME_STEPS:\n            if not steps[-1].get(\"truncated\"):\n                steps[-1][\"note\"] += f\" Stopped here after {MAX_FRAME_STEPS} steps.\"\n                steps[-1][\"truncated\"] = True\n            return\n        steps.append({\"line\": line, \"frames\": [{\"fn\": label(f), \"vars\": names(f)} for f in frames], \"note\": note})\n\n    def tracer(frame, event, arg):\n        if frame.f_code.co_filename != \"<cell>\":\n            return None\n        fid = id(frame)\n        if event == \"call\":\n            if frame.f_code.co_name != \"<module>\":\n                fresh.add(fid)\n            elif not module:\n                module.append(frame)\n        elif event == \"line\":\n            if not frame.f_lineno:\n                return tracer\n            failing.discard(fid)\n            note = \"\"\n            if fid in fresh:\n                fresh.discard(fid)\n                if frame.f_code.co_flags & 1:  # CO_OPTIMIZED: a function body, not a class body\n                    note = f\"A new frame for the call to {label(frame)}. Its arguments are its first names.\"\n                else:\n                    note = f\"A frame for the body of class {label(frame)}. Its names become the class's attributes.\"\n            record(chain(frame), frame.f_lineno, note)\n        elif event == \"return\":\n            below = chain(frame)[:-1]\n            if below:\n                if fid in failing:\n                    note = f\"The error is not caught in {label(frame)}, so its frame is erased and the error moves down.\"\n                else:\n                    note = f\"{label(frame)} returns {_show(arg)}. Its frame is erased, and its names with it.\"\n                record(below, below[-1].f_lineno, note)\n        elif event == \"exception\":\n            failing.add(fid)\n            if frame.f_code.co_name == \"<module>\":\n                failed.append(True)\n            fresh.discard(fid)\n            msg = f\"{arg[0].__name__}: {arg[1]}\"\n            record(chain(frame), frame.f_lineno, (msg if len(msg) <= 120 else msg[:119] + \"\u2026\") + f\" (in {label(frame)})\")\n        return tracer\n\n    sys.settrace(tracer)\n    try:\n        run()\n    finally:\n        sys.settrace(None)\n    if module and steps and not failed:\n        record(module, steps[-1][\"line\"], \"The cell has finished. These names are what it left behind.\")\n    return steps\n\n\n# ---------- the entry point the page calls ----------\ndef _normal(vars_):\n    import re\n    return [(v[\"name\"], v[\"type\"], re.sub(r\"0x[0-9a-fA-F]+\", \"0x\", v[\"repr\"])) for v in vars_]\n\n\ndef _collect_vars(ns):\n    out, seen = [], {}\n    for k, v in ns.items():\n        if k.startswith(\"__\") or callable(v) and not isinstance(v, (list, dict)):\n            continue\n        info = {\"name\": k, \"type\": type(v).__name__, \"id\": hex(id(v)), \"size\": sys.getsizeof(v), \"repr\": repr(v)[:120], \"same\": seen.get(id(v))}\n        seen.setdefault(id(v), k)\n        if isinstance(v, float):\n            info[\"bits\"] = format(struct.unpack(\">Q\", struct.pack(\">d\", v))[0], \"064b\")\n        elif isinstance(v, bool):\n            info[\"intbits\"] = \"1\" if v else \"0\"\n        elif isinstance(v, int):\n            info[\"intbits\"] = bin(v)\n        elif isinstance(v, str):\n            info[\"bytes\"] = \" \".join(f\"{b:08b}\" for b in v.encode(\"utf-8\")[:12])\n        elif isinstance(v, list):\n            info[\"items\"] = len(v)\n        out.append(info)\n    return out\n\n\ndef _decompose(src):\n    res = {\"instrs\": [], \"stdout\": \"\", \"error\": None, \"value\": None, \"vars\": [], \"frames\": [], \"trace\": None, \"trace_why\": None}\n    try:\n        tree = ast.parse(src, \"<cell>\")\n    except SyntaxError as e:\n        res[\"error\"] = f\"SyntaxError: {e.msg} (line {e.lineno})\"\n        return json.dumps(res)\n    last = None\n    if tree.body and isinstance(tree.body[-1], ast.Expr):\n        last = ast.Expression(tree.body.pop().value)\n    code = compile(tree, \"<cell>\", \"exec\")\n    whole = compile(src, \"<cell>\", \"exec\")\n    full = list(dis.get_instructions(whole, show_caches=False))\n    res[\"instrs\"] = _instrs(full)\n    linecache.cache[\"<cell>\"] = (len(src), None, src.splitlines(True), \"<cell>\")\n\n    # The real run.\n    ns = {}\n    out = io.StringIO()\n    err = [None]\n\n    def run():\n        try:\n            with contextlib.redirect_stdout(out):\n                exec(code, ns)\n                if last is not None:\n                    v = eval(compile(last, \"<cell>\", \"eval\"), ns)\n                    if v is not None:\n                        res[\"value\"] = repr(v)[:300]\n        except Exception as e:\n            err[0] = e\n\n    res[\"frames\"] = _trace_frames(run)\n    if err[0] is not None:\n        e = err[0]\n        res[\"error\"] = f\"{type(e).__name__}: {e}\"\n        frames = [f for f in traceback.extract_tb(e.__traceback__) if f.filename == \"<cell>\"]\n        if frames:\n            res[\"tb\"] = \"Traceback (most recent call last):\\n\" + \"\".join(traceback.format_list(frames)) + res[\"error\"]\n    res[\"stdout\"] = out.getvalue()[:2000]\n    res[\"vars\"] = _collect_vars(ns)\n\n    # The stack trace: a second run through the small interpreter, checked against the first.\n    ns2 = {}\n    out2 = io.StringIO()\n    try:\n        with contextlib.redirect_stdout(out2):\n            steps, why = _run_stack(whole, ns2)\n    except Exception as e:  # a bug in the interpreter must never break the page\n        steps, why = None, f\"an internal error ({type(e).__name__})\"\n    if steps is None:\n        res[\"trace_why\"] = why\n    else:\n        same = (_normal(_collect_vars(ns2)) == _normal(res[\"vars\"]) and out2.getvalue()[:2000] == res[\"stdout\"]\n                and (steps[-1].get(\"error\") if steps else None) == res[\"error\"])\n        if same:\n            res[\"trace\"] = steps\n        else:\n            res[\"trace_why\"] = \"its second run gave a different result (it may depend on time, randomness or object ids)\"\n    return json.dumps(res)\n";
 let pyPromise = null;
 function loadPython(statusEl) {
   if (pyPromise) return pyPromise;
@@ -1615,7 +1626,9 @@ total == 0.3</textarea>
     catch (e) { st.textContent = ""; stage.querySelector("#p1").innerHTML = `<div class="out err">Python couldn't start here: ${esc(e && e.message ? e.message : e)}</div>`; return; }
     st.textContent = "";
     stage.querySelector("#p1").innerHTML = runOutput(r);
-    stage.querySelector("#p2").innerHTML = r.instrs.length ? bcTable(r.instrs) : `<p class="note">The code didn't compile.</p>`;
+    const p2 = stage.querySelector("#p2");
+    p2.innerHTML = r.error && !r.instrs.length ? `<p class="note">The code didn't compile.</p>` : "";
+    liveViews(p2, r, stage.querySelector("#src").value);
     stage.querySelector("#p3").innerHTML = r.vars.length ? `<div class="tbl-wrap"><table class="data"><thead><tr><th>name</th><th>type</th><th>id</th><th>bytes</th><th>value</th></tr></thead><tbody>${r.vars.map(v => `<tr><td>${esc(v.name)}</td><td>${esc(v.type)}</td><td>${esc(v.id)}</td><td>${v.size}</td><td style="text-align:left">${esc(v.repr)}${v.same ? ` <span class="note">(same object as ${esc(v.same)})</span>` : ""}</td></tr>`).join("")}</tbody></table></div><p class="note">The id is the object's address. Two names with the same id share one object.</p>` : `<p class="note">No names were created.</p>`;
     const rows = r.vars.filter(v => v.bits || v.intbits || v.bytes).map(v => {
       if (v.bits) return `<div class="bitrow"><span class="name">${esc(v.name)} · float</span>${bitsHtml({ sign: v.bits[0], exp: v.bits.slice(1, 12), frac: v.bits.slice(12) })}</div>`;

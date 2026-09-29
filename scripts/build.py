@@ -1,4 +1,4 @@
-"""Build the deployable site: src/page.html + data/recorded.json -> site/index.html.
+"""Build the deployable site: src/page.html + src/helper.py + data/recorded.json -> site/index.html.
 
     python3 scripts/build.py
 
@@ -9,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PLACEHOLDER = "/*DATA*/null"
+HELPER_PLACEHOLDER = '/*PY_HELPER*/""'  # replaced with src/helper.py as a JavaScript string
 
 HEAD = """<!doctype html>
 <html lang="en">
@@ -28,6 +29,10 @@ def main():
     if PLACEHOLDER not in page:
         raise SystemExit(f"{PLACEHOLDER} not found in src/page.html")
     page = page.replace(PLACEHOLDER, json.dumps(data, separators=(",", ":")))
+    helper = (ROOT / "src" / "helper.py").read_text()
+    if HELPER_PLACEHOLDER not in page:
+        raise SystemExit(f"{HELPER_PLACEHOLDER} not found in src/page.html")
+    page = page.replace(HELPER_PLACEHOLDER, json.dumps(helper).replace("</", "<\\/"))
     split = page.index("</style>") + len("</style>")  # title, fonts and styles go in <head>
     html = HEAD + page[:split] + "\n" + RESET + "\n</head>\n<body>\n" + page[split:] + "\n</body>\n</html>\n"
     out = ROOT / "site" / "index.html"

@@ -12,10 +12,14 @@ import dis
 import json
 import struct
 import sys
+import types
 from decimal import Decimal
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent.parent / "data" / "recorded.json"
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "data" / "recorded.json"
+sys.path.insert(0, str(ROOT / "src"))
+import helper  # noqa: E402  the same tracer that runs in the page
 HIDE = ("RESUME", "NOP", "NOT_TAKEN", "CACHE")
 NO_ARG = ("POP_TOP", "RETURN_VALUE", "GET_ITER", "END_FOR", "POP_ITER")
 
@@ -27,12 +31,23 @@ def instrs(src):
         if i.opname in HIDE:
             continue
         arg = i.argrepr
-        if not arg and i.argval is not None and i.opname not in NO_ARG:
+        if isinstance(i.argval, types.CodeType):
+            arg = f"code for {i.argval.co_name}"  # instead of a repr with a memory address
+        elif not arg and i.argval is not None and i.opname not in NO_ARG:
             arg = repr(i.argval)
         out.append([i.opname, arg])
     if out[-2:] == [["LOAD_CONST", "None"], ["RETURN_VALUE", ""]]:
         out = out[:-2]  # the implicit "return None" at the end of every module
     return out
+
+
+def stacks(src, names):
+    """The value stack after each instruction, from the page's own tracer, starting with these names defined."""
+    steps, why = helper._run_stack(compile(src, "<cell>", "exec"), dict(names))
+    if steps is None:
+        raise SystemExit(f"could not trace {src!r}: {why}")
+    assert helper._instrs(list(dis.get_instructions(compile(src, "<cell>", "exec")))) == instrs(src)
+    return [s["stack"] for s in steps]
 
 
 def fbits(x):
@@ -44,7 +59,9 @@ def fbits(x):
 def record():
     d = {"python": sys.version.split()[0]}
     d["t1"] = instrs("total = price * qty")
+    d["t1_stacks"] = stacks("total = price * qty", {"price": 2.5, "qty": 4})
     d["t2"] = instrs("b = a\nb.append(4)")
+    d["t2_stacks"] = stacks("b = a\nb.append(4)", {"a": [1, 2, 3]})
     d["t3"] = instrs("x = a + b")
     d["t3_folded"] = instrs("x = 0.1 + 0.2")
     d["t3_bits"] = {k: fbits(v) for k, v in {"0.1": 0.1, "0.2": 0.2, "0.1 + 0.2": 0.1 + 0.2, "0.3": 0.3}.items()}

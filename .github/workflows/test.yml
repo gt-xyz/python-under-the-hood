@@ -1,0 +1,40 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  receipts:
+    name: Tracer vs. real CPython 3.14
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Unit tests (bytecode, stack states, call stacks)
+        run: python tests/test_helper.py
+      - name: Recorded data is current
+        run: |
+          python scripts/record_outputs.py
+          git diff --exit-code data/recorded.json
+      - name: Build is current
+        run: |
+          python scripts/build.py
+          git diff --exit-code site/index.html
+
+  walkthrough:
+    name: Every section in a headless browser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install playwright && python -m playwright install --with-deps chromium
+      - name: Serve site/ and walk every section at desktop and phone sizes
+        run: |
+          python scripts/serve.py &
+          sleep 1
+          python tests/walkthrough.py
