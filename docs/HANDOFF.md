@@ -4,7 +4,7 @@ State of the project as of 2026-09-29, the day it moved from a claude.ai convers
 
 ## Where things stand
 
-- A working 12-lesson course plus a sandbox, in one page (`src/page.html`, built to `site/index.html`).
+- A working 16-lesson course in four groups (the machine; the language; tools and libraries; bits, memory and the CPU) plus a sandbox, in one page (`src/page.html`, built to `site/index.html`).
 - Real CPython 3.14 runs in the page via Pyodide 314.0.7 for the runnable boxes and the sandbox.
 - Every runnable box shows the learner's own code's bytecode with a stepper after Run, and the call stack when the code calls its own functions. The value stack comes from a small bytecode interpreter in `src/helper.py` that executes the cell's real bytecode on real objects and is checked against a plain run; the call stack is recorded from the real run with `sys.settrace`. The lessons' curated steppers now use stack states recorded by the same tracer (`data/recorded.json`), with hand-written notes.
 - `tests/test_helper.py` (13 tests on real CPython 3.14) and `tests/walkthrough.py` (Chromium, desktop and iPhone) both pass. `.github/workflows/test.yml` runs them on every push.
@@ -31,7 +31,7 @@ State of the project as of 2026-09-29, the day it moved from a claude.ai convers
 - **Recorded data comes from CPython 3.14.7**; Pyodide runs 3.14.2. Bytecode is frozen within a minor version, and the walkthrough confirms the tracer behaves the same in Pyodide.
 - **The value-stack stepper is a simplification in one way:** CPython keeps placeholder slots (NULL) on its stack around calls and method lookups; the display hides them and says so under the stepper. The tests account for them exactly.
 - **Stepping isn't available for code using try/except, with, match, nested scopes or t-strings.** Those show the bytecode table with a reason. An infinite loop in a runnable box still hangs the page, as before.
-- **Terms are used before they are defined** throughout the course. `docs/TERMS.md` is the audit; lesson 3's names, objects, methods, DataFrame, mask and filter, and lesson 2's stack, push and pop, are done.
+- **Terms are used before they are defined** throughout the course. `docs/TERMS.md` is the audit; the language lessons (3 to 7) and the pandas lesson now define the core terms, and the list needs re-checking against the new order.
 - **The CPU, cache and logic-gate sections are simplified** and labeled as such.
 - **Loop timing (29.9 ms vs 0.79 ms)** was measured once on the build machine and is labeled that way.
 - **One big file.** `src/page.html` is about 1,600 lines of HTML, CSS and JavaScript.
@@ -39,7 +39,7 @@ State of the project as of 2026-09-29, the day it moved from a claude.ai convers
 ## Suggested next steps
 
 1. Test the deployed page on a phone and an iPad in Safari; Chromium only so far.
-2. Write the three new lessons in `docs/PLAN.md` (values/names/collections, functions/loops/modules, what pandas adds) and reorder the course as its curriculum table shows. Most of `docs/TERMS.md` gets resolved by those lessons; work down what remains afterwards.
+2. Work down what remains of `docs/TERMS.md` now that the language lessons define the core terms, then add the audit script to `tests/`.
 3. Watch the first learner; log where she stalls, what she skips, and what she still asks.
 4. Refactor into TypeScript + Vite: lesson content as typed data, components (stepper, frame stepper, pile, predict, try box, bit views) as modules, pandas outputs recorded by script.
 5. Separate the explorer (any code, every layer) from the course (paths through it).

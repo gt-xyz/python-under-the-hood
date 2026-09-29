@@ -93,6 +93,7 @@ nav.lessons { position: static; }
 .lesson-btn .lt { font-weight: 700; line-height: 1.25; }
 .lesson-btn .lp { display: block; font-weight: 400; font-size: var(--step--1); color: var(--muted); margin-top: 2px; }
 .lesson-btn.sandbox { margin-top: 8px; border: 1px dashed var(--line); }
+.navgroup { font-size: var(--step--1); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 10px 12px 2px; }
 
 .lesson-head h2:focus { outline: none; }
 .lesson-head { display: grid; gap: 8px; margin-bottom: 16px; }
@@ -355,7 +356,7 @@ footer.foot { margin-top: 40px; color: var(--muted); font-size: 0.88rem; display
 </div>
 
 <script>
-const DATA = {"python":"3.14.7","t1":[["LOAD_NAME","price"],["LOAD_NAME","qty"],["BINARY_OP","*"],["STORE_NAME","total"]],"t1_stacks":[["2.5"],["2.5","4"],["10.0"],[]],"t2":[["LOAD_NAME","a"],["STORE_NAME","b"],["LOAD_NAME","b"],["LOAD_ATTR","append + NULL|self"],["LOAD_SMALL_INT","4"],["CALL","1"],["POP_TOP",""]],"t2_stacks":[["[1, 2, 3]"],[],["[1, 2, 3]"],["list.append"],["list.append","4"],["None"],[]],"t3":[["LOAD_NAME","a"],["LOAD_NAME","b"],["BINARY_OP","+"],["STORE_NAME","x"]],"t3_folded":[["LOAD_CONST","0.30000000000000004"],["STORE_NAME","x"]],"t3_bits":{"0.1":{"sign":"0","exp":"01111111011","frac":"1001100110011001100110011001100110011001100110011010","exact":"0.1000000000000000055511151231257827021181583404541015625"},"0.2":{"sign":"0","exp":"01111111100","frac":"1001100110011001100110011001100110011001100110011010","exact":"0.200000000000000011102230246251565404236316680908203125"},"0.1 + 0.2":{"sign":"0","exp":"01111111101","frac":"0011001100110011001100110011001100110011001100110100","exact":"0.3000000000000000444089209850062616169452667236328125"},"0.3":{"sign":"0","exp":"01111111101","frac":"0011001100110011001100110011001100110011001100110011","exact":"0.299999999999999988897769753748434595763683319091796875"}},"t3_repr":"0.30000000000000004","t4_loop":[["LOAD_SMALL_INT","0"],["STORE_NAME","count"],["LOAD_NAME","values"],["GET_ITER",""],["FOR_ITER","to L3"],["STORE_NAME","v"],["LOAD_NAME","v"],["LOAD_SMALL_INT","0"],["COMPARE_OP","bool(>)"],["POP_JUMP_IF_TRUE","to L2"],["JUMP_BACKWARD","to L1"],["LOAD_NAME","count"],["LOAD_SMALL_INT","1"],["BINARY_OP","+="],["STORE_NAME","count"],["JUMP_BACKWARD","to L1"],["END_FOR",""],["POP_ITER",""]],"t4_mask":[["LOAD_NAME","arr"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_ATTR","sum + NULL|self"],["CALL","0"],["STORE_NAME","count"]],"t5":[["LOAD_NAME","df"],["LOAD_ATTR","a"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_NAME","df"],["LOAD_ATTR","b"],["LOAD_SMALL_INT","1"],["COMPARE_OP","=="],["BINARY_OP","&"],["STORE_NAME","mask"]],"t5_bad_ast":"df.a > 0 & df.b == 1","t6":[["LOAD_NAME","df"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP","!="],["BINARY_OP","[]"],["STORE_NAME","keep"]],"t6_bits":{"sign":"0","exp":"11111111111","frac":"1000000000000000000000000000000000000000000000000000","exact":"nan"},"t6_eq":[false,true,false],"t7":[["LOAD_SMALL_INT","5"],["LOAD_NAME","df"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["BINARY_OP","[]"],["LOAD_CONST","'y'"],["STORE_SUBSCR",""]],"t7_good":[["LOAD_SMALL_INT","5"],["LOAD_NAME","df"],["LOAD_ATTR","loc"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_CONST","'y'"],["BUILD_TUPLE","2"],["STORE_SUBSCR",""]],"imm":[["LOAD_NAME","x"],["STORE_NAME","y"],["LOAD_NAME","y"],["LOAD_SMALL_INT","1"],["BINARY_OP","+="],["STORE_NAME","y"]]};
+const DATA = {"python":"3.14.7","t1":[["LOAD_NAME","price"],["LOAD_NAME","qty"],["BINARY_OP","*"],["STORE_NAME","total"]],"t1_stacks":[["2.5"],["2.5","4"],["10.0"],[]],"t2":[["LOAD_NAME","a"],["STORE_NAME","b"],["LOAD_NAME","b"],["LOAD_ATTR","append + NULL|self"],["LOAD_SMALL_INT","4"],["CALL","1"],["POP_TOP",""]],"t2_stacks":[["[1, 2, 3]"],[],["[1, 2, 3]"],["list.append"],["list.append","4"],["None"],[]],"t3":[["LOAD_NAME","a"],["LOAD_NAME","b"],["BINARY_OP","+"],["STORE_NAME","x"]],"t3_folded":[["LOAD_CONST","0.30000000000000004"],["STORE_NAME","x"]],"t3_bits":{"0.1":{"sign":"0","exp":"01111111011","frac":"1001100110011001100110011001100110011001100110011010","exact":"0.1000000000000000055511151231257827021181583404541015625"},"0.2":{"sign":"0","exp":"01111111100","frac":"1001100110011001100110011001100110011001100110011010","exact":"0.200000000000000011102230246251565404236316680908203125"},"0.1 + 0.2":{"sign":"0","exp":"01111111101","frac":"0011001100110011001100110011001100110011001100110100","exact":"0.3000000000000000444089209850062616169452667236328125"},"0.3":{"sign":"0","exp":"01111111101","frac":"0011001100110011001100110011001100110011001100110011","exact":"0.299999999999999988897769753748434595763683319091796875"}},"t3_repr":"0.30000000000000004","t4_loop":[["LOAD_SMALL_INT","0"],["STORE_NAME","count"],["LOAD_NAME","values"],["GET_ITER",""],["FOR_ITER","to L3"],["STORE_NAME","v"],["LOAD_NAME","v"],["LOAD_SMALL_INT","0"],["COMPARE_OP","bool(>)"],["POP_JUMP_IF_TRUE","to L2"],["JUMP_BACKWARD","to L1"],["LOAD_NAME","count"],["LOAD_SMALL_INT","1"],["BINARY_OP","+="],["STORE_NAME","count"],["JUMP_BACKWARD","to L1"],["END_FOR",""],["POP_ITER",""]],"t4_mask":[["LOAD_NAME","arr"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_ATTR","sum + NULL|self"],["CALL","0"],["STORE_NAME","count"]],"t5":[["LOAD_NAME","df"],["LOAD_ATTR","a"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_NAME","df"],["LOAD_ATTR","b"],["LOAD_SMALL_INT","1"],["COMPARE_OP","=="],["BINARY_OP","&"],["STORE_NAME","mask"]],"t5_bad_ast":"df.a > 0 & df.b == 1","t6":[["LOAD_NAME","df"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP","!="],["BINARY_OP","[]"],["STORE_NAME","keep"]],"t6_bits":{"sign":"0","exp":"11111111111","frac":"1000000000000000000000000000000000000000000000000000","exact":"nan"},"t6_eq":[false,true,false],"t7":[["LOAD_SMALL_INT","5"],["LOAD_NAME","df"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["BINARY_OP","[]"],["LOAD_CONST","'y'"],["STORE_SUBSCR",""]],"t7_good":[["LOAD_SMALL_INT","5"],["LOAD_NAME","df"],["LOAD_ATTR","loc"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_CONST","'y'"],["BUILD_TUPLE","2"],["STORE_SUBSCR",""]],"imm":[["LOAD_NAME","x"],["STORE_NAME","y"],["LOAD_NAME","y"],["LOAD_SMALL_INT","1"],["BINARY_OP","+="],["STORE_NAME","y"]],"t_names":[["LOAD_SMALL_INT","5"],["STORE_NAME","x"],["LOAD_CONST","'five'"],["STORE_NAME","x"]],"t_def":[["LOAD_CONST","code for add_tax"],["MAKE_FUNCTION",""],["STORE_NAME","add_tax"],["LOAD_NAME","add_tax"],["PUSH_NULL",""],["LOAD_SMALL_INT","100"],["CALL","1"],["STORE_NAME","total"]]};
 
 const OPS = {
   LOAD_NAME: "Look up this name and put its object on the stack",
@@ -648,7 +649,7 @@ LESSONS.push({
             <div><div class="row">${tagPill("np")}${tagPill("pd")}</div><p><b>Packages</b> other people wrote, installed separately with <code>pip</code> or <code>conda</code>. They add new kinds of values, like arrays and DataFrames, and decide what operators like <code>+</code> and <code>&amp;</code> do with them. Much of NumPy isn't written in Python at all but in C, compiled ahead of time.</p></div>
             <div>${tagPill("jp")}<p><b>Tools</b> that run Python for you: Jupyter, Colab, VS Code. They aren't Python; they send your code to it.</p></div>
           </div>
-          <p class="note">From here on, every example carries a tag showing which layer it comes from.</p>
+          <p class="note">From here on, every example carries a tag showing which layer it comes from. The words in this table (types, modules, packages, import) are just labels for now; lessons 3 and 4 define each one.</p>
           ${predict("Check: which of these comes with Python when you install it?", ["<code>pandas</code>", "<code>math</code>", "Jupyter"])}
           ${reveal(`<p>Only <code>math</code>, from the standard library. pandas is a package you install, and Jupyter is a tool that runs Python.</p>`)}`;
         wirePredict(el, 1);
@@ -662,19 +663,8 @@ LESSONS.push({
 LESSONS.push({
   id: "l1", title: "How Python runs your code",
   summary: "Python is itself a program. It turns each line into small instructions and runs them one at a time.",
-  practice: "Before handing in a notebook, use Restart Kernel and Run All. If it runs cleanly, it doesn't depend on leftover memory.",
+  practice: "When a line surprises you, paste it into a runnable box and step through its bytecode. The instructions say exactly what Python did.",
   steps: [
-    {
-      layer: "Where code runs", title: "Plain Python and Jupyter run code differently",
-      render(el) {
-        el.innerHTML = `
-          <div class="grid2">
-            <div class="compare"><span class="eyebrow">Plain Python</span><pre class="code">python analysis.py</pre><p class="note">The Python program reads a <code>.py</code> file, runs it top to bottom in a fresh process, then exits. Nothing is left over between runs.</p></div>
-            <div class="compare"><span class="eyebrow">Jupyter notebook</span><div class="pipe"><span>notebook (.ipynb)</span><span>→</span><span>Jupyter</span><span>→</span><span>kernel: a Python process</span></div><p class="note">Each cell you run is sent to the same Python process, the kernel, which stays alive until you restart it. Colab and VS Code notebooks work the same way.</p></div>
-          </div>
-          <p>Either way, the Python that actually runs your code is the same program, usually CPython. The next section looks at what it does with a line.</p>`;
-      }
-    },
     {
       layer: "Bytecode", title: "Each line becomes a few simple instructions",
       render(el) {
@@ -696,58 +686,20 @@ LESSONS.push({
         wireTry(el);
       }
     },
-    {
-      layer: "Memory", title: "A notebook keeps one Python process running",
-      render(el) {
-        el.innerHTML = `
-          <div class="row">${tagPill("jp")}</div>
-          <p>These two cells worked earlier because cell 2 ran first, then cell 1.</p>
-          <div class="cell"><span class="in" id="n1">In [2]:</span><pre class="code">total = sum(prices)</pre></div>
-          <div class="cell"><span class="in" id="n2">In [1]:</span><pre class="code">prices = [4.5, 3.0, 12.25]</pre></div>
-          ${predict("You restart the kernel and click Run All, which runs top to bottom. What happens?", ["It works, same as before", "Cell 1 uses the old prices", "Cell 1 fails: nothing called prices exists yet"])}
-          ${reveal(`
-            <p>Cell 1 fails. Restarting empties the kernel's memory, so cell 1 asks for <code>prices</code> before anything has made it. Python reports a name it can't find as a <code>NameError</code>; for now read that as "no such name". Errors get a lesson of their own later. Try it:</p>
-            <div class="row"><button class="btn" data-run="0">Run cell 1</button><button class="btn" data-run="1">Run cell 2</button><button class="btn" id="restart">Restart kernel</button><button class="btn" id="runall">Run all</button></div>
-            <div id="nbout"></div>
-            <div class="memory" id="mem"></div>
-            <p class="note">The <code>In [n]</code> numbers are Jupyter's record of the order cells actually ran.</p>`)}`;
-        let mem = { prices: [4.5, 3.0, 12.25], total: 19.75 }, count = 2;
-        const out = el.querySelector("#nbout"), memEl = el.querySelector("#mem");
-        const drawMem = () => {
-          const keys = Object.keys(mem);
-          memEl.innerHTML = `<span class="eyebrow">Kernel memory</span>` + (keys.length ? keys.map(k => `<span class="item">${k} → ${Array.isArray(mem[k]) ? "[" + mem[k].map(v => Number.isInteger(v) ? v.toFixed(1) : v).join(", ") + "]" : mem[k]}</span>`).join("") : `<span class="none">empty</span>`);
-        };
-        const cells = [
-          () => { if (!("prices" in mem)) throw "NameError: name 'prices' is not defined"; mem.total = mem.prices.reduce((a, b) => a + b, 0); },
-          () => { mem.prices = [4.5, 3.0, 12.25]; },
-        ];
-        const run = i => {
-          count++; el.querySelector(i ? "#n2" : "#n1").textContent = `In [${count}]:`;
-          try { cells[i](); out.innerHTML = ""; drawMem(); return true; }
-          catch (e) { out.innerHTML = `<div class="out err">${esc(e)}</div>`; drawMem(); return false; }
-        };
-        const restart = () => { mem = {}; count = 0; el.querySelector("#n1").textContent = "In [ ]:"; el.querySelector("#n2").textContent = "In [ ]:"; out.innerHTML = `<div class="out">Kernel restarted. Memory is empty.</div>`; drawMem(); };
-        el.querySelectorAll("[data-run]").forEach(b => b.onclick = () => run(+b.dataset.run));
-        el.querySelector("#restart").onclick = restart;
-        el.querySelector("#runall").onclick = () => { if (run(0)) run(1); };
-        drawMem();
-        wirePredict(el, 2, () => { restart(); run(0); });
-      }
-    },
   ]
 });
 
 // 2
 LESSONS.push({
   id: "l2", title: "Names, objects and copies",
-  summary: "A variable is a name attached to an object. Knowing when two names share one object explains most surprising changes, in lists and in DataFrames.",
-  practice: "Copy on purpose when you want an independent version (<code>.copy()</code>), and assign with one set of brackets: <code>df.loc[rows, 'col'] = value</code>.",
+  summary: "Two names can share one object. Knowing when they do explains most surprising changes, in lists now and in DataFrames later.",
+  practice: "When a change shows up somewhere you didn't expect, ask which names share that object. Copy on purpose with <code>.copy()</code> when you want an independent version.",
   steps: [
     {
       layer: "Memory", title: "= attaches a name; it never copies",
       render(el) {
         el.innerHTML = `
-          <p>Three words this lesson leans on. Every value in a Python process, from the number 5 to a whole DataFrame, is an <b>object</b>: a piece of memory that holds the value and records what type it is. A <b>name</b> (what most people call a variable) is a label attached to an object; <code>=</code> attaches the name on its left to the object on its right. A <b>method</b> is a function that belongs to an object and is called through a dot, like <code>b.append(4)</code>, which adds 4 to the end of the list. The value in the brackets is its <b>argument</b>: the input it works on.</p>
+          <p>From the last two lessons: a name is a label on an object, and <code>b.append(4)</code> calls the list's append method with the argument 4. The question is what <code>b = a</code> did.</p>
           ${codeBlock("a = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)", "py")}
           ${predict("What does print(a) show?", ["[1, 2, 3]", "[1, 2, 3, 4]"])}
           ${reveal(`
@@ -798,69 +750,6 @@ LESSONS.push({
             ${tryIt("a = [1, 2]\nb = a\nb = b + [3]   # try b += [3] instead\na", null, "py")}`)}`;
         wirePredict(el, 0);
         wireTry(el);
-      }
-    },
-    {
-      layer: "Memory", title: "DataFrames follow the same rule",
-      render(el) {
-        el.innerHTML = `
-          <p>A pandas <b>DataFrame</b> is a table object: named columns, numbered rows. Reading the code below: the first line builds a table with two columns, <code>x</code> and <code>y</code>, three rows each. <code>df2['y'] = 9</code> puts 9 into column <code>y</code> of every row. <code>df.y</code> is column <code>y</code> on its own, and <code>.tolist()</code> turns it into a plain list so we can see it.</p>
-          ${codeBlock("df = pd.DataFrame({'x': [1, -1, 2], 'y': [0, 0, 0]})\ndf2 = df\ndf2['y'] = 9\ndf.y.tolist()", "pd")}
-          ${predict("You changed df2. What is df.y now?", ["[0, 0, 0]", "[9, 9, 9]"])}
-          ${reveal(`
-            <div class="out">[9, 9, 9]</div>
-            <p><code>df2 = df</code> is a second name for the same DataFrame. To get an independent one, ask for it:</p>
-            ${codeBlock("df2 = df.copy()\ndf2['y'] = 9\ndf.y.tolist()", "pd")}
-            <div class="out">[0, 0, 0]</div>
-            <p class="note">Output from pandas 3.0.2. pandas isn't available in the Python running in this page yet, so these results are recorded, not live.</p>`)}`;
-        wirePredict(el, 1);
-      }
-    },
-    {
-      layer: "Memory", title: "A filter builds a new object",
-      render(el) {
-        el.innerHTML = `
-          <p>The second line below does three things, one after another, so read it from the inside out:</p>
-          <ul>
-            <li><code>df.x &gt; 0</code> compares every value in column <code>x</code> with 0 and gives back a column of True and False, one per row: here True, False, True. A column of booleans used this way is called a <b>mask</b>.</li>
-            <li><code>df[mask]</code> selects the rows where the mask is True. This is a <b>filter</b>: it gives you rows 1 and 3, the ones with positive <code>x</code>.</li>
-            <li><code>['y'] = 5</code> then sets column <code>y</code> to 5 in whatever the filter gave back.</li>
-          </ul>
-          <p>Read as a sentence: for the rows where x is positive, set y to 5. The question is what that does to <code>df</code>.</p>
-          ${codeBlock("df = pd.DataFrame({'x': [1, -1, 2], 'y': [0, 0, 0]})\ndf[df.x > 0]['y'] = 5\ndf.y.tolist()", "pd")}
-          ${predict("You want y = 5 wherever x is positive. What is df.y afterwards?", ["[5, 0, 5]", "[0, 0, 0]"])}
-          ${reveal(`
-            <div class="out warn">ChainedAssignmentError: A value is being set on a copy of a DataFrame or Series through chained assignment.</div>
-            <div class="out">[0, 0, 0]</div>
-            <p><code>df[df.x &gt; 0]</code> builds a new, unnamed DataFrame holding the selected rows. <code>['y'] = 5</code> writes into that one, which is thrown away at the end of the line. <code>df</code> itself never changes, and pandas warns you about it.</p>
-            <p>The fix is <code>df.loc[df.x &gt; 0, 'y'] = 5</code>. <code>.loc[rows, column]</code> names the rows and the column in one step, so pandas can write straight into <code>df</code> instead of into a copy. Step through both versions:</p>
-            <div class="row"><button class="btn primary" id="s7n">Step</button><button class="btn" id="s7r">Reset</button><label class="row"><input type="checkbox" id="s7loc"> Use <code>.loc</code></label></div>
-            <div id="pic7"></div><p class="note" id="n7"></p>
-            <details class="peek"><summary>Bytecode: two brackets vs. .loc</summary><div class="grid2"><div>${codeBlock("df[df.x > 0]['y'] = 5", "pd")}${bcTable(DATA.t7, { hot: 6, compact: true })}</div><div>${codeBlock("df.loc[df.x > 0, 'y'] = 5", "pd")}${bcTable(DATA.t7_good, { hot: 9, compact: true })}</div></div><p class="note">Left: the highlighted subscript builds the copy, then the store writes into it. Right: one store, straight into df.</p></details>`)}`;
-        let s = 0, loc = false;
-        const notes = [
-          ["One DataFrame, named df.", "df[df.x > 0] builds a new, unnamed DataFrame of the matching rows.", "['y'] = 5 writes into the new one. df is untouched.", "Nothing refers to the new one, so Python frees it."],
-          ["One DataFrame, named df.", ".loc aims one assignment at df itself.", "The matching rows of df.y become 5.", "df.y is now [5, 0, 5]."],
-        ];
-        const pic = el.querySelector("#pic7");
-        function draw() {
-          const y = loc && s >= 2 ? "[5, 0, 5]" : "[0, 0, 0]";
-          let svg = `<svg class="mem" viewBox="0 0 440 150" role="img" aria-label="DataFrame objects in memory"><defs>${mark("ah7")}</defs>
-            <rect class="namebox" x="10" y="26" width="60" height="34" rx="6"/><text x="40" y="48" text-anchor="middle">df</text>
-            <rect class="box" x="120" y="16" width="170" height="54" rx="6"/><text x="132" y="36">DataFrame</text><text x="132" y="56">y ${y}</text><path class="arrow" d="M70 43H115" marker-end="url(#ah7)"/>`;
-          if (!loc && s >= 1) {
-            const gone = s >= 3;
-            svg += `<rect class="${gone ? "ghost" : "box"}" x="120" y="92" width="170" height="54" rx="6"/><text x="132" y="112" ${gone ? 'class="q"' : ""}>${gone ? "freed" : "new DataFrame"}</text><text x="132" y="132" ${gone ? 'class="q"' : ""}>y ${s >= 2 ? "[5, 5]" : "[0, 0]"}</text><text class="q" x="300" y="122">no name</text>`;
-          }
-          pic.innerHTML = svg + "</svg>";
-          el.querySelector("#n7").textContent = notes[loc ? 1 : 0][s];
-          el.querySelector("#s7n").disabled = s >= 3;
-        }
-        el.querySelector("#s7n").onclick = () => { s++; draw(); };
-        el.querySelector("#s7r").onclick = () => { s = 0; draw(); };
-        el.querySelector("#s7loc").onchange = e => { loc = e.target.checked; s = 0; draw(); };
-        draw();
-        wirePredict(el, 1);
       }
     },
   ]
@@ -1256,7 +1145,7 @@ EXTRA.functions = {
         el.innerHTML = `
           ${codeBlock(src, "py")}
           ${predict("While <code>total</code> is adding up the numbers, how many frames exist?", ["1", "2", "3"])}
-          ${reveal(`<p>Three: the top level, <code>mean</code>, and <code>total</code> on top. Step through to watch them stack and unstack:</p><div id="fs2"></div><p class="note">Both functions have a name <code>xs</code>. They are different names in different frames, pointing at the same list, as in lesson 3.</p>`)}`;
+          ${reveal(`<p>Three: the top level, <code>mean</code>, and <code>total</code> on top. Step through to watch them stack and unstack:</p><div id="fs2"></div><p class="note">Both functions have a name <code>xs</code>. They are different names in different frames, pointing at the same list. Lesson 6 looks closely at names that share one object.</p>`)}`;
         const T = ["total", "function"], M = ["mean", "function"];
         frameStepper(el.querySelector("#fs2"), src, [
           { line: 10, frames: [{ fn: "top level", vars: [T, M] }], note: "Call mean with a list." },
@@ -1351,30 +1240,25 @@ EXTRA.errors = {
       layer: "Code", title: "In a library error, find your own line",
       render(el) {
         const tb = `Traceback (most recent call last):
-  File ".../site-packages/pandas/core/indexes/base.py", line 3641, in get_loc
-    return self._engine.get_loc(casted_key)
-  File "pandas/_libs/index.pyx", line 168, in pandas._libs.index.IndexEngine.get_loc
-  …
-KeyError: 'Score'
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
   File "analysis.py", line 4, in <module>
-    avg = df["Score"].mean()
-          ~~^^^^^^^^^
-  File ".../site-packages/pandas/core/frame.py", line 4378, in __getitem__
-    indexer = self.columns.get_loc(key)
-  File ".../site-packages/pandas/core/indexes/base.py", line 3648, in get_loc
-    raise KeyError(key) from err
-KeyError: 'Score'`;
+    record = json.loads(text)
+  File ".../lib/python3.14/json/__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File ".../lib/python3.14/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File ".../lib/python3.14/json/decoder.py", line 361, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ~~~~~~~~~~~~~~^^^^^^^^
+json.decoder.JSONDecodeError: Illegal trailing comma before end of object: line 1 column 28 (char 27)`;
         el.innerHTML = `
-          ${codeBlock("df = pd.DataFrame({\"name\": [\"Ana\", \"Ben\"], \"score\": [90, 85]})\navg = df[\"Score\"].mean()", "pd")}
+          ${codeBlock("import json\n\ntext = '{\"name\": \"Ana\", \"score\": 90,}'\nrecord = json.loads(text)\nprint(record[\"score\"])", "std")}
           <pre class="code tb">${esc(tb)}</pre>
-          ${predict("Most of these frames are inside pandas. Which line do you fix?", ["frame.py, line 4378", "analysis.py, line 4", "base.py, line 3648"])}
+          ${predict("Three of the four frames are inside the json module. Which line do you fix?", ["json/__init__.py, line 352", "analysis.py, line 4", "json/decoder.py, line 361"])}
           ${reveal(`
-            <p>Your code, <code>analysis.py</code> line 4. Frames under it are pandas' own code doing what you asked; the bug is in the request. The message <code>KeyError: 'Score'</code> says the column wasn't found: it's <code>score</code>, lowercase.</p>
-            <p class="note">pandas raises two chained errors here; the last block is the one to read. Recorded from pandas 3.0.2, with install paths shortened.</p>`)}`;
+            <p>Your own file, <code>analysis.py</code> line 4. The frames below it are the json module doing what you asked; the bug is in the request. The message says where: a trailing comma before <code>}</code>, at column 28 of the text. Library code is rarely wrong; read down to the last frame that is yours, then read the message.</p>
+            <p class="note">Recorded from CPython 3.14.7, with the install path shortened. The same shape appears with pandas, only with more frames in between.</p>`)}`;
         wirePredict(el, 1);
       }
     },
@@ -1525,9 +1409,398 @@ EXTRA.packages = {
   ]
 };
 
+
+// Values, names and collections
+EXTRA.values = {
+  id: "values", title: "Values, names and collections",
+  summary: "Every value is an object with a type. A name is a label on one. Lists, tuples, dicts and sets hold many values, each with its own rule.",
+  practice: "When something behaves oddly, ask two questions: what type is this value, and which names point at it? <code>type(x)</code> answers the first.",
+  steps: [
+    {
+      layer: "Memory", title: "Every value is an object with a type",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("type(5), type(5.0), type('5')", "py")}
+          ${predict("Three fives. How many different types?", ["One: they are all 5", "Two: numbers and text", "Three"])}
+          ${reveal(`
+            <div class="out">(&lt;class 'int'&gt;, &lt;class 'float'&gt;, &lt;class 'str'&gt;)</div>
+            <p>Three. Python calls every value an <b>object</b>: a piece of memory that holds the value and a record of its <b>type</b>, the kind of value it is. The type decides what the value can do: <code>5 + 1</code> works, <code>'5' + 1</code> is an error. 5 and 5.0 print alike but are different objects of different types, stored in different ways (lesson 11).</p>
+            ${tryIt("5 + 1, 5.0 + 1, '5' + '1'", "Same operator, three types", "py")}`)}`;
+        wirePredict(el, 2);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Memory", title: "A name is a label on an object",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("x = 5\nx = 'five'", "py")}
+          ${predict("After these two lines, what happened to the number 5?", ["It was changed into 'five'", "Nothing: x just points at a different object now"])}
+          ${reveal(`
+            <p class="ans">Nothing happened to it. <code>=</code> attaches the <b>name</b> on its left to the object on its right, and a second <code>=</code> moves the label to a new object. The int 5 is untouched; with no name left on it, Python frees its memory. A name is what most people call a variable. It has no type of its own: only objects have types.</p>
+            ${bcTable(DATA.t_names)}
+            <p>Two kinds of line show up in that table. An <b>expression</b> has a value: <code>5</code>, <code>x + 1</code>, <code>len(xs)</code>. A <b>statement</b> does something and has no value: <code>x = 5</code>, <code>import math</code>. In the stepper, an expression leaves a value on the stack and a statement leaves nothing.</p>
+            ${tryIt("x = 5\ny = x\nx = 'five'\ny", "Predict y, then run", "py")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Code", title: "Five built-in values you meet everywhere",
+      render(el) {
+        el.innerHTML = `
+          <div class="stackl">
+            <div><p><b>int</b>: a whole number, of any size. <code>90</code>, <code>-3</code>, <code>2 ** 100</code>.</p></div>
+            <div><p><b>float</b>: a number with a fractional part, stored in 64 bits, so close to exact but not always exact (lesson 11). <code>4.5</code>, <code>0.1</code>.</p></div>
+            <div><p><b>str</b>: text, in quotes. <code>'Ana'</code>. Once made, a string never changes; operations build new ones.</p></div>
+            <div><p><b>bool</b>: <code>True</code> or <code>False</code>, the result of every comparison. Underneath it is an int, 1 or 0 (lesson 14).</p></div>
+            <div><p><b>None</b>: the value that means "no value". What a function gives back when it has nothing to give (next lesson).</p></div>
+          </div>
+          ${predict("What type is the result of 6 / 2?", ["int, because 6 divides evenly", "float, always"])}
+          ${reveal(`
+            <div class="out">3.0</div>
+            <p><code>/</code> always gives a float, even when the division is exact. <code>//</code> gives an int and drops the remainder; <code>%</code> gives the remainder.</p>
+            ${tryIt("6 / 2, 6 // 2, 7 % 2, 2 ** 100", null, "py")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Memory", title: "A list holds anything, in order",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("prices = [4.5, 3.0, 12.25]\nprices[1]", "py")}
+          ${predict("What is prices[1]?", ["4.5", "3.0"])}
+          ${reveal(`
+            <div class="out">3.0</div>
+            <p>Positions count from 0, so <code>[1]</code> is the second item. A <b>list</b> is an ordered collection of any values. The list is one object that holds a <b>pointer</b> to each item, the address where that item lives, which is why items can be of any type and why <code>append</code> can add one at the end. That one-pointer-per-item design is also what makes lists slow for big numeric work, which is where arrays come in (lesson 9).</p>
+            ${tryIt("prices = [4.5, 3.0, 12.25]\nprices.append(1.0)\nprices[-1], prices[1:3], len(prices), sum(prices)", "Last item, a slice, length, sum", "py")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Memory", title: "Tuples, dicts and sets are collections with a rule",
+      render(el) {
+        el.innerHTML = `
+          <div class="stackl">
+            <div><p><b>tuple</b> <code>(4.5, 3.0)</code>: a list that can't change. For fixed groups, like a coordinate, or a function handing back two things at once.</p></div>
+            <div><p><b>dict</b> <code>{'name': 'Ana', 'score': 90}</code>: look values up by a <b>key</b> instead of a position. Keys are unique.</p></div>
+            <div><p><b>set</b> <code>{'Ana', 'Ben'}</code>: no duplicates and no order. For "is this one of them?" questions.</p></div>
+          </div>
+          ${codeBlock("record = {'name': 'Ana', 'score': 90}", "py")}
+          ${predict("Which expression gets the 90?", ["record[1]", "record['score']", "record.score"])}
+          ${reveal(`
+            <div class="out">90</div>
+            <p>A dict is indexed by key, so <code>record['score']</code>. <code>record[1]</code> looks for the key 1, which doesn't exist. <code>record.score</code> is attribute syntax, which plain dicts don't offer; pandas columns do (lesson 9).</p>
+            ${tryIt("record = {'name': 'Ana', 'score': 90}\nrecord['score'] = 95\nlist(record.keys()), record['score'], 'name' in record", null, "py")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+  ]
+};
+
+// Functions, loops and modules
+EXTRA.flow = {
+  id: "flow", title: "Functions, loops and modules",
+  summary: "A function is a named block of code that runs when called and hands back a value. Loops repeat a block, conditions choose, and import loads a file of code.",
+  practice: "Keep the result: <code>total = add_tax(100)</code>, <code>df = df.dropna()</code>. What a call gives back vanishes unless a name catches it.",
+  steps: [
+    {
+      layer: "Bytecode", title: "def makes a function; calling it runs it",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("def add_tax(price):\n    return price * 1.25\n\ntotal = add_tax(100)", "py")}
+          ${predict("How many times does the line return price * 1.25 run?", ["Once, when Python reads the def", "Once, when add_tax(100) is called", "Twice"])}
+          ${reveal(`
+            <p class="ans">Once, at the call. <code>def</code> builds a <b>function</b> object, a recipe holding that code, and gives it the name add_tax; nothing inside runs yet. <code>add_tax(100)</code> <b>calls</b> it: 100 is the <b>argument</b>, price is the <b>parameter</b>, the name the argument gets inside, and <code>return</code> hands 125.0 back to the caller. In bytecode, the recipe is made and named, then called:</p>
+            ${bcTable(DATA.t_def)}
+            ${tryIt("def add_tax(price):\n    return price * 1.25\n\ntotal = add_tax(100)\ntotal", "Step through the call", "py")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Code", title: "A call gives back a value, or None",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("nums = [3, 1, 2]\nresult = nums.sort()\nprint(result)", "py")}
+          ${predict("What prints?", ["[1, 2, 3]", "None"])}
+          ${reveal(`
+            <div class="out">None</div>
+            <p><code>sort()</code> sorts the list in place and gives back <b>None</b>, the value that means no value. Every call gives something back; print, append and sort give None. Functions that build a new object give that back instead: <code>sorted(nums)</code> is a new list, and nums is untouched. The most common data-work slip has this shape: <code>df.dropna()</code> gives back a new DataFrame and changes nothing unless you keep it.</p>
+            ${tryIt("nums = [3, 1, 2]\nnew = sorted(nums)\nnums, new", null, "py")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Bytecode", title: "if chooses; for repeats",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("values = [3, -1, 2]\ncount = 0\nfor v in values:\n    if v > 0:\n        count += 1", "py")}
+          ${predict("How many times does the line count += 1 run?", ["3", "2", "1"])}
+          ${reveal(`
+            <p class="ans">Twice, for 3 and 2. A <b>for</b> loop asks an <b>iterator</b> for one item at a time and runs its block for each. <b>if</b> turns its condition into True or False and runs its block only for True. In bytecode both are jumps: <code>FOR_ITER</code> pushes the next item or leaves the loop, and <code>POP_JUMP_IF_FALSE</code> skips the block. Run it and step; you will see the same instructions come round three times.</p>
+            ${tryIt("values = [3, -1, 2]\ncount = 0\nfor v in values:\n    if v > 0:\n        count += 1\ncount", "Step through the loop", "py")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Memory", title: "Dots reach inside an object",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("text = 'ana'\nname = text.upper()", "py")}
+          ${predict("name is 'ANA'. What is text now?", ["'ANA'", "'ana'"])}
+          ${reveal(`
+            <div class="out">'ana'</div>
+            <p>Still 'ana'. An <b>attribute</b> is a value that belongs to an object, reached with a dot. A <b>method</b> is an attribute that is a function: <code>text.upper</code> is the str type's upper function bound to this text, and the <code>()</code> calls it. upper builds a new string, because a string can never change (next lesson). Every <code>df.something</code> in pandas is this same dot.</p>
+            ${tryIt("text = 'ana'\nname = text.upper()\ntext, name, text.count('a'), text.startswith('a')", null, "py")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Software", title: "import loads a module once",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("import math\nmath.sqrt(2)", "std")}
+          ${predict("Where does sqrt come from?", ["It is part of the language, like +", "From a module named math that import loaded", "From pandas"])}
+          ${reveal(`
+            <div class="out">1.4142135623730951</div>
+            <p>A <b>module</b> is a file of code that defines names. <code>import math</code> finds it, runs it once, and gives you the name math; <code>math.sqrt</code> is an attribute, the same dot as the last section. A second import in the same process reuses the loaded module. The <b>standard library</b> is the set of modules that ship with Python. A <b>package</b> is a bundle of modules; packages like pandas are installed separately (lesson 10).</p>
+            ${tryIt("import math\nmath.pi, math.sqrt(2), math.floor(2.7)", null, "std")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+  ]
+};
+
+// Notebooks and scripts: the two sections that used to open lesson 2.
+EXTRA.notebooks = {
+  id: "notebooks", title: "Notebooks and scripts",
+  summary: "A script runs top to bottom in a fresh process. A notebook sends cells to one process that stays alive, so order and leftovers matter.",
+  practice: "Before handing in a notebook, use Restart Kernel and Run All. If it runs cleanly, it doesn't depend on leftover memory.",
+  steps: [
+    {
+      layer: "Where code runs", title: "Plain Python and Jupyter run code differently",
+      render(el) {
+        el.innerHTML = `
+          <div class="grid2">
+            <div class="compare"><span class="eyebrow">Plain Python</span><pre class="code">python analysis.py</pre><p class="note">The Python program reads a <code>.py</code> file, runs it top to bottom in a fresh process, then exits. Nothing is left over between runs.</p></div>
+            <div class="compare"><span class="eyebrow">Jupyter notebook</span><div class="pipe"><span>notebook (.ipynb)</span><span>→</span><span>Jupyter</span><span>→</span><span>kernel: a Python process</span></div><p class="note">Each cell you run is sent to the same Python process, the kernel, which stays alive until you restart it. Colab and VS Code notebooks work the same way.</p></div>
+          </div>
+          <p>Either way, the Python that runs your code is the same program, usually CPython, doing what lesson 2 showed: one line at a time, as bytecode. The difference is what survives between lines.</p>`;
+      }
+    },
+    {
+      layer: "Memory", title: "A notebook keeps one Python process running",
+      render(el) {
+        el.innerHTML = `
+          <div class="row">${tagPill("jp")}</div>
+          <p>These two cells worked earlier because cell 2 ran first, then cell 1.</p>
+          <div class="cell"><span class="in" id="n1">In [2]:</span><pre class="code">total = sum(prices)</pre></div>
+          <div class="cell"><span class="in" id="n2">In [1]:</span><pre class="code">prices = [4.5, 3.0, 12.25]</pre></div>
+          ${predict("You restart the kernel and click Run All, which runs top to bottom. What happens?", ["It works, same as before", "Cell 1 uses the old prices", "Cell 1 fails: nothing called prices exists yet"])}
+          ${reveal(`
+            <p>Cell 1 fails. Restarting empties the kernel's memory, so cell 1 asks for <code>prices</code> before anything has made it. Python reports a name it can't find as a <code>NameError</code>; for now read that as "no such name". Errors get a lesson of their own later. Try it:</p>
+            <div class="row"><button class="btn" data-run="0">Run cell 1</button><button class="btn" data-run="1">Run cell 2</button><button class="btn" id="restart">Restart kernel</button><button class="btn" id="runall">Run all</button></div>
+            <div id="nbout"></div>
+            <div class="memory" id="mem"></div>
+            <p class="note">The <code>In [n]</code> numbers are Jupyter's record of the order cells actually ran.</p>`)}`;
+        let mem = { prices: [4.5, 3.0, 12.25], total: 19.75 }, count = 2;
+        const out = el.querySelector("#nbout"), memEl = el.querySelector("#mem");
+        const drawMem = () => {
+          const keys = Object.keys(mem);
+          memEl.innerHTML = `<span class="eyebrow">Kernel memory</span>` + (keys.length ? keys.map(k => `<span class="item">${k} → ${Array.isArray(mem[k]) ? "[" + mem[k].map(v => Number.isInteger(v) ? v.toFixed(1) : v).join(", ") + "]" : mem[k]}</span>`).join("") : `<span class="none">empty</span>`);
+        };
+        const cells = [
+          () => { if (!("prices" in mem)) throw "NameError: name 'prices' is not defined"; mem.total = mem.prices.reduce((a, b) => a + b, 0); },
+          () => { mem.prices = [4.5, 3.0, 12.25]; },
+        ];
+        const run = i => {
+          count++; el.querySelector(i ? "#n2" : "#n1").textContent = `In [${count}]:`;
+          try { cells[i](); out.innerHTML = ""; drawMem(); return true; }
+          catch (e) { out.innerHTML = `<div class="out err">${esc(e)}</div>`; drawMem(); return false; }
+        };
+        const restart = () => { mem = {}; count = 0; el.querySelector("#n1").textContent = "In [ ]:"; el.querySelector("#n2").textContent = "In [ ]:"; out.innerHTML = `<div class="out">Kernel restarted. Memory is empty.</div>`; drawMem(); };
+        el.querySelectorAll("[data-run]").forEach(b => b.onclick = () => run(+b.dataset.run));
+        el.querySelector("#restart").onclick = restart;
+        el.querySelector("#runall").onclick = () => { if (run(0)) run(1); };
+        drawMem();
+        wirePredict(el, 2, () => { restart(); run(0); });
+      }
+    },
+  ]
+};
+
+// What pandas adds, and why. Outputs are recorded; pandas isn't loaded in the page.
+EXTRA.pandas = {
+  id: "pandas", title: "What pandas adds, and why",
+  summary: "pandas adds two types, Series and DataFrame, built on packed arrays instead of lists. That is why one operation can work on a whole column.",
+  practice: "Assign with one set of brackets, <code>df.loc[rows, 'col'] = value</code>, and keep what methods give back: <code>df = df.dropna()</code>.",
+  steps: [
+
+    {
+      layer: "Memory", title: "A Series is one column",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("import pandas as pd\ns = pd.Series([4.5, 3.0, 12.25])\ns", "pd")}
+          <div class="out">0     4.50
+1     3.00
+2    12.25
+dtype: float64</div>
+          ${predict("A list of those three floats, or this Series: which one stores the numbers side by side as raw 64-bit values?", ["The list", "The Series", "Both"])}
+          ${reveal(`
+            <p class="ans">The Series. A list holds a pointer to each float object, and each object lives wherever it was created. A <b>Series</b> keeps its values in one packed block of memory, an <b>array</b>, 24 bytes for these three, plus a label for each row (the <b>index</b>, 0 to 2 here) and one <b>dtype</b>, the type shared by the whole column. One block, one type: that is what lets pandas hand a whole column to compiled code instead of looping in Python. Lesson 15 draws the two layouts and counts the bytes.</p>
+            <p class="note">Outputs in this lesson were recorded from pandas 3.0.6; pandas isn't loaded in the page's Python yet.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Memory", title: "A DataFrame is columns that share row labels",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("df = pd.DataFrame({'name': ['Ana', 'Ben', 'Cy'], 'score': [90, 85, 72]})\ndf", "pd")}
+          <div class="out">  name  score
+0  Ana     90
+1  Ben     85
+2   Cy     72</div>
+          ${predict("df['score'] and df.score are:", ["Two different columns", "The same column, written two ways"])}
+          ${reveal(`
+            <div class="out">0    90
+1    85
+2    72
+Name: score, dtype: int64</div>
+            <p>The same column, either way. A <b>DataFrame</b> is a set of Series that share one index: each column is its own array with its own dtype, and a row is just a label that runs across them. Brackets and the dot both reach a column; brackets also work for names with spaces or names that clash with a method.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Memory", title: "A dtype is one type for the whole column",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("pd.Series([1, 2, 3]).dtype, pd.Series([1, 2.5]).dtype, pd.Series([1, 'a']).dtype", "pd")}
+          ${predict("What dtype does the last one, [1, 'a'], get?", ["int64", "str", "object"])}
+          ${reveal(`
+            <div class="out">(dtype('int64'), dtype('float64'), dtype('O'))</div>
+            <p><code>object</code>, shown as <code>'O'</code>. A column has to pick one packed type for every value. Whole numbers pack as <b>int64</b>; one 2.5 turns the column into <b>float64</b>, 64-bit floats. When no single type fits, pandas falls back to a column of pointers to ordinary Python objects, like a list, and loses the speed. That is what an object column is. A missing value does the same to an int column (lesson 12), and text columns get pandas' own <code>str</code> dtype.</p>`)}`;
+        wirePredict(el, 2);
+      }
+    },
+    {
+      layer: "Memory", title: "One comparison runs on every row",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("df.score > 86", "pd")}
+          ${predict("With scores 90, 85 and 72, this gives:", ["True", "A Series of True and False, one per row"])}
+          ${reveal(`
+            <div class="out">0     True
+1    False
+2    False
+Name: score, dtype: bool</div>
+            <p>A Series of booleans. Used to pick rows it is called a <b>mask</b>, and <code>df[mask]</code> keeps the rows where it is True: a <b>filter</b>.</p>
+            ${codeBlock("df[df.score > 86]", "pd")}
+            <div class="out">  name  score
+0  Ana     90</div>
+            <p>Both steps run in compiled code over the packed array: one operation for the whole column instead of a Python loop over each value. Lesson 16 measures the difference.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Memory", title: "pandas methods give back new objects",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("df.sort_values('score')\ndf", "pd")}
+          ${predict("After these two lines, is df sorted?", ["Yes", "No"])}
+          ${reveal(`
+            <div class="out">  name  score
+0  Ana     90
+1  Ben     85
+2   Cy     72</div>
+            <p>No. <code>sort_values</code> builds a new, sorted DataFrame and gives it back; the first line throws it away. Keep it with a name: <code>df = df.sort_values('score')</code>. The same goes for <code>dropna</code>, <code>fillna</code>, <code>rename</code> and most others. The next two sections show the one place this rule bites hardest.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Memory", title: "DataFrames follow the same rule",
+      render(el) {
+        el.innerHTML = `
+          <p>The rule from the names lesson, applied to a DataFrame. <code>df2['y'] = 9</code> puts 9 into column <code>y</code> of every row, in place. <code>.tolist()</code> turns the column into a plain list so we can see it.</p>
+          ${codeBlock("df = pd.DataFrame({'x': [1, -1, 2], 'y': [0, 0, 0]})\ndf2 = df\ndf2['y'] = 9\ndf.y.tolist()", "pd")}
+          ${predict("You changed df2. What is df.y now?", ["[0, 0, 0]", "[9, 9, 9]"])}
+          ${reveal(`
+            <div class="out">[9, 9, 9]</div>
+            <p><code>df2 = df</code> is a second name for the same DataFrame. To get an independent one, ask for it:</p>
+            ${codeBlock("df2 = df.copy()\ndf2['y'] = 9\ndf.y.tolist()", "pd")}
+            <div class="out">[0, 0, 0]</div>
+            <p class="note">Output from pandas 3.0.2. pandas isn't available in the Python running in this page yet, so these results are recorded, not live.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Memory", title: "A filter builds a new object",
+      render(el) {
+        el.innerHTML = `
+          <p>The second line below does three things, one after another, so read it from the inside out:</p>
+          <ul>
+            <li><code>df.x &gt; 0</code> compares every value in column <code>x</code> with 0 and gives back a column of True and False, one per row: here True, False, True. A column of booleans used this way is called a <b>mask</b>.</li>
+            <li><code>df[mask]</code> selects the rows where the mask is True. This is a <b>filter</b>: it gives you rows 1 and 3, the ones with positive <code>x</code>.</li>
+            <li><code>['y'] = 5</code> then sets column <code>y</code> to 5 in whatever the filter gave back.</li>
+          </ul>
+          <p>Read as a sentence: for the rows where x is positive, set y to 5. The question is what that does to <code>df</code>.</p>
+          ${codeBlock("df = pd.DataFrame({'x': [1, -1, 2], 'y': [0, 0, 0]})\ndf[df.x > 0]['y'] = 5\ndf.y.tolist()", "pd")}
+          ${predict("You want y = 5 wherever x is positive. What is df.y afterwards?", ["[5, 0, 5]", "[0, 0, 0]"])}
+          ${reveal(`
+            <div class="out warn">ChainedAssignmentError: A value is being set on a copy of a DataFrame or Series through chained assignment.</div>
+            <div class="out">[0, 0, 0]</div>
+            <p><code>df[df.x &gt; 0]</code> builds a new, unnamed DataFrame holding the selected rows. <code>['y'] = 5</code> writes into that one, which is thrown away at the end of the line. <code>df</code> itself never changes, and pandas warns you about it.</p>
+            <p>The fix is <code>df.loc[df.x &gt; 0, 'y'] = 5</code>. <code>.loc[rows, column]</code> names the rows and the column in one step, so pandas can write straight into <code>df</code> instead of into a copy. Step through both versions:</p>
+            <div class="row"><button class="btn primary" id="s7n">Step</button><button class="btn" id="s7r">Reset</button><label class="row"><input type="checkbox" id="s7loc"> Use <code>.loc</code></label></div>
+            <div id="pic7"></div><p class="note" id="n7"></p>
+            <details class="peek"><summary>Bytecode: two brackets vs. .loc</summary><div class="grid2"><div>${codeBlock("df[df.x > 0]['y'] = 5", "pd")}${bcTable(DATA.t7, { hot: 6, compact: true })}</div><div>${codeBlock("df.loc[df.x > 0, 'y'] = 5", "pd")}${bcTable(DATA.t7_good, { hot: 9, compact: true })}</div></div><p class="note">Left: the highlighted subscript builds the copy, then the store writes into it. Right: one store, straight into df.</p></details>`)}`;
+        let s = 0, loc = false;
+        const notes = [
+          ["One DataFrame, named df.", "df[df.x > 0] builds a new, unnamed DataFrame of the matching rows.", "['y'] = 5 writes into the new one. df is untouched.", "Nothing refers to the new one, so Python frees it."],
+          ["One DataFrame, named df.", ".loc aims one assignment at df itself.", "The matching rows of df.y become 5.", "df.y is now [5, 0, 5]."],
+        ];
+        const pic = el.querySelector("#pic7");
+        function draw() {
+          const y = loc && s >= 2 ? "[5, 0, 5]" : "[0, 0, 0]";
+          let svg = `<svg class="mem" viewBox="0 0 440 150" role="img" aria-label="DataFrame objects in memory"><defs>${mark("ah7")}</defs>
+            <rect class="namebox" x="10" y="26" width="60" height="34" rx="6"/><text x="40" y="48" text-anchor="middle">df</text>
+            <rect class="box" x="120" y="16" width="170" height="54" rx="6"/><text x="132" y="36">DataFrame</text><text x="132" y="56">y ${y}</text><path class="arrow" d="M70 43H115" marker-end="url(#ah7)"/>`;
+          if (!loc && s >= 1) {
+            const gone = s >= 3;
+            svg += `<rect class="${gone ? "ghost" : "box"}" x="120" y="92" width="170" height="54" rx="6"/><text x="132" y="112" ${gone ? 'class="q"' : ""}>${gone ? "freed" : "new DataFrame"}</text><text x="132" y="132" ${gone ? 'class="q"' : ""}>y ${s >= 2 ? "[5, 5]" : "[0, 0]"}</text><text class="q" x="300" y="122">no name</text>`;
+          }
+          pic.innerHTML = svg + "</svg>";
+          el.querySelector("#n7").textContent = notes[loc ? 1 : 0][s];
+          el.querySelector("#s7n").disabled = s >= 3;
+        }
+        el.querySelector("#s7n").onclick = () => { s++; draw(); };
+        el.querySelector("#s7r").onclick = () => { s = 0; draw(); };
+        el.querySelector("#s7loc").onchange = e => { loc = e.target.checked; s = 0; draw(); };
+        draw();
+        wirePredict(el, 1);
+      }
+    },
+  ]
+};
+
+// Order and groups. A group heading has to be true of every lesson under it.
 (() => {
   const b = LESSONS.splice(0);
-  LESSONS.push(b[0], b[1], b[2], EXTRA.functions, EXTRA.errors, b[3], b[4], EXTRA.text, EXTRA.packages, b[5], b[6], b[7]);
+  const groups = [
+    ["The machine", [b[0], b[1]]],
+    ["The language", [EXTRA.values, EXTRA.flow, EXTRA.functions, b[2], EXTRA.errors]],
+    ["Tools and libraries", [EXTRA.notebooks, EXTRA.pandas, EXTRA.packages]],
+    ["Bits, memory and the CPU", [b[3], b[4], EXTRA.text, b[5], b[6], b[7]]],
+  ];
+  for (const [name, list] of groups) for (const L of list) { L.group = name; LESSONS.push(L); }
 })();
 LESSONS.forEach((L, i) => { L.id = "l" + (i + 1); });
 
@@ -1594,7 +1867,8 @@ try { if (localStorage.getItem("navCollapsed") === "1") setNav(true); } catch (e
 function drawNav() {
   nav.innerHTML = LESSONS.map((L, i) => {
     const seen = (progress[L.id] || []).length, done = seen >= L.steps.length;
-    return `<button class="lesson-btn" data-l="${i}" aria-current="${cur.l === i && cur.l >= 0 ? "true" : "false"}"><span class="ln">${done ? "✓" : i + 1}</span><span class="lt">${esc(L.title)}<span class="lp">${seen ? `${Math.min(seen, L.steps.length)} of ${L.steps.length} sections` : `${L.steps.length} sections`}</span></span></button>`;
+    const heading = i === 0 || LESSONS[i - 1].group !== L.group ? `<div class="navgroup">${esc(L.group)}</div>` : "";
+    return heading + `<button class="lesson-btn" data-l="${i}" aria-current="${cur.l === i && cur.l >= 0 ? "true" : "false"}"><span class="ln">${done ? "✓" : i + 1}</span><span class="lt">${esc(L.title)}<span class="lp">${seen ? `${Math.min(seen, L.steps.length)} of ${L.steps.length} sections` : `${L.steps.length} sections`}</span></span></button>`;
   }).join("") + `<button class="lesson-btn sandbox" data-l="-1" aria-current="${cur.l === -1 ? "true" : "false"}"><span class="ln">›_</span><span class="lt">Sandbox<span class="lp">Run your own code</span></span></button>`;
   nav.querySelectorAll(".lesson-btn").forEach(b => b.onclick = () => { nav.classList.remove("open"); tog.setAttribute("aria-expanded", "false"); go(+b.dataset.l, 0, true); });
   tog.textContent = cur.l >= 0 ? `All lessons · ${cur.l + 1} of ${LESSONS.length}` : "All lessons";

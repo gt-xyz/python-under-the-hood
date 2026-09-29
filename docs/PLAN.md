@@ -50,13 +50,13 @@ Revised 2026-09-29. The first version went from hardware straight to bytecode an
 | --- | --- | --- | --- | --- |
 | 1 | What a computer does | Processor, memory and addresses, storage, processes; the four software layers | Hardware, software | Done |
 | 2 | How Python runs your code | Bytecode and the stack; push and pop; the live stepper | Bytecode, memory | Done (notebook sections move to 8) |
-| 3 | Values, names and collections | Every value is an object with a type; int, float, str, bool, None; names and assignment; expressions and statements; list, tuple, dict, set and what each costs | Memory, bytecode | New |
-| 4 | Functions, loops and modules | def, call, arguments, return; if; for as iterator plus jump; attributes and methods; modules and import | Bytecode, memory | New |
+| 3 | Values, names and collections | Every value is an object with a type; int, float, str, bool, None; names and assignment; expressions and statements; list, tuple, dict, set and what each costs | Memory, bytecode | Done |
+| 4 | Functions, loops and modules | def, call, arguments, return; if; for as iterator plus jump; attributes and methods; modules and import | Bytecode, memory | Done |
 | 5 | Functions and the call stack | Frames, local names, arguments as shared objects | Memory | Done (moved up) |
 | 6 | Names, objects and copies | Assignment, mutability, copies (pure Python; the pandas sections move to 9) | Memory, bytecode | Done |
 | 7 | Reading errors | Tracebacks as the call stack, common error types, finding your line in library errors | Memory, code | Done (library example to become standard library) |
 | 8 | Notebooks and scripts | Script vs. kernel; one process across cells; run order | Software, memory | Done (moved from 2) |
-| 9 | What pandas adds, and why | Series, DataFrame, dtype and array as new types; why a packed column beats a list; DataFrame aliasing; filters and chained assignment | Memory | New |
+| 9 | What pandas adds, and why | Series, DataFrame, dtype and array as new types; why a packed column beats a list; DataFrame aliasing; filters and chained assignment | Memory | Done |
 | 10 | Packages and environments | import and site-packages, one Python installation per environment, versions changing behavior | Software | Done (moved up) |
 | 11 | Numbers as bits | Binary integers, int8 overflow, the float format, why 0.1 + 0.2 ≠ 0.3 | Bits | Done |
 | 12 | Missing values | NaN's bit pattern and comparisons, filters that keep NaN, nullable integers | Bits | Done |
@@ -76,7 +76,7 @@ The lesson list shows four groups, for a sense of progress. A group heading has 
 | Tools and libraries | Notebooks and scripts · What pandas adds, and why · Packages and environments |
 | Bits, memory and the CPU | Numbers as bits · Missing values · Text and files · True, False and logic · Collections in memory · Why vectorized code is fast |
 
-Build the grouping into the lesson list only when the reorder lands; grouping the current twelve would put pandas examples under "The language".
+The grouping, the reorder and the three new lessons landed on 2026-09-29.
 
 ### Outline of the new lessons
 
@@ -115,7 +115,7 @@ Full-stack teaching exists; doing it top-down, from a language learners already 
 ## Roadmap
 
 1. Deploy the simple version to your own site and test on laptop and phone.
-2. Write lessons 3, 4 and 9 (the language layer and the pandas introduction), reorder as the curriculum table shows, then add the four groups to the lesson list.
+2. Work through what remains of docs/TERMS.md after the language lessons.
 3. Watch the first learner use it; that is the first real curriculum data.
 4. Move to a repo with TypeScript modules, lesson content as data, and the recording script as a build step.
 5. Separate the explorer from the course.

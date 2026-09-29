@@ -77,6 +77,8 @@ def record():
     d["t7"] = instrs("df[df.x > 0]['y'] = 5")
     d["t7_good"] = instrs("df.loc[df.x > 0, 'y'] = 5")
     d["imm"] = instrs("y = x\ny += 1")
+    d["t_names"] = instrs("x = 5\nx = 'five'")
+    d["t_def"] = instrs("def add_tax(price):\n    return price * 1.25\n\ntotal = add_tax(100)")
     OUT.write_text(json.dumps(d, indent=1) + "\n")
     print(f"Wrote {OUT} with Python {d['python']}")
 
@@ -107,6 +109,13 @@ def pandas_report():
         pd.DataFrame({"score": [90]})["Score"]
     except KeyError as e:
         print("KeyError:", e)
+    print("--- What pandas adds (lesson 9)")
+    print(pd.Series([4.5, 3.0, 12.25]))
+    df = pd.DataFrame({"name": ["Ana", "Ben", "Cy"], "score": [90, 85, 72]})
+    print(df); print(df["score"])
+    print(repr((pd.Series([1, 2, 3]).dtype, pd.Series([1, 2.5]).dtype, pd.Series([1, "a"]).dtype)))
+    print(df.score > 86); print(df[df.score > 86])
+    df.sort_values("score"); print(df)
 
 
 if __name__ == "__main__":

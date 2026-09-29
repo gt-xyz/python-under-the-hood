@@ -425,5 +425,57 @@
    "STORE_NAME",
    "y"
   ]
+ ],
+ "t_names": [
+  [
+   "LOAD_SMALL_INT",
+   "5"
+  ],
+  [
+   "STORE_NAME",
+   "x"
+  ],
+  [
+   "LOAD_CONST",
+   "'five'"
+  ],
+  [
+   "STORE_NAME",
+   "x"
+  ]
+ ],
+ "t_def": [
+  [
+   "LOAD_CONST",
+   "code for add_tax"
+  ],
+  [
+   "MAKE_FUNCTION",
+   ""
+  ],
+  [
+   "STORE_NAME",
+   "add_tax"
+  ],
+  [
+   "LOAD_NAME",
+   "add_tax"
+  ],
+  [
+   "PUSH_NULL",
+   ""
+  ],
+  [
+   "LOAD_SMALL_INT",
+   "100"
+  ],
+  [
+   "CALL",
+   "1"
+  ],
+  [
+   "STORE_NAME",
+   "total"
+  ]
  ]
 }
