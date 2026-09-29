@@ -80,7 +80,7 @@ The grouping, the reorder and the three new lessons landed on 2026-09-29.
 
 ### Outline of the new lessons
 
-Each section: a takeaway heading, a prediction, the real result, a runnable box whose live bytecode stepper shows the construct doing what the text says. Headings below are drafts.
+Each section: a takeaway heading, a prediction, the real result, a runnable box whose live bytecode stepper shows the construct doing what the text says. Headings are as shipped.
 
 **3. Values, names and collections**
 
@@ -92,21 +92,21 @@ Each section: a takeaway heading, a prediction, the real result, a runnable box 
 
 **4. Functions, loops and modules**
 
-1. *A function is a recipe with a name.* def creates a function object and does not run it; calling runs it; return hands back a value. MAKE_FUNCTION and CALL in the stepper. Arguments are the inputs; parameters are their names inside.
-2. *A call gives back a value, or None.* `print` returns None; `len` returns a number. The most common data-work bug: `df.dropna()` without keeping the result.
+1. *What def does, and what a call does.* def creates a function object and does not run it; calling runs it; return hands back a value. MAKE_FUNCTION and CALL in the stepper. Arguments are the inputs; parameters are their names inside.
+2. *What a call gives back.* `print` returns None; `len` returns a number. The most common data-work bug: `df.dropna()` without keeping the result.
 3. *if chooses; for repeats.* A condition is any expression turned into True or False. A for loop asks an iterator for one item at a time; the stepper shows GET_ITER, FOR_ITER and the jump back.
 4. *Dots reach inside an object.* Attribute: a value that belongs to an object. Method: a function that belongs to one. `'abc'.upper()`, `[1].append(2)`. Explains every `df.something` that follows.
-5. *import loads a module once.* A module is a file of Python; import runs it once and gives you a name for it. Standard library vs. installed packages, ahead of lesson 13.
+5. *Where import gets its names.* A module is a file of Python; import runs it once and gives you a name for it. Standard library vs. installed packages, ahead of lesson 13.
 
 **9. What pandas adds, and why**
 
 1. *A Series is one column.* Values of one type, packed side by side, plus a label for each row. Compare a list of floats (pointers to objects) with the same numbers packed as an array: the picture from lesson 15, without the byte counts.
 2. *A DataFrame is a set of columns that share the row labels.* `df['x']` is a Series; `df.x` is the same thing; rows are numbered unless you say otherwise.
 3. *A dtype is one type for the whole column.* int64, float64, bool, object, string. Why a column has to choose, and what happens when it can't (object dtype). Sets up missing values and dtype guessing.
-4. *Arithmetic and comparisons apply to every row at once.* `df.x > 0` builds a Series of booleans, a mask; `df[mask]` keeps rows. Same idea as a loop, done in compiled code; lesson 16 measures it.
-5. *pandas methods return new objects.* `df.dropna()`, `df.sort_values()` give back a new DataFrame; `inplace` exists but is discouraged.
-6. *Two names, one DataFrame.* The aliasing section moved from the copies lesson: `df2 = df` then `df2['y'] = 9` changes both, `.copy()` gives an independent one.
-7. *A filter builds a new object.* The chained-assignment section moved from the copies lesson: `df[df.x > 0]['y'] = 5` writes into a copy; `.loc` writes into df.
+4. *Comparing a whole column at once.* `df.x > 0` builds a Series of booleans, a mask; `df[mask]` keeps rows. Same idea as a loop, done in compiled code; lesson 16 measures it.
+5. *What sort_values does to df.* `df.dropna()`, `df.sort_values()` give back a new DataFrame; `inplace` exists but is discouraged.
+6. *A DataFrame assigned to a second name.* The aliasing section moved from the copies lesson: `df2 = df` then `df2['y'] = 9` changes both, `.copy()` gives an independent one.
+7. *Assigning through a filter.* The chained-assignment section moved from the copies lesson: `df[df.x > 0]['y'] = 5` writes into a copy; `.loc` writes into df.
 
 ## Landscape
 
@@ -137,7 +137,7 @@ Full-stack teaching exists; doing it top-down, from a language learners already 
 
 ## Open questions
 
-- Section headings versus predictions. The rule "headings state the takeaway" means eighteen section headings answer their own prediction ("Numbers and text can't change in place" above "What does print(x) show?"). Two ways out: keep the headings and rewrite those predictions to test applying the principle rather than restating it, or keep the predictions and make those section headings name the topic without the outcome, leaving lesson titles as the takeaways. Decision pending.
+- Section headings versus predictions: settled 2026-09-29. A section heading names what the section is about and keeps its meaning, but drops any clause that answers its own prediction; lesson titles stay takeaways. Where the heading states a principle, the prediction tests applying it (the float section asks what print(0.1 + 0.2) shows).
 
 - Should the explorer accept whole notebook cells, and load NumPy and pandas in the page?
 - Free, paid, or both, and which modules sit where?

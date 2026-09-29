@@ -672,7 +672,7 @@ LESSONS.push({
   practice: "When a change shows up somewhere you didn't expect, ask which names share that object. Copy on purpose with <code>.copy()</code> when you want an independent version.",
   steps: [
     {
-      layer: "Memory", title: "= attaches a name; it never copies",
+      layer: "Memory", title: "= attaches a name to an object",
       render(el) {
         el.innerHTML = `
           <p>From the last two lessons: a name is a label on an object, and <code>b.append(4)</code> calls the list's append method with the argument 4. The question is what <code>b = a</code> did.</p>
@@ -707,7 +707,7 @@ LESSONS.push({
       }
     },
     {
-      layer: "Memory", title: "Numbers and text can't change in place",
+      layer: "Memory", title: "What += does to a number",
       render(el) {
         el.innerHTML = `
           ${codeBlock("x = 5\ny = x\ny += 1\nprint(x)", "py")}
@@ -785,11 +785,11 @@ LESSONS.push({
       render(el) {
         const B = DATA.t3_bits;
         el.innerHTML = `
-          ${codeBlock("0.1 + 0.2 == 0.3", "py")}
-          ${predict("True or False?", ["True", "False"])}
+          ${codeBlock("print(0.1 + 0.2)", "py")}
+          ${predict("What does this print?", ["0.3", "0.30000000000000004", "an error"])}
           ${reveal(`
-            <div class="out">False</div>
-            <p>In binary, 0.1 is 0.000110011… repeating forever, like 1/3 in decimal. With 52 bits of digits it must be rounded. Here is what's stored; highlighted bits are where the sum and 0.3 differ:</p>
+            <div class="out">${esc(DATA.t3_repr)}</div>
+            <p>So <code>0.1 + 0.2 == 0.3</code> is False. In binary, 0.1 is 0.000110011… repeating forever, like 1/3 in decimal. With 52 bits of digits it must be rounded. Here is what's stored; highlighted bits are where the sum and 0.3 differ:</p>
             <div>${["0.1", "0.2", "0.1 + 0.2", "0.3"].map(k => `<div class="bitrow"><span class="name">${k}</span>${bitsHtml(B[k], k === "0.1 + 0.2" ? B["0.3"] : k === "0.3" ? B["0.1 + 0.2"] : null)}<span class="exact">= ${B[k].exact}</span></div>`).join("")}</div>
             ${tryIt("import math\nprint(0.1 + 0.2)\nmath.isclose(0.1 + 0.2, 0.3)", null, "std")}`)}`;
         wirePredict(el, 1);
@@ -848,7 +848,7 @@ LESSONS.push({
       }
     },
     {
-      layer: "Bits", title: "One missing value turns integers into floats",
+      layer: "Bits", title: "What a missing value does to an integer column",
       render(el) {
         el.innerHTML = `
           ${codeBlock("pd.Series([1, None]).dtype", "pd")}
@@ -873,7 +873,7 @@ LESSONS.push({
   practice: "Combine conditions with <code>&amp;</code>, <code>|</code> and <code>~</code>, and wrap each comparison in parentheses: <code>df[(df.a &gt; 0) &amp; (df.b == 1)]</code>.",
   steps: [
     {
-      layer: "Bits", title: "True and False are 1 and 0",
+      layer: "Bits", title: "What True and False are underneath",
       render(el) {
         el.innerHTML = `
           ${codeBlock("True + True", "py")}
@@ -935,7 +935,7 @@ LESSONS.push({
       }
     },
     {
-      layer: "Bytecode", title: "Use &, and wrap each comparison",
+      layer: "Bytecode", title: "Combining two conditions on a column",
       render(el) {
         el.innerHTML = `
           ${predict("Which of these runs?", ["<code>(df.a &gt; 0) and (df.b == 1)</code>", "<code>df.a &gt; 0 &amp; df.b == 1</code>", "<code>(df.a &gt; 0) &amp; (df.b == 1)</code>"])}
@@ -1091,7 +1091,7 @@ EXTRA.functions = {
   practice: "Pass data into functions and get results back with <code>return</code>, rather than relying on names made inside. And remember that many pandas methods return a new object instead of changing yours: write <code>df = df.dropna()</code>, not just <code>df.dropna()</code>.",
   steps: [
     {
-      layer: "Memory", title: "A call's names disappear when it returns",
+      layer: "Memory", title: "What happens to a call's names when it returns",
       render(el) {
         el.innerHTML = `
           ${codeBlock("def add_tax(price):\n    tax = price * 0.25\n    return price + tax\n\ntotal = add_tax(100)\nprint(tax)", "py")}
@@ -1135,7 +1135,7 @@ EXTRA.functions = {
       }
     },
     {
-      layer: "Memory", title: "Arguments are names for the caller's objects",
+      layer: "Memory", title: "What a function receives when you pass it a list",
       render(el) {
         el.innerHTML = `
           ${codeBlock("def add_row(rows):\n    rows.append(0)\n\ndata = [1, 2]\nadd_row(data)\ndata", "py")}
@@ -1213,7 +1213,7 @@ EXTRA.errors = {
       }
     },
     {
-      layer: "Code", title: "In a library error, find your own line",
+      layer: "Code", title: "Reading a traceback that runs through a library",
       render(el) {
         const tb = `Traceback (most recent call last):
   File "analysis.py", line 4, in <module>
@@ -1349,7 +1349,7 @@ EXTRA.packages = {
       }
     },
     {
-      layer: "Software", title: "Each Python installation has its own packages",
+      layer: "Software", title: "pip succeeds, the notebook says ModuleNotFoundError",
       render(el) {
         el.innerHTML = `
           ${codeBlock("pip install pandas", "sh")}
@@ -1367,7 +1367,7 @@ EXTRA.packages = {
       }
     },
     {
-      layer: "Software", title: "Versions change behavior",
+      layer: "Software", title: "Same code, two laptops",
       render(el) {
         el.innerHTML = `
           ${codeBlock("df = pd.DataFrame({'name': ['Ana', 'Ben']})\ndf.dtypes", "pd")}
@@ -1484,7 +1484,7 @@ EXTRA.flow = {
   practice: "Keep the result: <code>total = add_tax(100)</code>, <code>df = df.dropna()</code>. What a call gives back vanishes unless a name catches it.",
   steps: [
     {
-      layer: "Bytecode", title: "def makes a function; calling it runs it",
+      layer: "Bytecode", title: "What def does, and what a call does",
       render(el) {
         el.innerHTML = `
           ${codeBlock("def add_tax(price):\n    return price * 1.25\n\ntotal = add_tax(100)", "py")}
@@ -1498,7 +1498,7 @@ EXTRA.flow = {
       }
     },
     {
-      layer: "Code", title: "A call gives back a value, or None",
+      layer: "Code", title: "What a call gives back",
       render(el) {
         el.innerHTML = `
           ${codeBlock("nums = [3, 1, 2]\nresult = nums.sort()\nprint(result)", "py")}
@@ -1539,7 +1539,7 @@ EXTRA.flow = {
       }
     },
     {
-      layer: "Software", title: "import loads a module once",
+      layer: "Software", title: "Where import gets its names",
       render(el) {
         el.innerHTML = `
           ${codeBlock("import math\nmath.sqrt(2)", "std")}
@@ -1668,7 +1668,7 @@ Name: score, dtype: int64</div>
       }
     },
     {
-      layer: "Memory", title: "One comparison runs on every row",
+      layer: "Memory", title: "Comparing a whole column at once",
       render(el) {
         el.innerHTML = `
           ${codeBlock("df.score > 86", "pd")}
@@ -1687,7 +1687,7 @@ Name: score, dtype: bool</div>
       }
     },
     {
-      layer: "Memory", title: "pandas methods give back new objects",
+      layer: "Memory", title: "What sort_values does to df",
       render(el) {
         el.innerHTML = `
           ${codeBlock("df.sort_values('score')\ndf", "pd")}
@@ -1702,7 +1702,7 @@ Name: score, dtype: bool</div>
       }
     },
     {
-      layer: "Memory", title: "DataFrames follow the same rule",
+      layer: "Memory", title: "A DataFrame assigned to a second name",
       render(el) {
         el.innerHTML = `
           <p>The rule from the names lesson, applied to a DataFrame. <code>df2['y'] = 9</code> puts 9 into column <code>y</code> of every row, in place. <code>.tolist()</code> turns the column into a plain list so we can see it.</p>
@@ -1718,7 +1718,7 @@ Name: score, dtype: bool</div>
       }
     },
     {
-      layer: "Memory", title: "A filter builds a new object",
+      layer: "Memory", title: "Assigning through a filter",
       render(el) {
         el.innerHTML = `
           <p>The second line below does three things, one after another, so read it from the inside out:</p>

@@ -34,7 +34,7 @@ Always rebuild after editing src/page.html or src/helper.py, and run both test f
 - **Step** only means running one instruction in a code runner (Step / Step back / Reset), as in a debugger.
 - Don't use "Python" as a count noun: say a **Python process** or a **Python installation**.
 - Don't use "floors" or "tours" (early prototype terms). The layers are Code, Bytecode, Memory, Bits, CPU, Logic gates.
-- Headings state the takeaway ("A filter builds a new object"), not a question.
+- Lesson titles state the takeaway. Section headings say what the section is about and keep their meaning, but never answer the section's own prediction ("Assigning through a filter", not "A filter builds a new object"). Never a question.
 
 ## Writing style
 
