@@ -9,7 +9,8 @@ State of the project as of 2026-09-29, the day it moved from a claude.ai convers
 - Every runnable box shows the learner's own code's bytecode with a stepper after Run, and the call stack when the code calls its own functions. The value stack comes from a small bytecode interpreter in `src/helper.py` that executes the cell's real bytecode on real objects and is checked against a plain run; the call stack is recorded from the real run with `sys.settrace`. The lessons' curated steppers now use stack states recorded by the same tracer (`data/recorded.json`), with hand-written notes.
 - `tests/test_helper.py` (13 tests on real CPython 3.14) and `tests/walkthrough.py` (Chromium, desktop and iPhone) both pass. `.github/workflows/test.yml` runs them on every push.
 - The plan lives in `docs/PLAN.md` (also a Claude Doc: "Python Under the Hood: Plan").
-- Next milestone: deploy to the owner's static site and watch the first learner (his sister, a Pitt Master of Data Science student) use it.
+- Deployed. The repo is public at https://github.com/gtaylor214/python-under-the-hood (GitHub Actions runs the tests on every push). The owner's site repo, gtaylor214/gregt-xyz, includes it as a git submodule at `python-under-the-hood/`, and a Cloudflare Pages rewrite in that repo's `_redirects` serves `site/` at https://gregt.xyz/python-under-the-hood/ (also reachable via www.gregtaylor.dev). To publish a new release: push here, then in gregt-xyz run `git submodule update --remote python-under-the-hood`, commit and push.
+- Next milestone: watch the first learner (the owner's sister, a Pitt Master of Data Science student) use it.
 
 ## How it got here (decisions worth keeping)
 
@@ -37,7 +38,7 @@ State of the project as of 2026-09-29, the day it moved from a claude.ai convers
 
 ## Suggested next steps
 
-1. Deploy `site/` and test on laptop and phone. Check the host's MIME types and security headers (README).
+1. Test the deployed page on a phone and an iPad in Safari; Chromium only so far.
 2. Write the three new lessons in `docs/PLAN.md` (values/names/collections, functions/loops/modules, what pandas adds) and reorder the course as its curriculum table shows. Most of `docs/TERMS.md` gets resolved by those lessons; work down what remains afterwards.
 3. Watch the first learner; log where she stalls, what she skips, and what she still asks.
 4. Refactor into TypeScript + Vite: lesson content as typed data, components (stepper, frame stepper, pile, predict, try box, bit views) as modules, pandas outputs recorded by script.
