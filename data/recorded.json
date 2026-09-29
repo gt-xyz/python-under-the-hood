@@ -1,0 +1,396 @@
+{
+ "python": "3.14.0rc2",
+ "t1": [
+  [
+   "LOAD_NAME",
+   "price"
+  ],
+  [
+   "LOAD_NAME",
+   "qty"
+  ],
+  [
+   "BINARY_OP",
+   "*"
+  ],
+  [
+   "STORE_NAME",
+   "total"
+  ]
+ ],
+ "t2": [
+  [
+   "LOAD_NAME",
+   "a"
+  ],
+  [
+   "STORE_NAME",
+   "b"
+  ],
+  [
+   "LOAD_NAME",
+   "b"
+  ],
+  [
+   "LOAD_ATTR",
+   "append + NULL|self"
+  ],
+  [
+   "LOAD_SMALL_INT",
+   "4"
+  ],
+  [
+   "CALL",
+   "1"
+  ],
+  [
+   "POP_TOP",
+   ""
+  ]
+ ],
+ "t3": [
+  [
+   "LOAD_NAME",
+   "a"
+  ],
+  [
+   "LOAD_NAME",
+   "b"
+  ],
+  [
+   "BINARY_OP",
+   "+"
+  ],
+  [
+   "STORE_NAME",
+   "x"
+  ]
+ ],
+ "t3_folded": [
+  [
+   "LOAD_CONST",
+   "0.30000000000000004"
+  ],
+  [
+   "STORE_NAME",
+   "x"
+  ]
+ ],
+ "t3_bits": {
+  "0.1": {
+   "sign": "0",
+   "exp": "01111111011",
+   "frac": "1001100110011001100110011001100110011001100110011010",
+   "exact": "0.1000000000000000055511151231257827021181583404541015625"
+  },
+  "0.2": {
+   "sign": "0",
+   "exp": "01111111100",
+   "frac": "1001100110011001100110011001100110011001100110011010",
+   "exact": "0.200000000000000011102230246251565404236316680908203125"
+  },
+  "0.1 + 0.2": {
+   "sign": "0",
+   "exp": "01111111101",
+   "frac": "0011001100110011001100110011001100110011001100110100",
+   "exact": "0.3000000000000000444089209850062616169452667236328125"
+  },
+  "0.3": {
+   "sign": "0",
+   "exp": "01111111101",
+   "frac": "0011001100110011001100110011001100110011001100110011",
+   "exact": "0.299999999999999988897769753748434595763683319091796875"
+  }
+ },
+ "t3_repr": "0.30000000000000004",
+ "t4_loop": [
+  [
+   "LOAD_SMALL_INT",
+   "0"
+  ],
+  [
+   "STORE_NAME",
+   "count"
+  ],
+  [
+   "LOAD_NAME",
+   "values"
+  ],
+  [
+   "GET_ITER",
+   ""
+  ],
+  [
+   "FOR_ITER",
+   "to L3"
+  ],
+  [
+   "STORE_NAME",
+   "v"
+  ],
+  [
+   "LOAD_NAME",
+   "v"
+  ],
+  [
+   "LOAD_SMALL_INT",
+   "0"
+  ],
+  [
+   "COMPARE_OP",
+   "bool(>)"
+  ],
+  [
+   "POP_JUMP_IF_TRUE",
+   "to L2"
+  ],
+  [
+   "JUMP_BACKWARD",
+   "to L1"
+  ],
+  [
+   "LOAD_NAME",
+   "count"
+  ],
+  [
+   "LOAD_SMALL_INT",
+   "1"
+  ],
+  [
+   "BINARY_OP",
+   "+="
+  ],
+  [
+   "STORE_NAME",
+   "count"
+  ],
+  [
+   "JUMP_BACKWARD",
+   "to L1"
+  ],
+  [
+   "END_FOR",
+   ""
+  ],
+  [
+   "POP_ITER",
+   ""
+  ]
+ ],
+ "t4_mask": [
+  [
+   "LOAD_NAME",
+   "arr"
+  ],
+  [
+   "LOAD_SMALL_INT",
+   "0"
+  ],
+  [
+   "COMPARE_OP",
+   ">"
+  ],
+  [
+   "LOAD_ATTR",
+   "sum + NULL|self"
+  ],
+  [
+   "CALL",
+   "0"
+  ],
+  [
+   "STORE_NAME",
+   "count"
+  ]
+ ],
+ "t5": [
+  [
+   "LOAD_NAME",
+   "df"
+  ],
+  [
+   "LOAD_ATTR",
+   "a"
+  ],
+  [
+   "LOAD_SMALL_INT",
+   "0"
+  ],
+  [
+   "COMPARE_OP",
+   ">"
+  ],
+  [
+   "LOAD_NAME",
+   "df"
+  ],
+  [
+   "LOAD_ATTR",
+   "b"
+  ],
+  [
+   "LOAD_SMALL_INT",
+   "1"
+  ],
+  [
+   "COMPARE_OP",
+   "=="
+  ],
+  [
+   "BINARY_OP",
+   "&"
+  ],
+  [
+   "STORE_NAME",
+   "mask"
+  ]
+ ],
+ "t5_bad_ast": "df.a > 0 & df.b == 1",
+ "t6": [
+  [
+   "LOAD_NAME",
+   "df"
+  ],
+  [
+   "LOAD_NAME",
+   "df"
+  ],
+  [
+   "LOAD_ATTR",
+   "x"
+  ],
+  [
+   "LOAD_SMALL_INT",
+   "0"
+  ],
+  [
+   "COMPARE_OP",
+   "!="
+  ],
+  [
+   "BINARY_OP",
+   "[]"
+  ],
+  [
+   "STORE_NAME",
+   "keep"
+  ]
+ ],
+ "t6_bits": {
+  "sign": "0",
+  "exp": "11111111111",
+  "frac": "1000000000000000000000000000000000000000000000000000",
+  "exact": "nan"
+ },
+ "t6_eq": [
+  false,
+  true,
+  false
+ ],
+ "t7": [
+  [
+   "LOAD_SMALL_INT",
+   "5"
+  ],
+  [
+   "LOAD_NAME",
+   "df"
+  ],
+  [
+   "LOAD_NAME",
+   "df"
+  ],
+  [
+   "LOAD_ATTR",
+   "x"
+  ],
+  [
+   "LOAD_SMALL_INT",
+   "0"
+  ],
+  [
+   "COMPARE_OP",
+   ">"
+  ],
+  [
+   "BINARY_OP",
+   "[]"
+  ],
+  [
+   "LOAD_CONST",
+   "'y'"
+  ],
+  [
+   "STORE_SUBSCR",
+   ""
+  ]
+ ],
+ "t7_good": [
+  [
+   "LOAD_SMALL_INT",
+   "5"
+  ],
+  [
+   "LOAD_NAME",
+   "df"
+  ],
+  [
+   "LOAD_ATTR",
+   "loc"
+  ],
+  [
+   "LOAD_NAME",
+   "df"
+  ],
+  [
+   "LOAD_ATTR",
+   "x"
+  ],
+  [
+   "LOAD_SMALL_INT",
+   "0"
+  ],
+  [
+   "COMPARE_OP",
+   ">"
+  ],
+  [
+   "LOAD_CONST",
+   "'y'"
+  ],
+  [
+   "BUILD_TUPLE",
+   "2"
+  ],
+  [
+   "STORE_SUBSCR",
+   ""
+  ]
+ ],
+ "imm": [
+  [
+   "LOAD_NAME",
+   "x"
+  ],
+  [
+   "STORE_NAME",
+   "y"
+  ],
+  [
+   "LOAD_NAME",
+   "y"
+  ],
+  [
+   "LOAD_SMALL_INT",
+   "1"
+  ],
+  [
+   "BINARY_OP",
+   "+="
+  ],
+  [
+   "STORE_NAME",
+   "y"
+  ]
+ ]
+}

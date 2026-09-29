@@ -1,0 +1,1635 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Python Under the Hood</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a lesson list on the left; the current lesson step on the right, one step at a time with Back and Next. */
+:root {
+  --bg: #f3f5f2;
+  --surface: #ffffff;
+  --sunk: #e9ede9;
+  --ink: #17211d;
+  --muted: #56645e;
+  --line: #d5dcd7;
+  --accent: #1f5bd0;
+  --accent-soft: #e3ebfb;
+  --sign: #b8235f;
+  --exp: #0c7d6f;
+  --frac: #a86400;
+  --good: #1b7a44;
+  --bad: #b3261e;
+  --warn-bg: #fff4dc;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.2rem;
+  --step-2: 1.5rem;
+  --step-3: 2.1rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111513; --surface: #181e1b; --sunk: #0d110f; --ink: #e4eae6; --muted: #9aa8a1; --line: #2c3531;
+    --accent: #83a9ff; --accent-soft: #1d2842; --sign: #ff7cb2; --exp: #45d1bd; --frac: #f0b34c;
+    --good: #5bcf8a; --bad: #ff8078; --warn-bg: #3a2f14; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111513; --surface: #181e1b; --sunk: #0d110f; --ink: #e4eae6; --muted: #9aa8a1; --line: #2c3531;
+  --accent: #83a9ff; --accent-soft: #1d2842; --sign: #ff7cb2; --exp: #45d1bd; --frac: #f0b34c;
+  --good: #5bcf8a; --bad: #ff8078; --warn-bg: #3a2f14; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: var(--step-0); line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 64px; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: var(--step-3); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: var(--step-2); font-weight: 700; }
+h3 { font-size: var(--step-1); font-weight: 500; }
+p { margin: 0; max-width: 66ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.9em; }
+a { color: var(--accent); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible, label:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.eyebrow { font-size: var(--step--1); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+
+header.top { display: grid; gap: 10px; margin-bottom: 28px; }
+header.top p { color: var(--muted); font-size: var(--step-1); }
+
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 32px; align-items: start; }
+@media (max-width: 880px) { .layout { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
+
+nav.lessons { display: grid; gap: 4px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+.navtoggle { display: none; }
+.navcol { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+nav.lessons { position: static; }
+@media (max-width: 880px) {
+  .navcol { position: static; display: grid; gap: 8px; }
+  .navtoggle { display: block; justify-self: start; }
+  nav.lessons { display: none; }
+  nav.lessons.open { display: grid; }
+}
+.lesson-btn { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px; align-content: start; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 9px 12px; }
+.lesson-btn:hover { background: var(--surface); border-color: var(--line); }
+.lesson-btn[aria-current="true"] { background: var(--surface); border-color: var(--accent); }
+.lesson-btn .ln { font-family: var(--font-mono); font-weight: 600; color: var(--muted); }
+.lesson-btn[aria-current="true"] .ln { color: var(--accent); }
+.lesson-btn .lt { font-weight: 700; line-height: 1.25; }
+.lesson-btn .lp { display: block; font-weight: 400; font-size: var(--step--1); color: var(--muted); margin-top: 2px; }
+.lesson-btn.sandbox { margin-top: 8px; border: 1px dashed var(--line); }
+
+.lesson-head h2:focus { outline: none; }
+.lesson-head { display: grid; gap: 8px; margin-bottom: 16px; }
+.lead { font-size: var(--step-1); line-height: 1.45; }
+.dots { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.dot { width: 28px; height: 8px; border-radius: 4px; border: 0; background: var(--line); padding: 0; }
+.dot.seen { background: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.dot.on { background: var(--accent); }
+.dl { font-size: var(--step--1); color: var(--muted); margin-left: 6px; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px 20px; display: grid; gap: 12px; min-width: 0; margin-bottom: 12px; }
+.step-body, .reveal, .step { grid-template-columns: minmax(0, 1fr); }
+.step-body { display: grid; gap: 14px; min-width: 0; }
+.layer-tag { color: var(--accent); }
+.step > h3 { margin-top: -6px; }
+@media (max-width: 560px) { .step { padding: 14px; } }
+.stepnav { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.stepnav .btn { padding: 9px 16px; }
+.nextwrap { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.upnext { font-size: 0.9rem; color: var(--muted); text-align: right; }
+.predict { border: 1px solid var(--accent); border-radius: 10px; padding: 12px 14px; display: grid; gap: 10px; background: var(--accent-soft); }
+.predict .eyebrow { color: var(--accent); }
+.pq { font-weight: 700; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { max-width: 100%; overflow-wrap: anywhere; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 14px; font-family: var(--font-mono); font-size: 0.9rem; text-align: left; }
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:disabled { cursor: default; opacity: 0.7; }
+.opt.right { border-color: var(--good); color: var(--good); opacity: 1; font-weight: 600; }
+.opt.wrong { border-color: var(--bad); color: var(--bad); opacity: 1; text-decoration: line-through; }
+.verdict { font-weight: 700; margin-top: -4px; }
+.ans { transition: filter 0.25s; }
+.ans.veiled { filter: blur(7px); user-select: none; pointer-events: none; }
+.verdict.wait { color: var(--muted); font-weight: 400; font-size: 0.9rem; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-size: 0.88rem; justify-self: start; }
+
+.verdict:empty { display: none; }
+.verdict.ok { color: var(--good); } .verdict.no { color: var(--bad); }
+.reveal { display: grid; gap: 14px; min-width: 0; }
+.try { border: 1px dashed var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
+.try .eyebrow { color: var(--good); }
+details.peek > summary { cursor: pointer; font-weight: 700; color: var(--muted); font-size: 0.9rem; margin-bottom: 8px; }
+.switches { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 560px) { .switches { gap: 5px; } .switches .bitbtn { width: 34px; height: 36px; } }
+.tag { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; border-radius: 999px; padding: 1px 9px; border: 1px solid; white-space: nowrap; }
+.tag-py, .tag-std { color: var(--accent); border-color: var(--accent); }
+.tag-std { border-style: dashed; }
+.tag-np, .tag-pd { color: var(--exp); border-color: var(--exp); }
+.tag-jp { color: var(--frac); border-color: var(--frac); }
+.ex { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; justify-items: start; min-width: 0; }
+.ex > .code { justify-self: stretch; }
+.hw { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: stretch; }
+.hwbox { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 6px; align-content: start; background: var(--sunk); min-width: 0; }
+.hn { font-weight: 700; }
+.hwarrow { align-self: center; color: var(--muted); font-size: 1.2rem; }
+.bytes { display: grid; gap: 2px; font-family: var(--font-mono); font-size: 0.75rem; }
+.bytes span { display: flex; gap: 8px; } .bytes b { color: var(--muted); font-weight: 400; }
+@media (max-width: 700px) { .hw { grid-template-columns: minmax(0, 1fr); } .hwarrow { justify-self: center; transform: rotate(90deg); } }
+.stackl { display: grid; gap: 8px; }
+.stackl > div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; justify-items: start; }
+.fs { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 700px) { .fs { grid-template-columns: minmax(0, 1fr); } }
+.fs-side { display: grid; gap: 6px; align-content: start; justify-items: stretch; }
+.fs-side .pilebase, .fs-side .op { justify-self: center; }
+.fs-code { white-space: pre; }
+.fs-code .ln { display: block; padding: 0 6px; border-radius: 4px; }
+.fs-code .ln i { display: inline-block; width: 2.2em; color: var(--muted); font-style: normal; user-select: none; }
+.fs-code .ln.on { background: var(--accent-soft); outline: 1px solid var(--accent); }
+.frame { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; font-family: var(--font-mono); font-size: 0.82rem; background: var(--surface); }
+pre.tb { font-size: 0.8rem; }
+pre.tb.err { color: var(--bad); border-color: var(--bad); }
+.tb-key { display: grid; gap: 8px; }
+.tb-key > div { border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; }
+table.errs td { text-align: left; }
+table.errs td.plain { font-family: var(--font-body); }
+.envs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.env { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; background: var(--sunk); }
+.pk { font-family: var(--font-mono); font-size: 0.82rem; }
+.tag-sh { color: var(--muted); border-color: var(--muted); }
+.sw { display: grid; justify-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); }
+.colset { display: flex; flex-wrap: wrap; gap: 8px; }
+.col { display: grid; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; min-width: 90px; font-family: var(--font-mono); font-size: 0.85rem; }
+.col .cn { background: var(--sunk); padding: 5px 10px; font-weight: 600; }
+.col .ct { padding: 2px 10px; color: var(--accent); font-size: var(--step--1); border-bottom: 1px solid var(--line); }
+.col .cv { padding: 4px 10px; border-top: 1px solid var(--line); }
+.col .ct + .cv { border-top: 0; }
+details.more { border: 1px dashed var(--line); border-radius: 12px; }
+details.more > summary { padding: 12px 16px; cursor: pointer; font-weight: 700; color: var(--muted); list-style: none; display: flex; gap: 10px; align-items: baseline; }
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary::before { content: "+"; font-family: var(--font-mono); color: var(--accent); }
+details.more[open] > summary::before { content: "−"; }
+details.more > .layer { margin: 0 12px 12px; }
+.compare { display: grid; gap: 8px; align-content: start; }
+.pipe { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.88rem; }
+.pipe span:nth-child(odd) { border: 1px solid var(--line); background: var(--sunk); border-radius: 6px; padding: 3px 8px; font-family: var(--font-mono); font-size: 0.8rem; }
+.pipe span:nth-child(even) { color: var(--muted); }
+.practice { border-left: 3px solid var(--good); background: var(--surface); padding: 12px 18px; border-radius: 0 12px 12px 0; display: grid; gap: 4px; }
+.practice .eyebrow { color: var(--good); }
+
+/* code */
+.code { background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-family: var(--font-mono); font-size: 0.875rem; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 0; }
+.code .p { color: var(--muted); user-select: none; }
+.out { font-family: var(--font-mono); font-size: 0.875rem; padding: 8px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); white-space: pre-wrap; word-break: break-word; }
+.out.err { border-color: var(--bad); color: var(--bad); }
+.out.warn { background: var(--warn-bg); border-color: var(--frac); color: var(--ink); }
+.note { color: var(--muted); font-size: 0.94rem; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.grid2 > * { min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; font-size: 0.94rem; font-weight: 700; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.kicker { font-weight: 700; }
+.aha { font-size: var(--step-1); font-family: var(--font-display); font-weight: 500; line-height: 1.3; max-width: 60ch; }
+
+/* bytecode listing */
+.bc-wrap { overflow-x: auto; }
+table.bc { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+table.bc td { padding: 5px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+table.bc tr:first-child td { border-top: 0; }
+table.bc td.op { font-family: var(--font-mono); font-weight: 600; white-space: nowrap; }
+table.bc td.arg { font-family: var(--font-mono); color: var(--accent); white-space: nowrap; }
+table.bc td.why { color: var(--muted); min-width: 180px; }
+table.bc tr.hot td { background: var(--accent-soft); }
+table.bc tr.loop td.op { border-left: 3px solid var(--frac); }
+@media (max-width: 560px) {
+  table.bc, table.bc tbody { display: block; }
+  table.bc tr { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; border-top: 1px solid var(--line); padding: 4px 0; }
+  table.bc tr:first-child { border-top: 0; }
+  table.bc td { border: 0; padding: 2px 6px; }
+  table.bc td.why { grid-column: 1 / -1; min-width: 0; font-size: 0.85rem; }
+}
+.vm { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 18px; align-items: start; }
+@media (max-width: 560px) { .vm { grid-template-columns: minmax(0, 1fr); } .vm .pilebox { order: -1; } }
+.pilebox { display: grid; gap: 4px; justify-items: center; align-content: start; }
+@media (max-width: 560px) { .vm .pilebox { margin-top: 6px; } }
+.pile { width: 180px; min-height: 176px; display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 4px; padding: 6px; border: 2px solid var(--muted); border-top: 0; border-radius: 0 0 10px 10px; background: var(--sunk); overflow: hidden; }
+.frames-pile { width: 100%; min-height: 150px; }
+.slab { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-mono); font-size: 0.85rem; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 34px 6px 8px; text-align: center; overflow-wrap: anywhere; }
+.frames-pile .slab { display: grid; justify-content: stretch; justify-items: start; text-align: left; gap: 2px; padding: 8px 40px 8px 10px; }
+.slab.top { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.toptag { position: absolute; right: 6px; top: 6px; font-family: var(--font-body); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.slab.empty { border-style: dashed; background: transparent; color: var(--muted); padding-right: 8px; }
+.slab .fn { font-family: var(--font-body); font-weight: 700; }
+.slab .fv { font-weight: 400; } .slab .fv b { font-weight: 600; } .slab .muted { color: var(--muted); }
+.slab.in { animation: pile-in 0.28s ease-out; }
+.slab.out { animation: pile-out 0.32s ease-in forwards; }
+@keyframes pile-in { from { transform: translateY(-16px); opacity: 0; } }
+@keyframes pile-out { to { transform: translateY(-16px); opacity: 0; } }
+.pilebase { font-size: var(--step--1); color: var(--muted); }
+.ctrls { justify-content: center; flex-wrap: nowrap; }
+.ctrls .btn { padding: 6px 10px; white-space: nowrap; }
+.fs-side .ctrls { justify-self: center; }
+.op { font-family: var(--font-mono); font-size: 0.8rem; min-height: 1.3em; display: flex; flex-wrap: wrap; gap: 4px 10px; justify-content: center; }
+.op .pop { color: var(--bad); } .op .push { color: var(--good); }
+.stack { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 34px; }
+.stack .lbl { font-size: var(--step--1); color: var(--muted); font-weight: 700; margin-right: 4px; }
+.plate { font-family: var(--font-mono); font-size: 0.85rem; border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 2px 8px; }
+.plate.empty { border-style: dashed; background: transparent; color: var(--muted); border-color: var(--line); }
+
+/* bits */
+.bits { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; word-break: break-all; letter-spacing: 0.02em; }
+.bits .s { color: var(--sign); font-weight: 600; }
+.bits .e { color: var(--exp); font-weight: 600; }
+.bits .f { color: var(--frac); }
+.bits .diff { background: var(--warn-bg); outline: 1px solid var(--frac); border-radius: 2px; }
+.bitrow { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--line); }
+.bitrow:first-child { border-top: 0; padding-top: 0; }
+.bitrow .name { font-family: var(--font-mono); font-weight: 600; }
+.bitrow .exact { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); word-break: break-all; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: var(--step--1); color: var(--muted); }
+.legend b { font-family: var(--font-mono); }
+.legend .s { color: var(--sign); } .legend .e { color: var(--exp); } .legend .f { color: var(--frac); }
+input[type="text"], textarea { font-family: var(--font-mono); font-size: 0.9rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 7px 10px; width: 100%; }
+textarea { min-height: 120px; resize: vertical; line-height: 1.55; }
+
+/* notebook */
+.cell { display: grid; grid-template-columns: 64px minmax(0,1fr) auto; gap: 8px; align-items: center; }
+.cell .in { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); text-align: right; }
+.cell .code { padding: 8px 12px; }
+.memory { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--sunk); display: grid; gap: 6px; }
+.memory .item { font-family: var(--font-mono); font-size: 0.85rem; }
+.memory .none { color: var(--muted); font-style: italic; }
+
+/* data tables */
+.tbl-wrap { overflow-x: auto; }
+table.data { border-collapse: collapse; font-family: var(--font-mono); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { border: 1px solid var(--line); padding: 5px 10px; text-align: center; }
+table.data th { background: var(--sunk); font-weight: 600; }
+table.data td.t { color: var(--good); font-weight: 600; }
+table.data td.f { color: var(--muted); }
+table.data td.nan { color: var(--frac); font-weight: 600; }
+table.data td button { background: none; border: 0; padding: 0; text-decoration: underline dotted; font-family: inherit; }
+table.data tr.kept td { background: var(--accent-soft); }
+
+/* memory picture */
+svg.mem { width: 100%; max-width: 520px; height: auto; display: block; }
+svg.mem text { font-family: var(--font-mono); font-size: 13px; fill: var(--ink); }
+svg.mem .q { fill: var(--muted); font-size: 11px; }
+svg.mem .box { fill: var(--surface); stroke: var(--ink); stroke-width: 1.2; }
+svg.mem .namebox { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
+svg.mem .ghost { fill: none; stroke: var(--muted); stroke-dasharray: 4 3; }
+svg.mem .arrow { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+svg.mem .ah { fill: var(--accent); }
+
+/* layout pictures */
+.cells { display: flex; flex-wrap: wrap; gap: 3px; }
+.cells span { width: 22px; height: 22px; border-radius: 3px; background: var(--frac); opacity: 0.85; }
+.cells span.ptr { background: var(--accent); }
+.scatter { position: relative; height: 90px; border: 1px dashed var(--line); border-radius: 8px; }
+.scatter span { position: absolute; width: 22px; height: 22px; border-radius: 3px; background: var(--frac); opacity: 0.85; }
+.stat { font-family: var(--font-mono); font-size: var(--step-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* gate */
+.gate { display: grid; grid-template-columns: auto auto auto; gap: 10px 14px; align-items: center; justify-content: start; }
+.bitbtn { font-family: var(--font-mono); font-weight: 600; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-size: 1.1rem; }
+.bitbtn.one { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.gate svg { width: 120px; height: 96px; }
+.gate svg path { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.gate svg line { stroke: var(--muted); stroke-width: 1.5; }
+.gate svg line.live { stroke: var(--accent); stroke-width: 2.5; }
+.outbit { font-family: var(--font-mono); font-size: 1.4rem; font-weight: 600; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--line); }
+.outbit.one { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+.status { font-size: 0.9rem; color: var(--muted); }
+.hint { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; }
+.hint button { justify-self: start; }
+footer.foot { margin-top: 40px; color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<style>html{color-scheme:light}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <h1>Python Under the Hood</h1>
+    <p>An introduction for those new to computing: what your Python code is actually doing, from the code you write down to the bits.</p>
+  </header>
+  <div class="layout">
+    <div class="navcol"><button class="btn navtoggle" id="navtoggle" aria-expanded="false" aria-controls="lessonNav">All lessons</button><nav class="lessons" id="lessonNav" aria-label="Lessons"></nav></div>
+    <main id="stage" aria-live="polite"></main>
+  </div>
+  <footer class="foot">
+    <span>Bytecode recorded from CPython 3.14 and pandas output from pandas 3.0.2. The CPU and logic-gate steps are simplified.</span>
+    <span>Related tools: <a href="https://pythontutor.com/" target="_blank" rel="noopener">Python Tutor</a> · <a href="https://pandastutor.com/" target="_blank" rel="noopener">Pandas Tutor</a> · <a href="https://float.exposed/" target="_blank" rel="noopener">float.exposed</a></span>
+  </footer>
+</div>
+
+<script>
+const DATA = {"python":"3.14.0rc2","t1":[["LOAD_NAME","price"],["LOAD_NAME","qty"],["BINARY_OP","*"],["STORE_NAME","total"]],"t2":[["LOAD_NAME","a"],["STORE_NAME","b"],["LOAD_NAME","b"],["LOAD_ATTR","append + NULL|self"],["LOAD_SMALL_INT","4"],["CALL","1"],["POP_TOP",""]],"t3":[["LOAD_NAME","a"],["LOAD_NAME","b"],["BINARY_OP","+"],["STORE_NAME","x"]],"t3_folded":[["LOAD_CONST","0.30000000000000004"],["STORE_NAME","x"]],"t3_bits":{"0.1":{"sign":"0","exp":"01111111011","frac":"1001100110011001100110011001100110011001100110011010","exact":"0.1000000000000000055511151231257827021181583404541015625"},"0.2":{"sign":"0","exp":"01111111100","frac":"1001100110011001100110011001100110011001100110011010","exact":"0.200000000000000011102230246251565404236316680908203125"},"0.1 + 0.2":{"sign":"0","exp":"01111111101","frac":"0011001100110011001100110011001100110011001100110100","exact":"0.3000000000000000444089209850062616169452667236328125"},"0.3":{"sign":"0","exp":"01111111101","frac":"0011001100110011001100110011001100110011001100110011","exact":"0.299999999999999988897769753748434595763683319091796875"}},"t3_repr":"0.30000000000000004","t4_loop":[["LOAD_SMALL_INT","0"],["STORE_NAME","count"],["LOAD_NAME","values"],["GET_ITER",""],["FOR_ITER","to L3"],["STORE_NAME","v"],["LOAD_NAME","v"],["LOAD_SMALL_INT","0"],["COMPARE_OP","bool(>)"],["POP_JUMP_IF_TRUE","to L2"],["JUMP_BACKWARD","to L1"],["LOAD_NAME","count"],["LOAD_SMALL_INT","1"],["BINARY_OP","+="],["STORE_NAME","count"],["JUMP_BACKWARD","to L1"],["END_FOR",""],["POP_ITER",""]],"t4_mask":[["LOAD_NAME","arr"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_ATTR","sum + NULL|self"],["CALL","0"],["STORE_NAME","count"]],"t5":[["LOAD_NAME","df"],["LOAD_ATTR","a"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_NAME","df"],["LOAD_ATTR","b"],["LOAD_SMALL_INT","1"],["COMPARE_OP","=="],["BINARY_OP","&"],["STORE_NAME","mask"]],"t5_bad_ast":"df.a > 0 & df.b == 1","t6":[["LOAD_NAME","df"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP","!="],["BINARY_OP","[]"],["STORE_NAME","keep"]],"t6_bits":{"sign":"0","exp":"11111111111","frac":"1000000000000000000000000000000000000000000000000000","exact":"nan"},"t6_eq":[false,true,false],"t7":[["LOAD_SMALL_INT","5"],["LOAD_NAME","df"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["BINARY_OP","[]"],["LOAD_CONST","'y'"],["STORE_SUBSCR",""]],"t7_good":[["LOAD_SMALL_INT","5"],["LOAD_NAME","df"],["LOAD_ATTR","loc"],["LOAD_NAME","df"],["LOAD_ATTR","x"],["LOAD_SMALL_INT","0"],["COMPARE_OP",">"],["LOAD_CONST","'y'"],["BUILD_TUPLE","2"],["STORE_SUBSCR",""]],"imm":[["LOAD_NAME","x"],["STORE_NAME","y"],["LOAD_NAME","y"],["LOAD_SMALL_INT","1"],["BINARY_OP","+="],["STORE_NAME","y"]]};
+
+const OPS = {
+  LOAD_NAME: "Look up this name and put its object on the stack",
+  STORE_NAME: "Take the top of the stack and give it this name",
+  BINARY_OP: "Take the top two items, combine them with this operator, push the result",
+  LOAD_ATTR: "Look up an attribute (a column or a method) on the top item",
+  LOAD_SMALL_INT: "Push this small whole number",
+  LOAD_CONST: "Push this constant value",
+  CALL: "Call the function with this many arguments",
+  POP_TOP: "Throw away the top item (a result nobody kept)",
+  COMPARE_OP: "Compare the top two items and push the answer",
+  GET_ITER: "Get ready to walk through the object one item at a time",
+  FOR_ITER: "Push the next item, or leave the loop when there are none",
+  POP_JUMP_IF_TRUE: "If the top item is true, jump ahead",
+  POP_JUMP_IF_FALSE: "If the top item is false, jump ahead",
+  JUMP_BACKWARD: "Jump back to the top of the loop",
+  END_FOR: "Clean up after the loop",
+  POP_ITER: "Clean up after the loop",
+  STORE_SUBSCR: "Do  container[key] = value",
+  BUILD_TUPLE: "Pack the top items into a tuple",
+  BUILD_LIST: "Pack the top items into a new list",
+  RETURN_VALUE: "Finish and hand back the top item",
+  LOAD_GLOBAL: "Look up a global name (often a built-in like print)",
+  LOAD_FAST: "Look up a local variable",
+  STORE_FAST: "Store into a local variable",
+  LOAD_FAST_BORROW_LOAD_FAST_BORROW: "Look up two local variables",
+  PUSH_NULL: "Push a placeholder used by the call",
+  COPY: "Copy an item on the stack",
+  TO_BOOL: "Turn the top item into True or False",
+  LOAD_FAST_BORROW: "Look up a local variable",
+  CALL_INTRINSIC_1: "Run a small built-in helper",
+  FORMAT_SIMPLE: "Format a value for an f-string",
+  BUILD_STRING: "Join the pieces of an f-string",
+  UNARY_NEGATIVE: "Flip the sign of the top item",
+  BUILD_MAP: "Build a new dictionary",
+  LIST_APPEND: "Append to a list (inside a comprehension)",
+  MAKE_FUNCTION: "Create a function object",
+  IMPORT_NAME: "Import a module",
+};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function cleanArg(op, a) {
+  if (!a) return "";
+  a = a.replace(" + NULL|self", "").replace(" + NULL", "");
+  const m = a.match(/^bool\((.*)\)$/); if (m) a = m[1];
+  if (op === "BINARY_OP" && a === "[]") a = "[ ]  (subscript)";
+  return a;
+}
+
+// ---------- shared pieces ----------
+function bcTable(instrs, opts = {}) {
+  const rows = instrs.map(([op, arg], i) => {
+    const cls = [opts.hot === i ? "hot" : "", opts.loop && opts.loop.includes(i) ? "loop" : ""].join(" ");
+    const why = opts.compact ? "" : `<td class="why">${esc(OPS[op] || "")}</td>`;
+    return `<tr class="${cls}" data-i="${i}" title="${esc(OPS[op] || "")}"><td class="op">${esc(op)}</td><td class="arg">${esc(cleanArg(op, arg))}</td>${why}</tr>`;
+  }).join("");
+  return `<div class="bc-wrap"><table class="bc"><tbody>${rows}</tbody></table></div>`;
+}
+const TAGS = { py: "Python", std: "Python standard library", np: "NumPy", pd: "pandas", jp: "Jupyter", sh: "Terminal" };
+const tagPill = t => t ? `<span class="tag tag-${t}">${TAGS[t]}</span>` : "";
+function codeBlock(src, tag) {
+  const pre = `<pre class="code">${esc(src)}</pre>`;
+  return tag ? `<div class="ex">${tagPill(tag)}${pre}</div>` : pre;
+}
+
+// A stepper that walks through instructions and shows the stack.
+// Draws a vertical pile: first item at the bottom, last item on top. Items that
+// arrive slide in from above; items that leave lift off the top and fade.
+function renderPile(el, items, prev, fmt, eq) {
+  eq = eq || ((x, y) => x === y);
+  let k = 0;
+  while (k < items.length && k < prev.length && eq(items[k], prev[k])) k++;
+  const popped = prev.slice(k), pushed = items.slice(k);
+  const slab = (it, cls, top) => `<div class="slab ${cls}">${fmt(it, top)}${top ? `<span class="toptag">top</span>` : ""}</div>`;
+  const empty = `<div class="slab empty">empty</div>`;
+  const final = () => {
+    el.innerHTML = items.length ? items.map((it, i) => slab(it, (i === items.length - 1 ? "top " : "") + (i >= k ? "in" : ""), i === items.length - 1)).join("") : empty;
+  };
+  const tok = el._tok = (el._tok || 0) + 1;
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (popped.length && !still) {
+    // First lift the popped items off the top, then drop in the new ones.
+    el.innerHTML = prev.map((it, i) => slab(it, (i >= k ? "out " : "") + (i === prev.length - 1 ? "top" : ""), i === prev.length - 1)).join("");
+    setTimeout(() => { if (el._tok === tok) final(); }, 300);
+  } else final();
+  return { popped, pushed };
+}
+function stepper(root, instrs, steps, onStep) {
+  let i = -1, shown = [];
+  const tbl = root.querySelector(".bc-slot"), pile = root.querySelector(".stack-slot"), op = root.querySelector(".op-slot");
+  const noteEl = root.querySelector(".note-slot");
+  const prev = root.querySelector("[data-act=prev]"), next = root.querySelector("[data-act=next]"), reset = root.querySelector("[data-act=reset]");
+  function draw() {
+    tbl.innerHTML = bcTable(instrs, { hot: i });
+    const st = i < 0 ? [] : steps[i].stack;
+    const d = renderPile(pile, st, shown, v => `<span>${esc(v)}</span>`);
+    shown = st.slice();
+    op.innerHTML = i < 0 ? "" : [d.popped.length ? `<span class="pop">pop ${d.popped.map(esc).join(", ")}</span>` : "", d.pushed.length ? `<span class="push">push ${d.pushed.map(esc).join(", ")}</span>` : ""].filter(Boolean).join(" ");
+    noteEl.textContent = i < 0 ? "Press Step to run the first instruction." : steps[i].note;
+    prev.disabled = i < 0; next.disabled = i >= instrs.length - 1;
+    if (onStep) onStep(i);
+  }
+  prev.onclick = () => { i--; draw(); };
+  next.onclick = () => { i++; draw(); };
+  reset.onclick = () => { i = -1; draw(); };
+  draw();
+}
+const stepperShell = `<div class="vm"><div class="bc-slot"></div><div class="pilebox"><span class="eyebrow">The stack</span><div class="pile stack-slot" aria-live="polite"></div><span class="pilebase">bottom</span><p class="op op-slot"></p><div class="row ctrls"><button class="btn primary" data-act="next">Step</button><button class="btn" data-act="prev">Step back</button><button class="btn" data-act="reset">Reset</button></div></div></div><p class="note note-slot"></p>`;
+
+// Float bits, computed in the browser with the same IEEE 754 format Python uses.
+function f64bits(x) {
+  const dv = new DataView(new ArrayBuffer(8)); dv.setFloat64(0, x);
+  let s = ""; for (let i = 0; i < 8; i++) s += dv.getUint8(i).toString(2).padStart(8, "0");
+  return { sign: s[0], exp: s.slice(1, 12), frac: s.slice(12) };
+}
+function exactDecimal(x) {
+  if (!Number.isFinite(x)) return String(x);
+  const b = f64bits(x);
+  const expBits = parseInt(b.exp, 2);
+  let m = BigInt("0b" + b.frac); let e;
+  if (expBits === 0) e = -1074; else { m += 1n << 52n; e = expBits - 1075; }
+  const neg = b.sign === "1" ? "-" : "";
+  if (m === 0n) return neg + "0";
+  if (e >= 0) return neg + (m << BigInt(e)).toString();
+  const digits = (m * 5n ** BigInt(-e)).toString().padStart(-e + 1, "0");
+  let int = digits.slice(0, digits.length + e), frac = digits.slice(digits.length + e).replace(/0+$/, "");
+  return neg + int + (frac ? "." + frac : "");
+}
+function bitsHtml(b, cmp) {
+  const mark = (str, other, cls) => str.split("").map((c, i) => `<span class="${cls}${other && other[i] !== c ? " diff" : ""}">${c}</span>`).join("");
+  return `<div class="bits"><span class="s">${b.sign}</span> ${mark(b.exp, cmp && cmp.exp, "e")} ${mark(b.frac, cmp && cmp.frac, "f")}</div>`;
+}
+const bitLegend = `<div class="legend"><span><b class="s">sign</b> 1 bit, + or −</span><span><b class="e">exponent</b> 11 bits, the scale (a power of 2)</span><span><b class="f">fraction</b> 52 bits, the digits</span></div>`;
+
+// ---------- lesson components ----------
+function predict(q, options) {
+  return `<div class="predict"><span class="eyebrow">Predict</span><p class="pq">${q}</p><div class="opts">${options.map((o, i) => `<button class="opt" data-i="${i}">${o}</button>`).join("")}</div><button class="linkbtn skip">Show answer</button></div>`;
+}
+// The section's content is always visible. Only the answer itself (elements marked .ans,
+// or else the leading result boxes) stays blurred until the reader predicts or skips.
+function wirePredict(el, answer, onReveal) {
+  const rev = el.querySelector(".reveal");
+  let ans = [...rev.querySelectorAll(".ans")];
+  if (!ans.length) {
+    for (const c of rev.children) { if (c.classList.contains("out")) ans.push(c); else break; }
+    if (!ans.length && rev.firstElementChild && rev.firstElementChild.tagName === "P") ans = [rev.firstElementChild];
+  }
+  ans.forEach(a => { a.classList.add("ans", "veiled"); a.setAttribute("aria-hidden", "true"); });
+  const verdict = el.querySelector(".verdict");
+  verdict.textContent = "Pick an answer to see the result.";
+  verdict.className = "verdict wait";
+  const show = picked => {
+    el.querySelectorAll(".opt").forEach(o => { o.disabled = true; o.classList.toggle("right", +o.dataset.i === answer); });
+    if (picked !== null && picked !== answer) el.querySelector(`.opt[data-i="${picked}"]`).classList.add("wrong");
+    verdict.textContent = picked === null ? "Answer shown." : picked === answer ? "Right." : "Not quite.";
+    verdict.className = "verdict " + (picked === null ? "wait" : picked === answer ? "ok" : "no");
+    el.querySelector(".skip").hidden = true;
+    ans.forEach(a => { a.classList.remove("veiled"); a.removeAttribute("aria-hidden"); });
+    if (onReveal) onReveal();
+  };
+  el.querySelectorAll(".opt").forEach(b => b.onclick = () => show(+b.dataset.i));
+  el.querySelector(".skip").onclick = () => show(null);
+}
+const reveal = (html) => `<p class="verdict" aria-live="polite"></p><div class="reveal">${html}</div>`;
+function tryIt(code, label, tag) {
+  return `<div class="try"><div class="row"><span class="eyebrow">${label || "Change it and run"}</span>${tagPill(tag || "py")}</div><textarea class="try-src" spellcheck="false" aria-label="Python code" rows="${Math.min(12, code.split("\n").length + 1)}">${esc(code)}</textarea><div class="row"><button class="btn primary try-run">Run</button><span class="status try-st"></span></div><div class="try-out"></div></div>`;
+}
+function wireTry(el) {
+  el.querySelectorAll(".try").forEach(box => {
+    box.querySelector(".try-run").onclick = async () => {
+      const st = box.querySelector(".try-st"), out = box.querySelector(".try-out");
+      let r;
+      try { r = await runPy(box.querySelector(".try-src").value, st); }
+      catch (e) { st.textContent = ""; out.innerHTML = `<div class="out err">Python couldn't start here: ${esc(e && e.message ? e.message : e)}</div>`; return; }
+      st.textContent = "";
+      out.innerHTML = runOutput(r) + (r.instrs.length ? `<details class="peek"><summary>Bytecode</summary>${bcTable(r.instrs)}</details>` : "");
+    };
+  });
+}
+function runOutput(r) {
+  return (r.stdout ? `<div class="out">${esc(r.stdout)}</div>` : "") +
+    (r.value !== null ? `<div class="out">${esc(r.value)}</div>` : "") +
+    (r.error ? (r.tb ? `<pre class="code tb err">${esc(r.tb)}</pre>` : `<div class="out err">${esc(r.error)}</div>`) : "") +
+    (!r.stdout && r.value === null && !r.error ? `<div class="out note">Ran with no output. End with an expression to see its value.</div>` : "");
+}
+async function runPy(src, st) {
+  const py = await loadPython(st);
+  py.globals.set("_src", src);
+  return JSON.parse(py.runPython("_decompose(_src)"));
+}
+const mark = (id) => `<marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0 0L10 5L0 10z"/></marker>`;
+
+// ---------- lessons ----------
+const LESSONS = [];
+
+// 0
+LESSONS.push({
+  id: "l0", title: "What a computer does",
+  summary: "Before Python: the three parts every computer has, and the layers of software between you and them.",
+  practice: "When a result looks wrong, ask which layer it comes from: the language, a package like pandas, or the tool running your code. The fix usually lives in that layer's documentation.",
+  steps: [
+    {
+      layer: "Hardware", title: "A computer is a processor, memory and storage",
+      render(el) {
+        el.innerHTML = `
+          <div class="hw">
+            <div class="hwbox"><span class="hn">Processor (CPU)</span><span class="note">Does arithmetic and comparisons, one small instruction at a time, billions of times a second.</span></div>
+            <span class="hwarrow" aria-hidden="true">⇄</span>
+            <div class="hwbox"><span class="hn">Memory (RAM)</span><span class="note">A long row of numbered bytes. Fast. Erased when a program ends or the power goes off.</span><span class="bytes" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map(i => `<span><b>${1000 + i}</b>${["01000001", "00000101", "11111111", "00000000", "01100010", "00000011"][i]}</span>`).join("")}</span></div>
+            <span class="hwarrow" aria-hidden="true">⇄</span>
+            <div class="hwbox"><span class="hn">Storage (disk)</span><span class="note">Files, like <code>grades.csv</code>. Much slower than memory, but permanent.</span></div>
+          </div>
+          <p>A <b>byte</b> is 8 bits, each a 1 or a 0. Every byte in memory has a number, its <b>address</b>. Later lessons rely on this: when one thing "points to" another, it is storing that thing's address.</p>
+          <p>A running program is called a <b>process</b>. It gets its own region of memory while it runs.</p>
+          ${predict("You load a CSV file into a DataFrame, then the program crashes. What still exists afterwards?", ["The DataFrame", "The CSV file", "Both"])}
+          ${reveal(`<p>Only the file. Loading copies the file's contents from storage into the process's memory. When the process ends, its memory is erased; the file on disk was never touched. Saving results means writing them back to storage, for example with <code>df.to_csv(...)</code>.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Software", title: "Python is a program, with layers around it",
+      render(el) {
+        el.innerHTML = `
+          <p>The code you write draws on four layers:</p>
+          <div class="stackl">
+            <div>${tagPill("py")}<p><b>The language</b> and the program that runs it (usually CPython). Syntax like <code>=</code>, <code>and</code>, <code>for</code>, and built-in types like int, float and list. The same everywhere.</p></div>
+            <div>${tagPill("std")}<p><b>Modules that ship with Python</b>, such as <code>math</code>, <code>json</code> and <code>csv</code>. Always available with <code>import</code>.</p></div>
+            <div><div class="row">${tagPill("np")}${tagPill("pd")}</div><p><b>Packages</b> other people wrote, installed separately with <code>pip</code> or <code>conda</code>. They add new kinds of objects, like arrays and DataFrames, and decide what operators like <code>+</code> and <code>&amp;</code> do with them. Much of NumPy isn't written in Python at all but in C, compiled ahead of time.</p></div>
+            <div>${tagPill("jp")}<p><b>Tools</b> that run Python for you: Jupyter, Colab, VS Code. They aren't Python; they send your code to it.</p></div>
+          </div>
+          <p class="note">From here on, every example carries a tag showing which layer it comes from.</p>
+          ${predict("Check: which of these comes with Python when you install it?", ["<code>pandas</code>", "<code>math</code>", "Jupyter"])}
+          ${reveal(`<p>Only <code>math</code>, from the standard library. pandas is a package you install, and Jupyter is a tool that runs Python.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+  ]
+});
+
+
+// 1
+LESSONS.push({
+  id: "l1", title: "How Python runs your code",
+  summary: "Python is itself a program. It turns each line into small instructions and runs them one at a time.",
+  practice: "Before handing in a notebook, use Restart Kernel and Run All. If it runs cleanly, it doesn't depend on leftover memory.",
+  steps: [
+    {
+      layer: "Where code runs", title: "Plain Python and Jupyter run code differently",
+      render(el) {
+        el.innerHTML = `
+          <div class="grid2">
+            <div class="compare"><span class="eyebrow">Plain Python</span><pre class="code">python analysis.py</pre><p class="note">The Python program reads a <code>.py</code> file, runs it top to bottom in a fresh process, then exits. Nothing is left over between runs.</p></div>
+            <div class="compare"><span class="eyebrow">Jupyter notebook</span><div class="pipe"><span>notebook (.ipynb)</span><span>→</span><span>Jupyter</span><span>→</span><span>kernel: a Python process</span></div><p class="note">Each cell you run is sent to the same Python process, the kernel, which stays alive until you restart it. Colab and VS Code notebooks work the same way.</p></div>
+          </div>
+          <p>Either way, the Python that actually runs your code is the same program, usually CPython. The next section looks at what it does with a line.</p>`;
+      }
+    },
+    {
+      layer: "Bytecode", title: "Each line becomes a few simple instructions",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("total = price * qty", "py")}
+          <p>Python doesn't run that line directly. It first translates it into four <b>bytecode</b> instructions, listed below. While running them it keeps a <b>stack</b>: a pile of values where each instruction takes from the top or puts something on top.</p>
+          ${predict("With <code>price = 2.5</code> and <code>qty = 4</code>, what's on the stack just before the last instruction, <code>STORE_NAME</code>, runs?", ["2.5 and 4", "10.0", "Nothing"])}
+          ${reveal(`
+            <p>10.0. <code>BINARY_OP *</code> popped both numbers and pushed their product. <code>STORE_NAME</code> then pops it and names it <code>total</code>.</p>
+            <div class="st">${stepperShell}</div>
+            ${tryIt("price = 2.5\nqty = 4\ntotal = price * qty\ntotal", null, "py")}`)}`;
+        wirePredict(el, 1);
+        stepper(el.querySelector(".st"), DATA.t1, [
+          { stack: ["2.5"], note: "Find the object named price and push it." },
+          { stack: ["2.5", "4"], note: "Push the object named qty." },
+          { stack: ["10.0"], note: "Pop both, multiply, push the result." },
+          { stack: [], note: "Pop the result and give it the name total." },
+        ]);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Memory", title: "A notebook keeps one Python process running",
+      render(el) {
+        el.innerHTML = `
+          <div class="row">${tagPill("jp")}</div>
+          <p>These two cells worked earlier because cell 2 ran first, then cell 1.</p>
+          <div class="cell"><span class="in" id="n1">In [2]:</span><pre class="code">total = sum(prices)</pre></div>
+          <div class="cell"><span class="in" id="n2">In [1]:</span><pre class="code">prices = [4.5, 3.0, 12.25]</pre></div>
+          ${predict("You restart the kernel and click Run All, which runs top to bottom. What happens?", ["It works, same as before", "NameError on cell 1"])}
+          ${reveal(`
+            <p>Restarting empties the kernel's memory, so cell 1 asks for <code>prices</code> before anything has made it. Try it:</p>
+            <div class="row"><button class="btn" data-run="0">Run cell 1</button><button class="btn" data-run="1">Run cell 2</button><button class="btn" id="restart">Restart kernel</button><button class="btn" id="runall">Run all</button></div>
+            <div id="nbout"></div>
+            <div class="memory" id="mem"></div>
+            <p class="note">The <code>In [n]</code> numbers are Jupyter's record of the order cells actually ran.</p>`)}`;
+        let mem = { prices: [4.5, 3.0, 12.25], total: 19.75 }, count = 2;
+        const out = el.querySelector("#nbout"), memEl = el.querySelector("#mem");
+        const drawMem = () => {
+          const keys = Object.keys(mem);
+          memEl.innerHTML = `<span class="eyebrow">Kernel memory</span>` + (keys.length ? keys.map(k => `<span class="item">${k} → ${Array.isArray(mem[k]) ? "[" + mem[k].map(v => Number.isInteger(v) ? v.toFixed(1) : v).join(", ") + "]" : mem[k]}</span>`).join("") : `<span class="none">empty</span>`);
+        };
+        const cells = [
+          () => { if (!("prices" in mem)) throw "NameError: name 'prices' is not defined"; mem.total = mem.prices.reduce((a, b) => a + b, 0); },
+          () => { mem.prices = [4.5, 3.0, 12.25]; },
+        ];
+        const run = i => {
+          count++; el.querySelector(i ? "#n2" : "#n1").textContent = `In [${count}]:`;
+          try { cells[i](); out.innerHTML = ""; drawMem(); return true; }
+          catch (e) { out.innerHTML = `<div class="out err">${esc(e)}</div>`; drawMem(); return false; }
+        };
+        const restart = () => { mem = {}; count = 0; el.querySelector("#n1").textContent = "In [ ]:"; el.querySelector("#n2").textContent = "In [ ]:"; out.innerHTML = `<div class="out">Kernel restarted. Memory is empty.</div>`; drawMem(); };
+        el.querySelectorAll("[data-run]").forEach(b => b.onclick = () => run(+b.dataset.run));
+        el.querySelector("#restart").onclick = restart;
+        el.querySelector("#runall").onclick = () => { if (run(0)) run(1); };
+        drawMem();
+        wirePredict(el, 1, () => { restart(); run(0); });
+      }
+    },
+  ]
+});
+
+// 2
+LESSONS.push({
+  id: "l2", title: "Names, objects and copies",
+  summary: "A variable is a name attached to an object. Knowing when two names share one object explains most surprising changes, in lists and in DataFrames.",
+  practice: "Copy on purpose when you want an independent version (<code>.copy()</code>), and assign with one set of brackets: <code>df.loc[rows, 'col'] = value</code>.",
+  steps: [
+    {
+      layer: "Memory", title: "= attaches a name; it never copies",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("a = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)", "py")}
+          ${predict("What does print(a) show?", ["[1, 2, 3]", "[1, 2, 3, 4]"])}
+          ${reveal(`
+            <div class="out">[1, 2, 3, 4]</div>
+            <p>Step through and watch memory:</p>
+            <div id="pic"></div><label class="row"><input type="checkbox" id="copy"> Use <code>b = a.copy()</code></label><div class="st">${stepperShell}</div>`)}`;
+        let stepI = -1, copy = false;
+        const pic = el.querySelector("#pic");
+        function draw() {
+          const bLinked = stepI >= 1 || stepI === -2, appended = stepI >= 5 || stepI === -2;
+          const aList = appended && !copy ? "[1, 2, 3, 4]" : "[1, 2, 3]", bList = appended ? "[1, 2, 3, 4]" : "[1, 2, 3]";
+          let svg = `<svg class="mem" viewBox="0 0 440 ${copy ? 170 : 150}" role="img" aria-label="Names pointing at list objects"><defs>${mark("ah2")}</defs>
+            <text class="q" x="10" y="16">names</text><text class="q" x="210" y="16">objects</text>
+            <rect class="namebox" x="10" y="30" width="60" height="34" rx="6"/><text x="40" y="52" text-anchor="middle">a</text>
+            <rect class="box" x="210" y="26" width="200" height="42" rx="6"/><text x="222" y="44">list</text><text x="222" y="60">${aList}</text>
+            <path class="arrow" d="M70 47H205" marker-end="url(#ah2)"/>`;
+          if (bLinked) {
+            svg += `<rect class="namebox" x="10" y="96" width="60" height="34" rx="6"/><text x="40" y="118" text-anchor="middle">b</text>`;
+            svg += copy ? `<rect class="box" x="210" y="112" width="200" height="42" rx="6"/><text x="222" y="130">list (copy)</text><text x="222" y="146">${bList}</text><path class="arrow" d="M70 113C130 113 150 133 205 133" marker-end="url(#ah2)"/>`
+              : `<path class="arrow" d="M70 113C140 113 160 60 205 56" marker-end="url(#ah2)"/>`;
+          }
+          pic.innerHTML = svg + "</svg>";
+        }
+        stepper(el.querySelector(".st"), DATA.t2, [
+          { stack: ["list [1, 2, 3]"], note: "Push the object named a: the object itself, not a copy." },
+          { stack: [], note: "Give that same object a second name, b." },
+          { stack: ["list"], note: "Push the object named b. It is the one list." },
+          { stack: ["list.append"], note: "Look up the list's append method." },
+          { stack: ["list.append", "4"], note: "Push the argument, 4." },
+          { stack: ["None"], note: "Call append. The one list grows to [1, 2, 3, 4]." },
+          { stack: [], note: "Discard append's return value, None." },
+        ], i => { stepI = i; draw(); });
+        el.querySelector("#copy").onchange = e => { copy = e.target.checked; if (stepI < 1) stepI = -2; draw(); };
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Memory", title: "Numbers and text can't change in place",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("x = 5\ny = x\ny += 1\nprint(x)", "py")}
+          ${predict("Same pattern as the list. What does print(x) show?", ["5", "6"])}
+          ${reveal(`
+            <div class="out">5</div>
+            <p>Ints, floats, strings and tuples are <b>immutable</b>: no operation can change them. So <code>y += 1</code> builds a new int, 6, and moves the name <code>y</code> to it. <code>x</code> still points at 5.</p>
+            <div class="grid2">${bcTable(DATA.imm)}
+            <svg class="mem" viewBox="0 0 300 130" role="img" aria-label="x points to 5, y points to 6"><defs>${mark("ah3")}</defs>
+              <rect class="namebox" x="10" y="16" width="50" height="32" rx="6"/><text x="35" y="37" text-anchor="middle">x</text>
+              <rect class="namebox" x="10" y="80" width="50" height="32" rx="6"/><text x="35" y="101" text-anchor="middle">y</text>
+              <rect class="box" x="170" y="16" width="100" height="32" rx="6"/><text x="182" y="37">int 5</text>
+              <rect class="box" x="170" y="80" width="100" height="32" rx="6"/><text x="182" y="101">int 6 (new)</text>
+              <path class="arrow" d="M60 32H165" marker-end="url(#ah3)"/><path class="arrow" d="M60 96H165" marker-end="url(#ah3)"/></svg></div>
+            <p class="note">Lists, dicts, NumPy arrays and DataFrames are <b>mutable</b>: methods like <code>.append</code> change the object itself, and every name attached to it sees the change.</p>
+            ${tryIt("a = [1, 2]\nb = a\nb = b + [3]   # try b += [3] instead\na", null, "py")}`)}`;
+        wirePredict(el, 0);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Memory", title: "DataFrames follow the same rule",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("df = pd.DataFrame({'x': [1, -1, 2], 'y': [0, 0, 0]})\ndf2 = df\ndf2['y'] = 9\ndf.y.tolist()", "pd")}
+          ${predict("You changed df2. What is df.y now?", ["[0, 0, 0]", "[9, 9, 9]"])}
+          ${reveal(`
+            <div class="out">[9, 9, 9]</div>
+            <p><code>df2 = df</code> is a second name for the same DataFrame. To get an independent one, ask for it:</p>
+            ${codeBlock("df2 = df.copy()\ndf2['y'] = 9\ndf.y.tolist()", "pd")}
+            <div class="out">[0, 0, 0]</div>
+            <p class="note">Output from pandas 3.0.2. pandas isn't available in the Python running in this page yet, so these results are recorded, not live.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Memory", title: "A filter builds a new object",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("df = pd.DataFrame({'x': [1, -1, 2], 'y': [0, 0, 0]})\ndf[df.x > 0]['y'] = 5\ndf.y.tolist()", "pd")}
+          ${predict("You want y = 5 wherever x is positive. What is df.y afterwards?", ["[5, 0, 5]", "[0, 0, 0]"])}
+          ${reveal(`
+            <div class="out warn">ChainedAssignmentError: A value is being set on a copy of a DataFrame or Series through chained assignment.</div>
+            <div class="out">[0, 0, 0]</div>
+            <p><code>df[df.x &gt; 0]</code> builds a new, unnamed DataFrame. <code>['y'] = 5</code> writes into that one, which is thrown away at the end of the line.</p>
+            <div class="row"><button class="btn primary" id="s7n">Step</button><button class="btn" id="s7r">Reset</button><label class="row"><input type="checkbox" id="s7loc"> Use <code>.loc</code></label></div>
+            <div id="pic7"></div><p class="note" id="n7"></p>
+            <details class="peek"><summary>Bytecode: two brackets vs. .loc</summary><div class="grid2"><div>${codeBlock("df[df.x > 0]['y'] = 5", "pd")}${bcTable(DATA.t7, { hot: 6, compact: true })}</div><div>${codeBlock("df.loc[df.x > 0, 'y'] = 5", "pd")}${bcTable(DATA.t7_good, { hot: 9, compact: true })}</div></div><p class="note">Left: the highlighted subscript builds the copy, then the store writes into it. Right: one store, straight into df.</p></details>`)}`;
+        let s = 0, loc = false;
+        const notes = [
+          ["One DataFrame, named df.", "df[df.x > 0] builds a new, unnamed DataFrame of the matching rows.", "['y'] = 5 writes into the new one. df is untouched.", "Nothing refers to the new one, so Python frees it."],
+          ["One DataFrame, named df.", ".loc aims one assignment at df itself.", "The matching rows of df.y become 5.", "df.y is now [5, 0, 5]."],
+        ];
+        const pic = el.querySelector("#pic7");
+        function draw() {
+          const y = loc && s >= 2 ? "[5, 0, 5]" : "[0, 0, 0]";
+          let svg = `<svg class="mem" viewBox="0 0 440 150" role="img" aria-label="DataFrame objects in memory"><defs>${mark("ah7")}</defs>
+            <rect class="namebox" x="10" y="26" width="60" height="34" rx="6"/><text x="40" y="48" text-anchor="middle">df</text>
+            <rect class="box" x="120" y="16" width="170" height="54" rx="6"/><text x="132" y="36">DataFrame</text><text x="132" y="56">y ${y}</text><path class="arrow" d="M70 43H115" marker-end="url(#ah7)"/>`;
+          if (!loc && s >= 1) {
+            const gone = s >= 3;
+            svg += `<rect class="${gone ? "ghost" : "box"}" x="120" y="92" width="170" height="54" rx="6"/><text x="132" y="112" ${gone ? 'class="q"' : ""}>${gone ? "freed" : "new DataFrame"}</text><text x="132" y="132" ${gone ? 'class="q"' : ""}>y ${s >= 2 ? "[5, 5]" : "[0, 0]"}</text><text class="q" x="300" y="122">no name</text>`;
+          }
+          pic.innerHTML = svg + "</svg>";
+          el.querySelector("#n7").textContent = notes[loc ? 1 : 0][s];
+          el.querySelector("#s7n").disabled = s >= 3;
+        }
+        el.querySelector("#s7n").onclick = () => { s++; draw(); };
+        el.querySelector("#s7r").onclick = () => { s = 0; draw(); };
+        el.querySelector("#s7loc").onchange = e => { loc = e.target.checked; s = 0; draw(); };
+        draw();
+        wirePredict(el, 1);
+      }
+    },
+  ]
+});
+
+// 3
+LESSONS.push({
+  id: "l3", title: "Numbers as bits",
+  summary: "Every number is stored as a fixed pattern of 1s and 0s. The pattern's size and layout decide what can be stored exactly.",
+  practice: "Compare floats with <code>math.isclose</code> or <code>np.isclose</code>, never <code>==</code>. And pick integer dtypes big enough for your data, because small ones wrap around silently.",
+  steps: [
+    {
+      layer: "Bits", title: "Whole numbers are sums of powers of 2",
+      render(el) {
+        const places = [128, 64, 32, 16, 8, 4, 2, 1];
+        el.innerHTML = `
+          <p>Each switch is one bit. Turn them on and off:</p>
+          <div class="switches">${places.map((p, i) => `<div class="sw"><button class="bitbtn" data-b="${i}" aria-label="bit worth ${p}">0</button><span>${p}</span></div>`).join("")}</div>
+          <p class="stat" id="val">0</p>
+          <p class="note">Eight bits make a byte and hold 256 different patterns. NumPy's <code>int8</code> uses one byte and splits those patterns between −128 and 127.</p>
+          ${predict("So what does this give? " + tagPill("np") + "<br><code>np.array([127], dtype='int8') + 1</code>", ["[128]", "[-128]", "an error"])}
+          ${reveal(`
+            <div class="out">[-128]</div>
+            <p>There is no pattern for 128 in eight signed bits, so the value wraps around to the other end, with no error. Python's own <code>int</code> is different: it grows as needed, so <code>2 ** 64</code> is simply <code>18446744073709551616</code>.</p>
+            ${tryIt("2 ** 64", null, "py")}`)}`;
+        const bits = [0, 0, 0, 0, 0, 1, 0, 1];
+        const draw = () => {
+          el.querySelectorAll("[data-b]").forEach(b => { const v = bits[+b.dataset.b]; b.textContent = v; b.classList.toggle("one", !!v); });
+          const v = bits.reduce((s, b, i) => s + b * places[i], 0);
+          el.querySelector("#val").textContent = `${bits.join("")} = ${v}`;
+        };
+        el.querySelectorAll("[data-b]").forEach(b => b.onclick = () => { bits[+b.dataset.b] ^= 1; draw(); });
+        draw();
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Bits", title: "A float stores a sign, a scale and digits",
+      render(el) {
+        el.innerHTML = `
+          <p>A Python float is 64 bits in the IEEE 754 format, a binary version of scientific notation.</p>
+          ${bitLegend}
+          <div class="grid2"><div><label class="eyebrow" for="fin">Type a number</label><input type="text" id="fin" value="12.25"></div><div id="fout"></div></div>
+          <p class="note">Try 0.5, 0.25 and 0.75, then 0.1. Fractions built from halves, quarters and eighths end quickly. Others go on forever.</p>`;
+        const fin = el.querySelector("#fin"), fout = el.querySelector("#fout");
+        const upd = () => {
+          const t = fin.value.trim(), v = Number(t);
+          if (t === "" || Number.isNaN(v) && t.toLowerCase() !== "nan") { fout.innerHTML = `<p class="note">Enter a number, such as 0.5 or 1e-7.</p>`; return; }
+          fout.innerHTML = bitsHtml(f64bits(v)) + `<span class="exact">= ${esc(exactDecimal(v))}</span>`;
+        };
+        fin.oninput = upd; upd();
+      }
+    },
+    {
+      layer: "Bits", title: "0.1 can't be stored exactly",
+      render(el) {
+        const B = DATA.t3_bits;
+        el.innerHTML = `
+          ${codeBlock("0.1 + 0.2 == 0.3", "py")}
+          ${predict("True or False?", ["True", "False"])}
+          ${reveal(`
+            <div class="out">False</div>
+            <p>In binary, 0.1 is 0.000110011… repeating forever, like 1/3 in decimal. With 52 bits of digits it must be rounded. Here is what's stored; highlighted bits are where the sum and 0.3 differ:</p>
+            <div>${["0.1", "0.2", "0.1 + 0.2", "0.3"].map(k => `<div class="bitrow"><span class="name">${k}</span>${bitsHtml(B[k], k === "0.1 + 0.2" ? B["0.3"] : k === "0.3" ? B["0.1 + 0.2"] : null)}<span class="exact">= ${B[k].exact}</span></div>`).join("")}</div>
+            ${tryIt("import math\nprint(0.1 + 0.2)\nmath.isclose(0.1 + 0.2, 0.3)", null, "std")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+  ]
+});
+
+// 4
+LESSONS.push({
+  id: "l4", title: "Missing values",
+  summary: "pandas marks missing numbers with NaN, a real float with its own bit pattern and its own comparison rules.",
+  practice: "Count missing values first with <code>df.x.isna().sum()</code>, then decide on purpose: drop them, fill them, or add <code>df.x.notna()</code> to your mask.",
+  steps: [
+    {
+      layer: "Bits", title: "NaN is a float with a reserved pattern",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("nan = float('nan')\nnan == nan", "py")}
+          ${predict("Is NaN equal to itself?", ["True", "False"])}
+          ${reveal(`
+            <div class="out">False</div>
+            ${bitLegend}
+            <div class="bitrow"><span class="name">nan</span>${bitsHtml(DATA.t6_bits)}</div>
+            <p>All exponent bits on and a nonzero fraction means "not a number." The float standard makes every comparison with it False, except <code>!=</code>:</p>
+            <div class="tbl-wrap"><table class="data"><tbody>
+              <tr><td>nan == nan</td><td class="f">False</td></tr><tr><td>nan != 0</td><td class="t">True</td></tr><tr><td>nan &gt; 0</td><td class="f">False</td></tr>
+            </tbody></table></div>
+            ${tryIt("nan = float('nan')\nnan == nan, nan != 0, nan > 0", null, "py")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Code", title: "Filters quietly keep or drop NaN",
+      render(el) {
+        const x = [2.0, 0.0, NaN, -1.0];
+        const conds = { "x != 0": v => v !== 0, "x > 0": v => v > 0, "x.notna() & (x != 0)": v => !Number.isNaN(v) && v !== 0 };
+        el.innerHTML = `
+          <p>A column <code>x</code> holds <code>[2.0, 0.0, NaN, -1.0]</code>. You want rows where a value was recorded and isn't zero.</p>
+          ${predict("How many rows does <code>df[df.x != 0]</code> keep?", ["2", "3", "4"])}
+          ${reveal(`
+            <p>3. <code>NaN != 0</code> is True, so the missing row stays in. Compare the three filters:</p>
+            <div class="row" id="t6c">${Object.keys(conds).map((k, i) => `<label class="row"><input type="radio" name="t6" value="${esc(k)}" ${i === 1 ? "checked" : ""}> <code>${esc(k)}</code></label>`).join("")}</div>
+            <div class="tbl-wrap" id="t6tbl"></div><p class="note" id="t6msg"></p>`)}`;
+        const draw = () => {
+          const k = el.querySelector("#t6c input:checked").value, kept = x.map(conds[k]);
+          el.querySelector("#t6tbl").innerHTML = `<table class="data"><thead><tr><th>x</th><th>${esc(k)}</th></tr></thead><tbody>${x.map((v, i) => `<tr class="${kept[i] ? "kept" : ""}"><td class="${Number.isNaN(v) ? "nan" : ""}">${Number.isNaN(v) ? "NaN" : v.toFixed(1)}</td><td class="${kept[i] ? "t" : "f"}">${kept[i] ? "True" : "False"}</td></tr>`).join("")}</tbody></table>`;
+          const n = kept.filter(Boolean).length;
+          el.querySelector("#t6msg").textContent = k === "x != 0" ? `Keeps ${n} rows, including the missing one.` : k === "x > 0" ? `Keeps ${n} row. NaN is gone, but so is −1.0.` : `Keeps ${n} rows: recorded and not zero.`;
+        };
+        el.querySelectorAll("#t6c input").forEach(r => r.onchange = draw);
+        draw();
+        wirePredict(el, 1, () => { el.querySelector('#t6c input[value="x != 0"]').checked = true; draw(); });
+      }
+    },
+    {
+      layer: "Bits", title: "One missing value turns integers into floats",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("pd.Series([1, None]).dtype", "pd")}
+          ${predict("What type does pandas choose?", ["int64", "float64", "object"])}
+          ${reveal(`
+            <div class="out">float64</div>
+            <p>Integers have no bit pattern meaning "missing," and floats do. So pandas converts the whole column to float to hold the NaN. That's why an ID or count column can suddenly show <code>3.0</code>.</p>
+            <p>pandas also has a nullable integer type that tracks missing values separately:</p>
+            ${codeBlock("pd.Series([1, None], dtype='Int64')", "pd")}
+            <div class="out">[1, &lt;NA&gt;]   dtype: Int64</div>
+            <p class="note">Recorded from pandas 3.0.2.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+  ]
+});
+
+// 5
+LESSONS.push({
+  id: "l5", title: "True, False and logic",
+  summary: "Booleans are single bits, and logic gates combine bits. A pandas mask runs a gate on every row at once.",
+  practice: "Combine conditions with <code>&amp;</code>, <code>|</code> and <code>~</code>, and wrap each comparison in parentheses: <code>df[(df.a &gt; 0) &amp; (df.b == 1)]</code>.",
+  steps: [
+    {
+      layer: "Bits", title: "True and False are 1 and 0",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("True + True", "py")}
+          ${predict("What does Python give?", ["True", "2", "an error"])}
+          ${reveal(`
+            <div class="out">2</div>
+            <p>A bool is an int that can only be 1 or 0. That's why <code>mask.sum()</code> counts the rows where a condition holds, and <code>mask.mean()</code> gives the share.</p>
+            ${tryIt("passed = [True, False, True, True]\nsum(passed), sum(passed) / len(passed)", null, "py")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Logic gates", title: "Logic gates combine bits",
+      render(el) {
+        el.innerHTML = `
+          <div class="row" role="radiogroup" aria-label="Gate">${["AND", "OR", "NOT"].map((g, i) => `<label class="row"><input type="radio" name="gate" value="${g}" ${i === 0 ? "checked" : ""}> ${g} <code>${{ AND: "&amp;", OR: "|", NOT: "~" }[g]}</code></label>`).join("")}</div>
+          <div class="gate">
+            <div style="display:grid;gap:14px" id="ins"><button class="bitbtn" id="ga" aria-label="input A">1</button><button class="bitbtn" id="gb" aria-label="input B">0</button></div>
+            <svg viewBox="0 0 120 96" aria-hidden="true" id="gsvg"></svg>
+            <div class="outbit" id="gout">0</div>
+          </div>
+          <div class="tbl-wrap" id="tt"></div>
+          <p class="note">Click the inputs. Inside a CPU, each gate is a handful of transistors acting as switches.</p>`;
+        let A = 1, B = 0;
+        const shape = { AND: `<path d="M34 12H62A36 36 0 0 1 62 84H34Z"/>`, OR: `<path d="M30 12Q70 12 98 48Q70 84 30 84Q48 48 30 12Z"/>`, NOT: `<path d="M34 20L86 48L34 76Z"/><circle cx="92" cy="48" r="6"/>` };
+        const fn = { AND: (a, b) => a & b, OR: (a, b) => a | b, NOT: a => a ^ 1 };
+        const draw = () => {
+          const g = el.querySelector("input[name=gate]:checked").value, one = g === "NOT";
+          const o = fn[g](A, B);
+          el.querySelector("#gb").hidden = one;
+          el.querySelector("#gsvg").innerHTML = (one ? `<line class="${A ? "live" : ""}" x1="0" y1="48" x2="34" y2="48"/>` : `<line class="${A ? "live" : ""}" x1="0" y1="28" x2="38" y2="28"/><line class="${B ? "live" : ""}" x1="0" y1="68" x2="38" y2="68"/>`) + shape[g] + `<line class="${o ? "live" : ""}" x1="${one ? 98 : 98}" y1="48" x2="120" y2="48"/>`;
+          [["#ga", A], ["#gb", B]].forEach(([s, v]) => { const b = el.querySelector(s); b.textContent = v; b.classList.toggle("one", !!v); });
+          const go = el.querySelector("#gout"); go.textContent = o; go.classList.toggle("one", !!o);
+          const rows = one ? [[0], [1]] : [[0, 0], [0, 1], [1, 0], [1, 1]];
+          el.querySelector("#tt").innerHTML = `<table class="data"><thead><tr>${one ? "<th>A</th>" : "<th>A</th><th>B</th>"}<th>${g}</th></tr></thead><tbody>${rows.map(r => `<tr class="${r[0] === A && (one || r[1] === B) ? "kept" : ""}">${r.map(v => `<td>${v}</td>`).join("")}<td>${fn[g](r[0], r[1])}</td></tr>`).join("")}</tbody></table>`;
+        };
+        el.querySelector("#ga").onclick = () => { A ^= 1; draw(); };
+        el.querySelector("#gb").onclick = () => { B ^= 1; draw(); };
+        el.querySelectorAll("input[name=gate]").forEach(r => r.onchange = draw);
+        draw();
+      }
+    },
+    {
+      layer: "Code", title: "A mask runs the gate on every row",
+      render(el) {
+        const df = { a: [3, -1, 2, 5], b: [1, 1, 0, 1] };
+        el.innerHTML = `
+          ${codeBlock("mask = (df.a > 0) & (df.b == 1)\ndf[mask]", "pd")}
+          <div class="tbl-wrap" id="t5tbl"></div>
+          <p class="note">Click a value in a or b to change it. Each comparison makes a column of bits; <code>&amp;</code> runs AND down the rows; shaded rows are kept.</p>`;
+        const draw = () => {
+          const m1 = df.a.map(v => v > 0), m2 = df.b.map(v => v === 1), m = m1.map((v, i) => v && m2[i]);
+          const cell = v => `<td class="${v ? "t" : "f"}">${v ? "True" : "False"}</td>`;
+          el.querySelector("#t5tbl").innerHTML = `<table class="data"><thead><tr><th>a</th><th>b</th><th>a &gt; 0</th><th>b == 1</th><th>&amp;</th></tr></thead><tbody>${df.a.map((_, i) => `<tr class="${m[i] ? "kept" : ""}"><td><button data-c="a" data-i="${i}">${df.a[i]}</button></td><td><button data-c="b" data-i="${i}">${df.b[i]}</button></td>${cell(m1[i])}${cell(m2[i])}${cell(m[i])}</tr>`).join("")}</tbody></table>`;
+          el.querySelectorAll("#t5tbl button").forEach(b => b.onclick = () => { const i = +b.dataset.i; if (b.dataset.c === "a") df.a[i] = -df.a[i]; else df.b[i] = df.b[i] ? 0 : 1; draw(); });
+        };
+        draw();
+      }
+    },
+    {
+      layer: "Bytecode", title: "Use &, and wrap each comparison",
+      render(el) {
+        el.innerHTML = `
+          ${predict("Which of these runs?", ["<code>(df.a &gt; 0) and (df.b == 1)</code>", "<code>df.a &gt; 0 &amp; df.b == 1</code>", "<code>(df.a &gt; 0) &amp; (df.b == 1)</code>"])}
+          ${reveal(`
+            <p>Only the last. The first two both fail with:</p>
+            <div class="out err">ValueError: The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().</div>
+            <p><code>and</code> belongs to the Python language and always asks one True-or-False question, which a whole column can't answer. <code>&amp;</code> is an operator that pandas redefines to work row by row. Without parentheses, <code>&amp;</code> binds before <code>&gt;</code> and <code>==</code>, so Python reads the second line as <code>df.a &gt; (0 &amp; df.b) == 1</code>, a chained comparison that uses <code>and</code> behind the scenes.</p>
+            <p>The bytecode of the working line shows the order: both comparisons finish, then one <code>&amp;</code>:</p>
+            ${bcTable(DATA.t5)}`)}`;
+        wirePredict(el, 2);
+      }
+    },
+  ]
+});
+
+// 6
+LESSONS.push({
+  id: "l6", title: "Collections in memory",
+  summary: "A Python list and a NumPy array can hold the same numbers laid out very differently. A DataFrame is a set of arrays, one per column.",
+  practice: "Check <code>df.dtypes</code> after loading data. A numbers column showing <code>object</code> or <code>str</code> means something non-numeric slipped in, and it will be slow and behave oddly.",
+  steps: [
+    {
+      layer: "Memory", title: "A list holds pointers; an array holds values",
+      render(el) {
+        el.innerHTML = `
+          ${predict("A million floats as a Python list vs. a NumPy array. Which uses more memory?", ["About the same", "The list, about 4×", "The array, about 4×"])}
+          ${reveal(`
+            <div class="grid2 ans">
+              <div><div class="row"><span class="eyebrow">list</span>${tagPill("py")}</div><div class="cells" aria-hidden="true">${"<span class='ptr'></span>".repeat(8)}</div><div class="scatter" aria-hidden="true">${[[6,8],[60,40],[130,12],[200,55],[35,58],[250,20],[95,62],[170,34]].map(([x,y])=>`<span style="left:${x}px;top:${y}px"></span>`).join("")}</div><p class="stat">≈ 32 MB</p><p class="note">An 8-byte pointer per item, each to a separate 24-byte float object</p></div>
+              <div><div class="row"><span class="eyebrow">float64 array</span>${tagPill("np")}</div><div class="cells" aria-hidden="true">${"<span></span>".repeat(8)}</div><p class="stat">8 MB</p><p class="note">The numbers themselves, packed side by side, 8 bytes each</p></div>
+            </div>
+            <p class="note">A list can hold anything, so it stores a pointer to each item. An array stores raw values because every item has the same type.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Memory", title: "An array has exactly one dtype",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("np.array([1, 2.5]).dtype", "np")}
+          ${predict("An int and a float go in. What dtype comes out?", ["int64", "float64", "object"])}
+          ${reveal(`
+            <div class="out">float64</div>
+            <p>NumPy picks one type that fits everything, and every element gets the same number of bytes.</p>
+            <div class="tbl-wrap"><table class="data"><thead><tr><th>made from</th><th>dtype</th><th>bytes each</th></tr></thead><tbody>
+              <tr><td>[1, 2.5]</td><td>float64</td><td>8</td></tr>
+              <tr><td>[True, False]</td><td>bool</td><td>1</td></tr>
+              <tr><td>dtype='int8'</td><td>int8</td><td>1</td></tr>
+              <tr><td>[1, 'a']</td><td>&lt;U21 (text)</td><td>84</td></tr>
+              <tr><td>[1, 'a'], dtype=object</td><td>object</td><td>8 (a pointer)</td></tr>
+            </tbody></table></div>
+            <p class="note">An <code>object</code> array is back to pointers, like a list, and loses most of NumPy's speed.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Memory", title: "A DataFrame is a set of column arrays",
+      render(el) {
+        const cols = [["name", "str", ["Ana", "Ben"]], ["score", "int64", ["90", "85"]], ["passed", "bool", ["True", "False"]], ["gpa", "float64", ["3.5", "3.1"]]];
+        el.innerHTML = `
+          ${codeBlock("df = pd.DataFrame({'name': ['Ana', 'Ben'], 'score': [90, 85],\n                   'passed': [True, False], 'gpa': [3.5, 3.1]})\ndf.dtypes", "pd")}
+          <div class="colset">${cols.map(([n, t, v]) => `<div class="col"><span class="cn">${n}</span><span class="ct">${t}</span>${v.map(x => `<span class="cv">${x}</span>`).join("")}</div>`).join("")}</div>
+          <p>Each column behaves as its own array with one dtype. Operations on one column, like <code>df.score * 2</code>, run on that packed array. Going row by row means stitching one value from each column back together, every time.</p>
+          <p class="note">dtypes recorded from pandas 3.0.2, where text columns get the <code>str</code> type.</p>`;
+      }
+    },
+  ]
+});
+
+// 7
+LESSONS.push({
+  id: "l7", title: "Why vectorized code is fast",
+  summary: "Everything so far adds up here: bytecode runs per value in a loop, but once per column with NumPy, over data packed the way the CPU likes it.",
+  practice: "Before looping over rows, look for a column operation: a mask, <code>.sum()</code>, <code>.mean()</code>, <code>np.where</code>, <code>groupby</code>. Reach for <code>.apply</code> or <code>iterrows</code> last.",
+  steps: [
+    {
+      layer: "Code", title: "Same answer, very different speed",
+      render(el) {
+        el.innerHTML = `
+          <div class="grid2"><div>${codeBlock("count = 0\nfor v in values:\n    if v > 0:\n        count += 1", "py")}</div><div>${codeBlock("count = (arr > 0).sum()", "np")}</div></div>
+          ${predict("Both count the positive numbers among 1,000,000 values. How do they compare?", ["About the same", "The mask is about 2× faster", "The mask is about 40× faster"])}
+          ${reveal(`
+            <div class="grid2 ans"><div><span class="eyebrow">loop over a list</span><p class="stat">29.9 ms</p></div><div><span class="eyebrow">NumPy mask</span><p class="stat">0.79 ms</p></div></div>
+            <p class="note">Best of five runs on one machine, about 38× apart. Your numbers will differ; the gap won't disappear.</p>`)}`;
+        wirePredict(el, 2);
+      }
+    },
+    {
+      layer: "Bytecode", title: "The loop pays for every value in bytecode",
+      render(el) {
+        const loopIdx = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+        el.innerHTML = `
+          <div class="grid2">
+            <div><span class="eyebrow">loop</span>${bcTable(DATA.t4_loop, { loop: loopIdx, compact: true })}</div>
+            <div><span class="eyebrow">mask</span>${bcTable(DATA.t4_mask, { compact: true })}</div>
+          </div>
+          <p>Marked rows repeat for every value: 7 instructions for a negative number, 11 for a positive one. The mask runs 6 instructions in total, and the million comparisons happen inside NumPy's compiled code.</p>
+          <div class="row"><button class="btn primary" id="go">Run both on 1,000,000 values</button></div>
+          <div class="grid2"><div><span class="eyebrow">loop instructions</span><p class="stat" id="c1">0</p></div><div><span class="eyebrow">mask instructions</span><p class="stat" id="c2">0</p></div></div>`;
+        el.querySelector("#go").onclick = () => {
+          const c1 = el.querySelector("#c1"), c2 = el.querySelector("#c2"), total = 9000000, dur = 1600, t0 = performance.now();
+          c2.textContent = "6";
+          const tick = t => { const p = Math.min(1, (t - t0) / dur); c1.textContent = (p === 1 ? "≈ " : "") + Math.round(total * p).toLocaleString(); if (p < 1) requestAnimationFrame(tick); };
+          requestAnimationFrame(tick);
+        };
+      }
+    },
+    {
+      layer: "CPU", title: "Packed data suits the CPU",
+      render(el) {
+        el.innerHTML = `
+          <p>The CPU reads memory in 64-byte chunks called cache lines. For a float64 array, one chunk brings the next 8 values, all useful:</p>
+          <div class="cells" aria-hidden="true">${"<span></span>".repeat(8)}</div>
+          <p>For a list, each pointer leads somewhere new, so most of every chunk is wasted on other data.</p>
+          <p>CPUs also have instructions that compare several numbers at once. NumPy's compiled loop can use them; a bytecode loop can't.</p>
+          <p class="note">Simplified: real CPUs add prefetching and several cache levels, but the direction holds.</p>`;
+      }
+    },
+  ]
+});
+
+// ---------- call-stack stepper ----------
+function frameStepper(el, code, steps) {
+  const lines = code.split("\n");
+  el.innerHTML = `<div class="fs"><pre class="code fs-code">${lines.map((l, i) => `<span class="ln" data-l="${i + 1}"><i>${i + 1}</i>${esc(l) || " "}</span>`).join("")}</pre>
+    <div class="fs-side"><span class="eyebrow">Call stack</span><div class="pile frames-pile" aria-live="polite"></div><span class="pilebase">bottom: the program's top level</span><p class="op fs-op"></p>
+    <div class="row ctrls"><button class="btn primary" data-a="n">Step</button><button class="btn" data-a="p">Step back</button><button class="btn" data-a="r">Reset</button></div><p class="note fs-note"></p></div></div>`;
+  let i = -1, shown = [];
+  const fmt = f => `<span class="fn">${esc(f.fn)}</span>${f.vars.map(([n, v]) => `<span class="fv"><b>${esc(n)}</b> → ${esc(v)}</span>`).join("") || `<span class="fv muted">no names yet</span>`}`;
+  const draw = () => {
+    const st = i < 0 ? { line: 0, frames: [], note: "Press Step to start." } : steps[i];
+    el.querySelectorAll(".ln").forEach(n => n.classList.toggle("on", +n.dataset.l === st.line));
+    const d = renderPile(el.querySelector(".frames-pile"), st.frames, shown, fmt, (a, b) => a.fn === b.fn);
+    shown = st.frames.slice();
+    el.querySelector(".fs-op").innerHTML = i < 0 ? "" : [d.popped.length ? `<span class="pop">pop frame: ${d.popped.map(f => esc(f.fn)).join(", ")}</span>` : "", d.pushed.length && shown.length > 1 ? `<span class="push">push frame: ${d.pushed.map(f => esc(f.fn)).join(", ")}</span>` : ""].filter(Boolean).join(" ");
+    el.querySelector(".fs-note").innerHTML = st.note;
+    el.querySelector("[data-a=p]").disabled = i < 0;
+    el.querySelector("[data-a=n]").disabled = i >= steps.length - 1;
+  };
+  el.querySelector("[data-a=n]").onclick = () => { i++; draw(); };
+  el.querySelector("[data-a=p]").onclick = () => { i--; draw(); };
+  el.querySelector("[data-a=r]").onclick = () => { i = -1; draw(); };
+  draw();
+}
+const ADD_TAX_BC = [["LOAD_FAST_BORROW", "price"], ["LOAD_CONST", "0.25"], ["BINARY_OP", "*"], ["STORE_FAST", "tax"], ["LOAD_FAST_BORROW_LOAD_FAST_BORROW", "price, tax"], ["BINARY_OP", "+"], ["RETURN_VALUE", ""]];
+
+const EXTRA = {};
+
+// Functions and the call stack
+EXTRA.functions = {
+  title: "Functions and the call stack",
+  summary: "A function call gets its own private set of names, stacked on top of the caller's. When the call returns, those names are erased.",
+  practice: "Pass data into functions and get results back with <code>return</code>, rather than relying on names made inside. And remember that many pandas methods return a new object instead of changing yours: write <code>df = df.dropna()</code>, not just <code>df.dropna()</code>.",
+  steps: [
+    {
+      layer: "Memory", title: "A call's names disappear when it returns",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("def add_tax(price):\n    tax = price * 0.25\n    return price + tax\n\ntotal = add_tax(100)\nprint(tax)", "py")}
+          ${predict("What does the last line print?", ["25.0", "125.0", "an error"])}
+          ${reveal(`
+            <div class="out err">NameError: name 'tax' is not defined</div>
+            <p>Every call gets a <b>frame</b>: a private area of memory holding that call's names. Frames pile up on the <b>call stack</b>. Step through:</p>
+            <div id="fs1"></div>
+            <details class="peek"><summary>Bytecode inside the function</summary>${bcTable(ADD_TAX_BC)}<p class="note">Inside a function, Python uses <code>LOAD_FAST</code> and <code>STORE_FAST</code>: names are looked up in the current frame by position, which is quicker than the name lookups at the top level.</p></details>
+            ${tryIt("def add_tax(price):\n    tax = price * 0.25\n    return price + tax\n\ntotal = add_tax(100)\ntotal")}`)}`;
+        frameStepper(el.querySelector("#fs1"), "def add_tax(price):\n    tax = price * 0.25\n    return price + tax\n\ntotal = add_tax(100)\nprint(tax)", [
+          { line: 1, frames: [{ fn: "top level", vars: [["add_tax", "function"]] }], note: "<code>def</code> creates a function object named add_tax. Nothing inside it runs yet." },
+          { line: 5, frames: [{ fn: "top level", vars: [["add_tax", "function"]] }], note: "Call add_tax(100). This line pauses until the call returns." },
+          { line: 2, frames: [{ fn: "top level", vars: [["add_tax", "function"]] }, { fn: "add_tax", vars: [["price", "100"]] }], note: "A new frame for this call. Its own name, price, points at 100." },
+          { line: 3, frames: [{ fn: "top level", vars: [["add_tax", "function"]] }, { fn: "add_tax", vars: [["price", "100"], ["tax", "25.0"]] }], note: "tax is created in the call's frame, not at the top level." },
+          { line: 5, frames: [{ fn: "top level", vars: [["add_tax", "function"], ["total", "125.0"]] }], note: "The call returns 125.0. Its frame is erased, and tax with it. total gets the result." },
+          { line: 6, frames: [{ fn: "top level", vars: [["add_tax", "function"], ["total", "125.0"]] }], note: "<span style='color:var(--bad)'>NameError</span>: there is no tax in the top-level frame." },
+        ]);
+        wirePredict(el, 2);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Memory", title: "Calls stack up, most recent on top",
+      render(el) {
+        const src = "def total(xs):\n    s = 0\n    for x in xs:\n        s += x\n    return s\n\ndef mean(xs):\n    return total(xs) / len(xs)\n\nm = mean([2, 4, 9])";
+        el.innerHTML = `
+          ${codeBlock(src, "py")}
+          ${predict("While <code>total</code> is adding up the numbers, how many frames exist?", ["1", "2", "3"])}
+          ${reveal(`<p>Three: the top level, <code>mean</code>, and <code>total</code> on top. Step through to watch them stack and unstack:</p><div id="fs2"></div><p class="note">Both functions have a name <code>xs</code>. They are different names in different frames, pointing at the same list, as in lesson 3.</p>`)}`;
+        const T = ["total", "function"], M = ["mean", "function"];
+        frameStepper(el.querySelector("#fs2"), src, [
+          { line: 10, frames: [{ fn: "top level", vars: [T, M] }], note: "Call mean with a list." },
+          { line: 8, frames: [{ fn: "top level", vars: [T, M] }, { fn: "mean", vars: [["xs", "[2, 4, 9]"]] }], note: "mean's frame. It calls total and waits." },
+          { line: 2, frames: [{ fn: "top level", vars: [T, M] }, { fn: "mean", vars: [["xs", "[2, 4, 9]"]] }, { fn: "total", vars: [["xs", "[2, 4, 9]"], ["s", "0"]] }], note: "Three frames now. Only the top one is running." },
+          { line: 5, frames: [{ fn: "top level", vars: [T, M] }, { fn: "mean", vars: [["xs", "[2, 4, 9]"]] }, { fn: "total", vars: [["xs", "[2, 4, 9]"], ["s", "15"], ["x", "9"]] }], note: "The loop has run. total returns 15." },
+          { line: 8, frames: [{ fn: "top level", vars: [T, M] }, { fn: "mean", vars: [["xs", "[2, 4, 9]"]] }], note: "total's frame is gone. mean computes 15 / 3 and returns 5.0." },
+          { line: 10, frames: [{ fn: "top level", vars: [T, M, ["m", "5.0"]] }], note: "Back at the top level with the result." },
+        ]);
+        wirePredict(el, 2);
+      }
+    },
+    {
+      layer: "Memory", title: "Arguments are names for the caller's objects",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("def add_row(rows):\n    rows.append(0)\n\ndata = [1, 2]\nadd_row(data)\ndata", "py")}
+          ${predict("The function never touches <code>data</code> by name. What is <code>data</code> afterwards?", ["[1, 2]", "[1, 2, 0]"])}
+          ${reveal(`
+            <div class="out">[1, 2, 0]</div>
+            <p>Calling a function doesn't copy its arguments. <code>rows</code> is a new name, in the call's frame, for the same list. Changing the list through either name changes the one list.</p>
+            <p>pandas usually avoids this by returning a new object, which is why you have to keep the result:</p>
+            ${codeBlock("df.dropna()        # returns a new DataFrame, then it's thrown away\ndf = df.dropna()   # keeps it", "pd")}
+            ${tryIt("def add_row(rows):\n    rows = rows + [0]   # makes a new list instead\n\ndata = [1, 2]\nadd_row(data)\ndata")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+  ]
+};
+
+// Reading errors
+const TB_SCRIPT = `Traceback (most recent call last):
+  File "stats.py", line 10, in <module>
+    mean([2, "4", 9])
+    ~~~~^^^^^^^^^^^^^
+  File "stats.py", line 2, in mean
+    return total(xs) / len(xs)
+           ~~~~~^^^^
+  File "stats.py", line 7, in total
+    s += x
+TypeError: unsupported operand type(s) for +=: 'int' and 'str'`;
+EXTRA.errors = {
+  title: "Reading errors",
+  summary: "An error stops the program and prints a traceback: the call stack at the moment things went wrong. Read it from the bottom up.",
+  practice: "Read the last line first: the error type and message. Then go up to the last frame in your own code; that's usually the line to fix.",
+  steps: [
+    {
+      layer: "Memory", title: "A traceback is the call stack, printed",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("def mean(xs):\n    return total(xs) / len(xs)\n\ndef total(xs):\n    s = 0\n    for x in xs:\n        s += x\n    return s\n\nmean([2, \"4\", 9])", "py")}
+          <p>Running this file prints:</p>
+          <pre class="code tb">${esc(TB_SCRIPT)}</pre>
+          ${predict("Where should you start reading?", ["The first line", "The last line"])}
+          ${reveal(`
+            <div class="tb-key ans">
+              <div><b>Last line:</b> what went wrong. A <code>TypeError</code>: Python can't add a string to an int.</div>
+              <div><b>Each <code>File …, line …, in …</code> pair:</b> one frame from the call stack, oldest at the top, the one that failed at the bottom (<i>most recent call last</i>).</div>
+              <div><b>Carets <code>~~~^^^</code>:</b> point at the exact part of the line that was running.</div>
+            </div>
+            <p>So: <code>total</code> failed on <code>s += x</code>, called from <code>mean</code>, called from line 10. The cause is the <code>"4"</code> in the list, a string where a number belongs.</p>
+            ${tryIt("def mean(xs):\n    return total(xs) / len(xs)\n\ndef total(xs):\n    s = 0\n    for x in xs:\n        s += x\n    return s\n\nmean([2, \"4\", 9])", "Run it, then fix it")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Code", title: "The error type says what kind of problem it is",
+      render(el) {
+        const rows = [
+          ["NameError", "print(totl)", "name 'totl' is not defined", "A typo, or a notebook cell that hasn't run yet"],
+          ["TypeError", "2 + '4'", "unsupported operand type(s) for +: 'int' and 'str'", "Numbers stored as text"],
+          ["ValueError", "int('3.5')", "invalid literal for int() with base 10: '3.5'", "Right type, wrong contents"],
+          ["KeyError", "{'score': 90}['Score']", "'Score'", "A column or key name that doesn't match exactly"],
+          ["IndexError", "[1, 2, 3][3]", "list index out of range", "Positions start at 0"],
+          ["AttributeError", "[1, 2].mean()", "'list' object has no attribute 'mean'", "The object isn't the type you think"],
+          ["ModuleNotFoundError", "import pandsa", "No module named 'pandsa'", "A typo, or the package isn't installed for this Python"],
+          ["FileNotFoundError", "open('data/grades.csv')", "[Errno 2] No such file or directory: 'data/grades.csv'", "The path is relative to a different folder"],
+        ];
+        el.innerHTML = `
+          ${codeBlock("int('3.5')", "py")}
+          ${predict("Which error does this raise?", ["TypeError", "ValueError"])}
+          ${reveal(`
+            <div class="out err">ValueError: invalid literal for int() with base 10: '3.5'</div>
+            <p><code>'3.5'</code> is the right type (text can be converted to int) but the wrong contents. The common types, all recorded from Python 3.14:</p>
+            <div class="tbl-wrap"><table class="data errs"><thead><tr><th>type</th><th>example</th><th>message</th><th>usually means</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r[0]}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td class="plain">${esc(r[3])}</td></tr>`).join("")}</tbody></table></div>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Code", title: "In a library error, find your own line",
+      render(el) {
+        const tb = `Traceback (most recent call last):
+  File ".../site-packages/pandas/core/indexes/base.py", line 3641, in get_loc
+    return self._engine.get_loc(casted_key)
+  File "pandas/_libs/index.pyx", line 168, in pandas._libs.index.IndexEngine.get_loc
+  …
+KeyError: 'Score'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "analysis.py", line 4, in <module>
+    avg = df["Score"].mean()
+          ~~^^^^^^^^^
+  File ".../site-packages/pandas/core/frame.py", line 4378, in __getitem__
+    indexer = self.columns.get_loc(key)
+  File ".../site-packages/pandas/core/indexes/base.py", line 3648, in get_loc
+    raise KeyError(key) from err
+KeyError: 'Score'`;
+        el.innerHTML = `
+          ${codeBlock("df = pd.DataFrame({\"name\": [\"Ana\", \"Ben\"], \"score\": [90, 85]})\navg = df[\"Score\"].mean()", "pd")}
+          <pre class="code tb">${esc(tb)}</pre>
+          ${predict("Most of these frames are inside pandas. Which line do you fix?", ["frame.py, line 4378", "analysis.py, line 4", "base.py, line 3648"])}
+          ${reveal(`
+            <p>Your code, <code>analysis.py</code> line 4. Frames under it are pandas' own code doing what you asked; the bug is in the request. The message <code>KeyError: 'Score'</code> says the column wasn't found: it's <code>score</code>, lowercase.</p>
+            <p class="note">pandas raises two chained errors here; the last block is the one to read. Recorded from pandas 3.0.2, with install paths shortened.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+  ]
+};
+
+// Text and files
+EXTRA.text = {
+  title: "Text and files",
+  summary: "Text is stored as numbers too, using an encoding. A file is bytes on disk, and a CSV is just text with commas.",
+  practice: "When reading a CSV, check <code>df.dtypes</code> and a few rows before trusting it. Pass <code>dtype={...}</code> for codes like zip codes and IDs, and <code>encoding=...</code> if names come out scrambled or fail to load.",
+  steps: [
+    {
+      layer: "Bits", title: "Each character is stored as one or more bytes",
+      render(el) {
+        el.innerHTML = `
+          ${predict("In UTF-8, the standard text encoding, how many bytes does <code>é</code> take?", ["1", "2", "4"])}
+          ${reveal(`
+            <p>Two. UTF-8 gives every character a number, its <b>code point</b>, then stores it in 1 to 4 bytes: plain English letters take 1, accented letters 2, many symbols 3, emoji 4. Type anything:</p>
+            <input type="text" id="tin" value="Hi €5" aria-label="Text to encode">
+            <div class="tbl-wrap" id="tout"></div>
+            ${tryIt("'José'.encode('utf-8')")}`)}`;
+        const tin = el.querySelector("#tin"), tout = el.querySelector("#tout"), enc = new TextEncoder();
+        const draw = () => {
+          const chars = [...tin.value].slice(0, 16);
+          tout.innerHTML = chars.length ? `<table class="data"><thead><tr><th>character</th><th>code point</th><th>UTF-8 bytes</th></tr></thead><tbody>${chars.map(c => `<tr><td>${esc(c === " " ? "space" : c)}</td><td>U+${c.codePointAt(0).toString(16).toUpperCase().padStart(4, "0")}</td><td style="text-align:left">${[...enc.encode(c)].map(b => b.toString(2).padStart(8, "0")).join(" ")}</td></tr>`).join("")}</tbody></table>` : "";
+        };
+        tin.oninput = draw; draw();
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Bits", title: "Reading with the wrong encoding scrambles text",
+      render(el) {
+        el.innerHTML = `
+          <p>A file only holds bytes; it doesn't say which encoding made them. The reader has to know.</p>
+          ${predict("A file saved in UTF-8 is read as Latin-1, an older encoding. What does <code>José</code> become?", ["José", "JosÃ©", "an error"])}
+          ${reveal(`
+            <div class="out">JosÃ©</div>
+            <p>The two bytes UTF-8 uses for <code>é</code>, <code>11000011 10101001</code>, mean two separate characters in Latin-1: <code>Ã</code> and <code>©</code>. The other way round fails outright, because Latin-1's single byte for <code>é</code> isn't valid UTF-8:</p>
+            <div class="out err">UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe9 in position 3: unexpected end of data</div>
+            ${codeBlock("pd.read_csv('grades.csv', encoding='latin-1')   # if the file isn't UTF-8", "pd")}
+            ${tryIt("'José'.encode('utf-8').decode('latin-1')")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Code", title: "A CSV file is just text",
+      render(el) {
+        el.innerHTML = `
+          <div class="row"><span class="eyebrow">grades.csv, as text</span></div>
+          <pre class="code">name,zip,score\nAna,02139,90\n"Ben, Jr.",15213,85</pre>
+          <p>Commas separate columns; quotes protect a comma inside a value. <code>read_csv</code> has to guess each column's type from the text.</p>
+          ${codeBlock("df = pd.read_csv('grades.csv')\ndf.zip.tolist()", "pd")}
+          ${predict("What happens to Ana's zip code?", ["'02139'", "2139", "an error"])}
+          ${reveal(`
+            <div class="out">[2139, 15213]</div>
+            <p>The column looked numeric, so it became <code>int64</code>, and the leading zero is gone. Codes that happen to be digits, like zip codes and IDs, should stay text:</p>
+            ${codeBlock("pd.read_csv('grades.csv', dtype={'zip': str}).zip.tolist()", "pd")}
+            <div class="out">['02139', '15213']</div>
+            <p class="note">Recorded from pandas 3.0.2.</p>`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Hardware", title: "A path says where a file lives",
+      render(el) {
+        el.innerHTML = `
+          <pre class="code tree">/Users/ana/project/
+├── data/
+│   └── grades.csv
+└── notebooks/
+    └── analysis.ipynb</pre>
+          ${codeBlock("pd.read_csv('data/grades.csv')", "pd")}
+          ${predict("The notebook runs this line. Where does Python look?", ["/Users/ana/project/data/grades.csv", "/Users/ana/project/notebooks/data/grades.csv"])}
+          ${reveal(`
+            <div class="out err">FileNotFoundError: [Errno 2] No such file or directory: 'data/grades.csv'</div>
+            <p>A path without a leading <code>/</code> is <b>relative</b>: it starts from the process's <b>working directory</b>. Jupyter usually sets that to the notebook's own folder, <code>notebooks/</code>. Two fixes:</p>
+            ${codeBlock("pd.read_csv('../data/grades.csv')                  # .. means the parent folder\npd.read_csv('/Users/ana/project/data/grades.csv')  # absolute: starts at /", "pd")}
+            <p class="note">On Windows, absolute paths start with a drive, like <code>C:\\Users\\ana</code>.</p>
+            ${tryIt("import os\nos.getcwd()", "See this page's working directory")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+  ]
+};
+
+// Packages and environments
+EXTRA.packages = {
+  title: "Packages and environments",
+  summary: "A package is a folder of code on disk. Each Python installation has its own set of them, which is why the same code can fail, or behave differently, on another setup.",
+  practice: "Install from inside the notebook with <code>%pip install …</code> so it lands in the kernel's Python installation. Record versions with <code>pip freeze &gt; requirements.txt</code>, and check <code>pd.__version__</code> when results differ between machines.",
+  steps: [
+    {
+      layer: "Software", title: "import searches folders for code",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("import pandas\npandas.__file__", "pd")}
+          <div class="out">'.../site-packages/pandas/__init__.py'</div>
+          <p><code>import pandas</code> makes Python search a list of folders, <code>sys.path</code>, for one named <code>pandas</code>. Installed packages live in a folder called <code>site-packages</code>. Importing runs the code in that folder and gives you the resulting module object.</p>
+          ${predict("You <code>import pandsa</code> by mistake. What happens?", ["Python suggests pandas", "ModuleNotFoundError", "It imports pandas anyway"])}
+          ${reveal(`
+            <div class="out err">ModuleNotFoundError: No module named 'pandsa'</div>
+            <p>No folder with that name is on the list. The same error appears when a package is spelled right but isn't installed in the Python installation that's running your code.</p>
+            ${tryIt("import sys\nsys.path", "See where Python looks in this page")}`)}`;
+        wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Software", title: "Each Python installation has its own packages",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("pip install pandas", "sh")}
+          <p>You run this in a terminal, and it succeeds. Then, in a notebook:</p>
+          ${codeBlock("import pandas", "jp")}
+          ${predict("The notebook says <code>ModuleNotFoundError: No module named 'pandas'</code>. Most likely cause?", ["The install was broken", "The notebook's kernel uses a different Python installation", "The computer needs a restart"])}
+          ${reveal(`
+            <div class="envs ans">
+              <div class="env"><span class="hn">Python installation A</span><span class="note">what the terminal's <code>pip</code> uses</span><span class="pk">site-packages: <b>pandas 3.0.2</b></span></div>
+              <div class="env"><span class="hn">Python installation B</span><span class="note">what the notebook's kernel runs</span><span class="pk">site-packages: <i>no pandas</i></span></div>
+            </div>
+            <p>A computer often has several Python installations, each with its own <code>site-packages</code>. An <b>environment</b> (made with <code>venv</code> or <code>conda</code>) is a deliberate extra one, so each project gets exactly the packages it needs. To install into the kernel's own Python installation, run this in a notebook cell:</p>
+            ${codeBlock("%pip install pandas", "jp")}`)}`;
+        wirePredict(el, 1);
+      }
+    },
+    {
+      layer: "Software", title: "Versions change behavior",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("df = pd.DataFrame({'name': ['Ana', 'Ben']})\ndf.dtypes", "pd")}
+          ${predict("Same code, same data, two laptops. Can the output differ?", ["No, code is code", "Yes"])}
+          ${reveal(`
+            <div class="tbl-wrap ans"><table class="data"><thead><tr><th></th><th>pandas 2.2.3</th><th>pandas 3.0.2</th></tr></thead><tbody>
+              <tr><td>text column dtype</td><td>object</td><td>str</td></tr>
+              <tr><td><code>df[mask]['y'] = 5</code></td><td>SettingWithCopyWarning</td><td>ChainedAssignmentError</td></tr>
+            </tbody></table></div>
+            <p>Both recorded by running the same code under each version. Packages change between releases, so results depend on which version is installed. Check with <code>pd.__version__</code>, and save the exact versions of a working project:</p>
+            ${codeBlock("pip freeze > requirements.txt     # record versions\npip install -r requirements.txt   # recreate them elsewhere", "sh")}`)}`;
+        wirePredict(el, 1);
+      }
+    },
+  ]
+};
+
+(() => {
+  const b = LESSONS.splice(0);
+  LESSONS.push(b[0], b[1], b[2], EXTRA.functions, EXTRA.errors, b[3], b[4], EXTRA.text, EXTRA.packages, b[5], b[6], b[7]);
+})();
+LESSONS.forEach((L, i) => { L.id = "l" + (i + 1); });
+
+const PY_HELPER = `
+import ast, dis, io, json, struct, sys, contextlib, linecache, traceback
+def _decompose(src):
+    res = {"instrs": [], "stdout": "", "error": None, "value": None, "vars": []}
+    try:
+        tree = ast.parse(src, "<cell>")
+    except SyntaxError as e:
+        res["error"] = f"SyntaxError: {e.msg} (line {e.lineno})"
+        return json.dumps(res)
+    last = None
+    if tree.body and isinstance(tree.body[-1], ast.Expr):
+        last = ast.Expression(tree.body.pop().value)
+    code = compile(tree, "<cell>", "exec")
+    whole = compile(src, "<cell>", "exec")
+    for i in dis.get_instructions(whole):
+        if i.opname in ("RESUME", "NOP", "NOT_TAKEN", "CACHE"):
+            continue
+        r = i.argrepr
+        if not r and i.argval is not None and i.opname not in ("POP_TOP", "RETURN_VALUE", "GET_ITER", "END_FOR", "POP_ITER"):
+            r = repr(i.argval)
+        res["instrs"].append([i.opname, r])
+    if res["instrs"][-2:] == [["LOAD_CONST", "None"], ["RETURN_VALUE", ""]]:
+        res["instrs"] = res["instrs"][:-2]
+    ns = {}
+    out = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(out):
+            exec(code, ns)
+            if last is not None:
+                v = eval(compile(last, "<cell>", "eval"), ns)
+                if v is not None:
+                    res["value"] = repr(v)[:300]
+    except Exception as e:
+        res["error"] = f"{type(e).__name__}: {e}"
+        linecache.cache["<cell>"] = (len(src), None, src.splitlines(True), "<cell>")
+        frames = [f for f in traceback.extract_tb(e.__traceback__) if f.filename == "<cell>"]
+        if frames:
+            res["tb"] = "Traceback (most recent call last):\\n" + "".join(traceback.format_list(frames)) + res["error"]
+    res["stdout"] = out.getvalue()[:2000]
+    seen = {}
+    for k, v in ns.items():
+        if k.startswith("__") or callable(v) and not isinstance(v, (list, dict)):
+            continue
+        info = {"name": k, "type": type(v).__name__, "id": hex(id(v)), "size": sys.getsizeof(v), "repr": repr(v)[:120], "same": seen.get(id(v))}
+        seen.setdefault(id(v), k)
+        if isinstance(v, float):
+            info["bits"] = format(struct.unpack(">Q", struct.pack(">d", v))[0], "064b")
+        elif isinstance(v, bool):
+            info["intbits"] = "1" if v else "0"
+        elif isinstance(v, int):
+            info["intbits"] = bin(v)
+        elif isinstance(v, str):
+            info["bytes"] = " ".join(f"{b:08b}" for b in v.encode("utf-8")[:12])
+        elif isinstance(v, list):
+            info["items"] = len(v)
+        res["vars"].append(info)
+    return json.dumps(res)
+`;
+let pyPromise = null;
+function loadPython(statusEl) {
+  if (pyPromise) return pyPromise;
+  let stage = "checking WebAssembly";
+  pyPromise = new Promise((resolve, reject) => {
+    const fail = e => reject(new Error(`${stage}: ${e && e.message ? e.message : e}`));
+    try { new WebAssembly.Module(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0])); }
+    catch (e) { fail(new Error("this viewer blocks WebAssembly (" + (e && e.message || e) + ")")); return; }
+    if (statusEl) statusEl.textContent = "Starting Python 3.14 in this page (about 12 MB, first run only)…";
+    stage = "loading py/pyodide.js";
+    const base = new URL("py/", document.baseURI).href;
+    const s = document.createElement("script");
+    s.src = base + "pyodide.js";
+    s.onload = async () => {
+      try {
+        stage = "fetching the standard library";
+        const res = await fetch(base + "python_stdlib.b64.txt");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const raw = Uint8Array.from(atob((await res.text()).trim()), c => c.charCodeAt(0));
+        const stdLibURL = URL.createObjectURL(new Blob([raw], { type: "application/zip" }));
+        stage = "starting the Python runtime";
+        const py = await loadPyodide({ indexURL: base, stdLibURL });
+        stage = "preparing helpers";
+        py.runPython(PY_HELPER);
+        resolve(py);
+      } catch (e) { fail(e); }
+    };
+    s.onerror = () => fail(new Error("the script was blocked or missing"));
+    document.head.appendChild(s);
+  });
+  const started = pyPromise;
+  pyPromise = Promise.race([started, new Promise((_, rej) => setTimeout(() => rej(new Error(`timed out after 60 seconds while ${stage}`)), 60000))]);
+  pyPromise.catch(() => { pyPromise = null; });
+  return pyPromise;
+}
+
+// ---------- shell ----------
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem("uth-progress") || "{}"); } catch (e) { return {}; } },
+  set(v) { try { localStorage.setItem("uth-progress", JSON.stringify(v)); } catch (e) {} },
+};
+let progress = store.get();
+const nav = document.getElementById("lessonNav"), stage = document.getElementById("stage");
+let cur = { l: 0, s: 0 };
+
+const tog = document.getElementById("navtoggle");
+tog.onclick = () => { const o = nav.classList.toggle("open"); tog.setAttribute("aria-expanded", o); };
+function drawNav() {
+  nav.innerHTML = LESSONS.map((L, i) => {
+    const seen = (progress[L.id] || []).length, done = seen >= L.steps.length;
+    return `<button class="lesson-btn" data-l="${i}" aria-current="${cur.l === i && cur.l >= 0 ? "true" : "false"}"><span class="ln">${done ? "✓" : i + 1}</span><span class="lt">${esc(L.title)}<span class="lp">${seen ? `${Math.min(seen, L.steps.length)} of ${L.steps.length} sections` : `${L.steps.length} sections`}</span></span></button>`;
+  }).join("") + `<button class="lesson-btn sandbox" data-l="-1" aria-current="${cur.l === -1 ? "true" : "false"}"><span class="ln">›_</span><span class="lt">Sandbox<span class="lp">Run your own code</span></span></button>`;
+  nav.querySelectorAll(".lesson-btn").forEach(b => b.onclick = () => { nav.classList.remove("open"); tog.setAttribute("aria-expanded", "false"); go(+b.dataset.l, 0, true); });
+  tog.textContent = cur.l >= 0 ? `All lessons · ${cur.l + 1} of ${LESSONS.length}` : "All lessons";
+}
+function go(l, s, scroll) {
+  cur = { l, s };
+  if (l === -1) { drawSandbox(); drawNav(); if (scroll) jump(); return; }
+  const L = LESSONS[l], st = L.steps[s];
+  const seen = new Set(progress[L.id] || []); seen.add(s); progress[L.id] = [...seen]; store.set(progress);
+  const last = s === L.steps.length - 1;
+  stage.innerHTML = `
+    <div class="lesson-head">
+      <span class="eyebrow">Lesson ${l + 1} of ${LESSONS.length}</span>
+      <h2>${esc(L.title)}</h2>
+      ${s === 0 ? `<p class="lead">${L.summary}</p>` : ""}
+      <div class="dots" aria-label="Sections">${L.steps.map((x, i) => `<button class="dot ${i === s ? "on" : ""} ${seen.has(i) ? "seen" : ""}" data-s="${i}" aria-label="Section ${i + 1}: ${esc(x.title)}"></button>`).join("")}<span class="dl">Section ${s + 1} of ${L.steps.length}</span></div>
+    </div>
+    <section class="step"><span class="eyebrow layer-tag">${esc(st.layer)}</span><h3>${esc(st.title)}</h3><div class="step-body" id="sb"></div></section>
+    ${last ? `<div class="practice"><span class="eyebrow">In practice</span><p>${L.practice}</p></div>` : ""}
+    <div class="stepnav">
+      <button class="btn" id="back" ${l === 0 && s === 0 ? "disabled" : ""}>Previous</button>
+      <div class="nextwrap">${last ? `${l < LESSONS.length - 1 ? `<span class="upnext">${esc(LESSONS[l + 1].title)}</span>` : ""}` : ""}<button class="btn primary" id="next">${last ? (l < LESSONS.length - 1 ? "Next lesson" : "Open the sandbox") : "Next section"}</button></div>
+    </div>`;
+  st.render(stage.querySelector("#sb"));
+  stage.querySelectorAll(".dot").forEach(d => d.onclick = () => go(l, +d.dataset.s, true));
+  stage.querySelector("#back").onclick = () => s > 0 ? go(l, s - 1, true) : go(l - 1, LESSONS[l - 1].steps.length - 1, true);
+  stage.querySelector("#next").onclick = () => !last ? go(l, s + 1, true) : (l < LESSONS.length - 1 ? go(l + 1, 0, true) : go(-1, 0, true));
+  try { history.replaceState(null, "", `#${L.id}-${s + 1}`); } catch (e) {}
+  drawNav();
+  if (scroll) jump();
+}
+function jump() {
+  // Instant jump plus focus on the new title: focus scrolls the title into view even when
+  // the page is embedded in a frame that handles scrolling itself.
+  const target = stage.querySelector(".lesson-head h2") || stage;
+  try { stage.scrollIntoView({ behavior: "auto", block: "start" }); } catch (e) {}
+  try { window.scrollTo(0, stage.getBoundingClientRect().top + window.scrollY - 12); } catch (e) {}
+  target.setAttribute("tabindex", "-1");
+  try { target.focus({ preventScroll: false }); } catch (e) {}
+}
+function drawSandbox() {
+  stage.innerHTML = `
+    <div class="lesson-head"><span class="eyebrow">Sandbox</span><h2>Run your own code</h2><p class="lead">Real Python 3.14, running inside this page. See the output, the bytecode, the objects created and their bits.</p></div>
+    <section class="step"><span class="eyebrow layer-tag">Code</span><h3>Write a few lines</h3>
+      <textarea id="src" spellcheck="false" aria-label="Python code" rows="7">price = 0.1
+tax = 0.2
+total = price + tax
+same = total
+total == 0.3</textarea>
+      <div class="row"><button class="btn primary" id="run">Run</button><span class="status" id="pst"></span></div>
+      <div id="p1"></div>
+      <p class="note">Plain Python only; NumPy and pandas aren't loaded yet. This build is 32-bit, so some sizes come out smaller than on a laptop.</p>
+    </section>
+    <section class="step"><span class="eyebrow layer-tag">Bytecode</span><div id="p2"><p class="note">Appears after you run.</p></div></section>
+    <section class="step"><span class="eyebrow layer-tag">Memory</span><div id="p3"><p class="note">Appears after you run.</p></div></section>
+    <section class="step"><span class="eyebrow layer-tag">Bits</span><div id="p4"><p class="note">Appears after you run.</p></div></section>`;
+  try { history.replaceState(null, "", "#sandbox"); } catch (e) {}
+  const st = stage.querySelector("#pst");
+  stage.querySelector("#run").onclick = async () => {
+    let r;
+    try { r = await runPy(stage.querySelector("#src").value, st); }
+    catch (e) { st.textContent = ""; stage.querySelector("#p1").innerHTML = `<div class="out err">Python couldn't start here: ${esc(e && e.message ? e.message : e)}</div>`; return; }
+    st.textContent = "";
+    stage.querySelector("#p1").innerHTML = runOutput(r);
+    stage.querySelector("#p2").innerHTML = r.instrs.length ? bcTable(r.instrs) : `<p class="note">The code didn't compile.</p>`;
+    stage.querySelector("#p3").innerHTML = r.vars.length ? `<div class="tbl-wrap"><table class="data"><thead><tr><th>name</th><th>type</th><th>id</th><th>bytes</th><th>value</th></tr></thead><tbody>${r.vars.map(v => `<tr><td>${esc(v.name)}</td><td>${esc(v.type)}</td><td>${esc(v.id)}</td><td>${v.size}</td><td style="text-align:left">${esc(v.repr)}${v.same ? ` <span class="note">(same object as ${esc(v.same)})</span>` : ""}</td></tr>`).join("")}</tbody></table></div><p class="note">The id is the object's address. Two names with the same id share one object.</p>` : `<p class="note">No names were created.</p>`;
+    const rows = r.vars.filter(v => v.bits || v.intbits || v.bytes).map(v => {
+      if (v.bits) return `<div class="bitrow"><span class="name">${esc(v.name)} · float</span>${bitsHtml({ sign: v.bits[0], exp: v.bits.slice(1, 12), frac: v.bits.slice(12) })}</div>`;
+      if (v.intbits) return `<div class="bitrow"><span class="name">${esc(v.name)} · ${esc(v.type)}</span><div class="bits">${esc(v.intbits)}</div></div>`;
+      return `<div class="bitrow"><span class="name">${esc(v.name)} · text as UTF-8</span><div class="bits">${esc(v.bytes)}</div></div>`;
+    }).join("");
+    stage.querySelector("#p4").innerHTML = rows ? (r.vars.some(v => v.bits) ? bitLegend : "") + rows : `<p class="note">No numbers, booleans or text to show.</p>`;
+  };
+}
+const h = (location.hash || "").slice(1), m = h.match(/^l(\d+)-(\d+)$/);
+if (h === "sandbox") go(-1, 0, false);
+else if (m && LESSONS[+m[1] - 1] && LESSONS[+m[1] - 1].steps[+m[2] - 1]) go(+m[1] - 1, +m[2] - 1, false);
+else go(0, 0, false);
+</script>
+
+</body>
+</html>
