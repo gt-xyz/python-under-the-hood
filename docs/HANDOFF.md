@@ -19,7 +19,7 @@ State of the project as of 2026-09-29, the day it moved from a claude.ai convers
 3. **Order.** Research offers principles, not a consensus order: an explicit notional machine (Sorva), references taught early, misconception inventories (ProgMiscon, Singh et al.), and read-before-write (PRIMM). Assignment, mutation and copies were grouped early at the owner's request. Functions and errors follow names; files follow bits; packages follow files.
 4. **Starts one level lower** than Python: lesson 1 covers processor, memory and addresses, storage, processes, and the four software layers, because the audience has no computing background.
 5. **Layer tags** (Python / standard library / NumPy / pandas / Jupyter / Terminal) make the language-vs-library-vs-tool boundary explicit. It explains, for example, why `and` fails on a column but `&` works (pandas redefines `&`).
-6. **Predictions never gate content.** Only the answer is blurred; there's a "Show answer" link.
+6. **Predictions gate only their answer.** The answer and explanation live inside the prediction box and appear after a pick; no blur, no skip. Nothing outside the box may give the answer away (see the open question on section headings in docs/PLAN.md).
 7. **Stacks look like stacks.** Values and call frames pile up from a labeled bottom; pops lift off before pushes drop in; a line underneath says what was pushed and popped. Step controls sit under the stack, next to the code.
 8. **Terminology** is in CLAUDE.md. Several rounds of feedback went into it; keep it.
 

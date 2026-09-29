@@ -122,16 +122,10 @@ nav.lessons { position: static; }
 .opt:disabled { cursor: default; opacity: 0.7; }
 .opt.right { border-color: var(--good); color: var(--good); opacity: 1; font-weight: 600; }
 .opt.wrong { border-color: var(--bad); color: var(--bad); opacity: 1; text-decoration: line-through; }
-.verdict { font-weight: 700; margin-top: -4px; }
-.ans { transition: filter 0.25s; }
-.ans { position: relative; }
-/* The blurred answer is itself the control: a button laid over it blurs what's behind and says what it does. */
-.veil { position: absolute; inset: -4px; z-index: 1; border: 0; border-radius: 8px; padding: 0; cursor: pointer; display: grid; place-items: center;
-  font: inherit; font-weight: 700; color: var(--accent); background: color-mix(in srgb, var(--bg) 40%, transparent);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background 0.15s; }
-.veil:hover, .veil:focus-visible { background: color-mix(in srgb, var(--bg) 55%, transparent); }
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .veil { background: var(--surface); } }
-.ans.veiled { user-select: none; }
+.verdict { font-weight: 700; }
+/* The answer and its explanation sit inside the prediction box and appear once an option is picked. */
+.predict .reveal { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.predict .hint { color: var(--muted); font-size: 0.9rem; }
 .live { display: grid; gap: 8px; margin-top: 6px; }
 .live .bc-wrap { max-height: 340px; overflow-y: auto; }
 .dim { color: var(--muted); }
@@ -537,34 +531,26 @@ const bitLegend = `<div class="legend"><span><b class="s">sign</b> 1 bit, + or â
 function predict(q, options) {
   return `<div class="predict"><span class="eyebrow">Predict</span><p class="pq">${q}</p><div class="opts">${options.map((o, i) => `<button class="opt" data-i="${i}">${o}</button>`).join("")}</div></div>`;
 }
-// The section's content is always visible. Only the answer itself (elements marked .ans,
-// or else the leading result boxes) stays blurred until the reader predicts or skips.
+// The answer (everything passed to reveal()) moves inside the prediction box and stays hidden until the
+// learner picks an option. Content outside reveal() is always visible, so nothing outside it may give
+// the answer away.
 function wirePredict(el, answer, onReveal) {
-  const rev = el.querySelector(".reveal");
-  let ans = [...rev.querySelectorAll(".ans")];
-  if (!ans.length) {
-    for (const c of rev.children) { if (c.classList.contains("out")) ans.push(c); else break; }
-    if (!ans.length && rev.firstElementChild && rev.firstElementChild.tagName === "P") ans = [rev.firstElementChild];
-  }
-  const verdict = el.querySelector(".verdict");
-  verdict.textContent = "";
+  const box = el.querySelector(".predict"), rev = el.querySelector(".reveal"), verdict = el.querySelector(".verdict");
+  const hint = document.createElement("p");
+  hint.className = "hint"; hint.textContent = "Pick one to see what happens and why.";
+  box.appendChild(hint); box.appendChild(verdict); box.appendChild(rev);
+  verdict.textContent = ""; rev.hidden = true;
   let done = false;
   const show = picked => {
     if (done) return;
     done = true;
     el.querySelectorAll(".opt").forEach(o => { o.disabled = true; o.classList.toggle("right", +o.dataset.i === answer); });
-    if (picked !== null && picked !== answer) el.querySelector(`.opt[data-i="${picked}"]`).classList.add("wrong");
-    if (picked !== null) { verdict.textContent = picked === answer ? "Right." : "Not quite."; verdict.className = "verdict " + (picked === answer ? "ok" : "no"); }
-    ans.forEach(a => { a.classList.remove("veiled"); a.querySelectorAll(":scope > .veil").forEach(v => v.remove()); });
+    if (picked !== answer) el.querySelector(`.opt[data-i="${picked}"]`).classList.add("wrong");
+    verdict.textContent = picked === answer ? "Right." : "Not quite.";
+    verdict.className = "verdict " + (picked === answer ? "ok" : "no");
+    hint.remove(); rev.hidden = false;
     if (onReveal) onReveal();
   };
-  ans.forEach(a => {
-    a.classList.add("ans", "veiled");
-    const v = document.createElement("button");
-    v.type = "button"; v.className = "veil"; v.textContent = "Show answer";
-    v.onclick = e => { e.stopPropagation(); show(null); };
-    a.appendChild(v);
-  });
   el.querySelectorAll(".opt").forEach(b => b.onclick = () => show(+b.dataset.i));
 }
 const reveal = (html) => `<p class="verdict" aria-live="polite"></p><div class="reveal">${html}</div>`;
@@ -676,8 +662,8 @@ LESSONS.push({
           <p>To run them, Python keeps a <b>stack</b>: a pile of values. An instruction can <b>push</b> a value, which puts it on top of the pile, or <b>pop</b> a value, which takes the top one off. Instructions only ever touch the top. That is what lets each one be so simple: it never has to say where its inputs are, because they are always the most recently pushed values.</p>
           ${predict("With <code>price = 2.5</code> and <code>qty = 4</code>, what's on the stack just before the last instruction, <code>STORE_NAME</code>, runs?", ["2.5 and 4", "10.0", "Nothing"])}
           ${reveal(`
-            <p class="ans">10.0. The two <code>LOAD_NAME</code>s pushed 2.5 and 4. <code>BINARY_OP *</code> popped both and pushed their product. <code>STORE_NAME</code> then pops that and gives it the name <code>total</code>. Step through it and watch the pile:</p>
-            <div class="st ans">${stepperShell}</div>
+            <p>10.0. The two <code>LOAD_NAME</code>s pushed 2.5 and 4. <code>BINARY_OP *</code> popped both and pushed their product. <code>STORE_NAME</code> then pops that and gives it the name <code>total</code>. Step through it and watch the pile:</p>
+            <div class="st">${stepperShell}</div>
             <p>Now change the code and run it. Your version's bytecode appears underneath, with its own stepper.</p>
             ${tryIt("price = 2.5\nqty = 4\ntotal = price * qty\ntotal", null, "py")}`)}`;
         wirePredict(el, 1);
@@ -703,9 +689,9 @@ LESSONS.push({
           ${codeBlock("a = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)", "py")}
           ${predict("What does print(a) show?", ["[1, 2, 3]", "[1, 2, 3, 4]"])}
           ${reveal(`
-            <div class="out ans">[1, 2, 3, 4]</div>
+            <div class="out">[1, 2, 3, 4]</div>
             <p>Step through and watch memory:</p>
-            <div id="pic"></div><label class="row"><input type="checkbox" id="copy"> Use <code>b = a.copy()</code></label><div class="st ans">${stepperShell}</div>`)}`;
+            <div id="pic"></div><label class="row"><input type="checkbox" id="copy"> Use <code>b = a.copy()</code></label><div class="st">${stepperShell}</div>`)}`;
         let stepI = -1, copy = false;
         const pic = el.querySelector("#pic");
         function draw() {
@@ -735,7 +721,7 @@ LESSONS.push({
       render(el) {
         el.innerHTML = `
           ${codeBlock("x = 5\ny = x\ny += 1\nprint(x)", "py")}
-          ${predict("Same pattern as the list. What does print(x) show?", ["5", "6"])}
+          ${predict("What does print(x) show?", ["5", "6"])}
           ${reveal(`
             <div class="out">5</div>
             <p>Ints, floats, strings and tuples are <b>immutable</b>: no operation can change them. So <code>y += 1</code> builds a new int, 6, and moves the name <code>y</code> to it. <code>x</code> still points at 5.</p>
@@ -1437,7 +1423,7 @@ EXTRA.values = {
           ${codeBlock("x = 5\nx = 'five'", "py")}
           ${predict("After these two lines, what happened to the number 5?", ["It was changed into 'five'", "Nothing: x just points at a different object now"])}
           ${reveal(`
-            <p class="ans">Nothing happened to it. <code>=</code> attaches the <b>name</b> on its left to the object on its right, and a second <code>=</code> moves the label to a new object. The int 5 is untouched; with no name left on it, Python frees its memory. A name is what most people call a variable. It has no type of its own: only objects have types.</p>
+            <p>Nothing happened to it. <code>=</code> attaches the <b>name</b> on its left to the object on its right, and a second <code>=</code> moves the label to a new object. The int 5 is untouched; with no name left on it, Python frees its memory. A name is what most people call a variable. It has no type of its own: only objects have types.</p>
             ${bcTable(DATA.t_names)}
             <p>Two kinds of line show up in that table. An <b>expression</b> has a value: <code>5</code>, <code>x + 1</code>, <code>len(xs)</code>. A <b>statement</b> does something and has no value: <code>x = 5</code>, <code>import math</code>. In the stepper, an expression leaves a value on the stack and a statement leaves nothing.</p>
             ${tryIt("x = 5\ny = x\nx = 'five'\ny", "Predict y, then run", "py")}`)}`;
@@ -1514,7 +1500,7 @@ EXTRA.flow = {
           ${codeBlock("def add_tax(price):\n    return price * 1.25\n\ntotal = add_tax(100)", "py")}
           ${predict("How many times does the line return price * 1.25 run?", ["Once, when Python reads the def", "Once, when add_tax(100) is called", "Twice"])}
           ${reveal(`
-            <p class="ans">Once, at the call. <code>def</code> builds a <b>function</b> object, a recipe holding that code, and gives it the name add_tax; nothing inside runs yet. <code>add_tax(100)</code> <b>calls</b> it: 100 is the <b>argument</b>, price is the <b>parameter</b>, the name the argument gets inside, and <code>return</code> hands 125.0 back to the caller. In bytecode, the recipe is made and named, then called:</p>
+            <p>Once, at the call. <code>def</code> builds a <b>function</b> object, a recipe holding that code, and gives it the name add_tax; nothing inside runs yet. <code>add_tax(100)</code> <b>calls</b> it: 100 is the <b>argument</b>, price is the <b>parameter</b>, the name the argument gets inside, and <code>return</code> hands 125.0 back to the caller. In bytecode, the recipe is made and named, then called:</p>
             ${bcTable(DATA.t_def)}
             ${tryIt("def add_tax(price):\n    return price * 1.25\n\ntotal = add_tax(100)\ntotal", "Step through the call", "py")}`)}`;
         wirePredict(el, 1);
@@ -1542,7 +1528,7 @@ EXTRA.flow = {
           ${codeBlock("values = [3, -1, 2]\ncount = 0\nfor v in values:\n    if v > 0:\n        count += 1", "py")}
           ${predict("How many times does the line count += 1 run?", ["3", "2", "1"])}
           ${reveal(`
-            <p class="ans">Twice, for 3 and 2. A <b>for</b> loop asks an <b>iterator</b> for one item at a time and runs its block for each. <b>if</b> turns its condition into True or False and runs its block only for True. In bytecode both are jumps: <code>FOR_ITER</code> pushes the next item or leaves the loop, and <code>POP_JUMP_IF_FALSE</code> skips the block. Run it and step; you will see the same instructions come round three times.</p>
+            <p>Twice, for 3 and 2. A <b>for</b> loop asks an <b>iterator</b> for one item at a time and runs its block for each. <b>if</b> turns its condition into True or False and runs its block only for True. In bytecode both are jumps: <code>FOR_ITER</code> pushes the next item or leaves the loop, and <code>POP_JUMP_IF_FALSE</code> skips the block. Run it and step; you will see the same instructions come round three times.</p>
             ${tryIt("values = [3, -1, 2]\ncount = 0\nfor v in values:\n    if v > 0:\n        count += 1\ncount", "Step through the loop", "py")}`)}`;
         wirePredict(el, 1);
         wireTry(el);
@@ -1655,7 +1641,7 @@ EXTRA.pandas = {
 dtype: float64</div>
           ${predict("A list of those three floats, or this Series: which one stores the numbers side by side as raw 64-bit values?", ["The list", "The Series", "Both"])}
           ${reveal(`
-            <p class="ans">The Series. A list holds a pointer to each float object, and each object lives wherever it was created. A <b>Series</b> keeps its values in one packed block of memory, an <b>array</b>, 24 bytes for these three, plus a label for each row (the <b>index</b>, 0 to 2 here) and one <b>dtype</b>, the type shared by the whole column. One block, one type: that is what lets pandas hand a whole column to compiled code instead of looping in Python. Lesson 15 draws the two layouts and counts the bytes.</p>
+            <p>The Series. A list holds a pointer to each float object, and each object lives wherever it was created. A <b>Series</b> keeps its values in one packed block of memory, an <b>array</b>, 24 bytes for these three, plus a label for each row (the <b>index</b>, 0 to 2 here) and one <b>dtype</b>, the type shared by the whole column. One block, one type: that is what lets pandas hand a whole column to compiled code instead of looping in Python. Lesson 15 draws the two layouts and counts the bytes.</p>
             <p class="note">Outputs in this lesson were recorded from pandas 3.0.6; pandas isn't loaded in the page's Python yet.</p>`)}`;
         wirePredict(el, 1);
       }

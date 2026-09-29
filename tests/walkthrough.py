@@ -4,7 +4,7 @@
     python3 scripts/serve.py &          # in another terminal
     python3 tests/walkthrough.py        # add --no-python to skip the runnable boxes
 
-Checks: no script errors; every prediction blurs its answer and reveals it; no sideways
+Checks: no script errors; every prediction hides its answer until an option is picked, then shows it; no sideways
 scrolling at phone width; runnable examples produce output and a live bytecode stepper that
 steps (desktop pass only).
 """
@@ -30,11 +30,11 @@ with sync_playwright() as p:
                 page.evaluate(f"go({l}, {s}, false)")
                 page.wait_for_timeout(60)
                 if page.locator(".predict").count():
-                    if page.locator(".veiled").count() == 0 and page.locator(".reveal .ans").count():
-                        problems.append(f"{where}: answer not blurred before predicting")
-                    page.locator(".veil").first.click()
-                    if page.locator(".veiled").count() or page.locator(".veil").count():
-                        problems.append(f"{where}: answer still blurred after tapping Show answer")
+                    if page.locator(".predict .reveal[hidden]").count() == 0:
+                        problems.append(f"{where}: answer not inside the prediction box, or not hidden before picking")
+                    page.locator(".opt").first.click()
+                    if page.locator(".reveal[hidden]").count() or not page.locator(".reveal").first.is_visible():
+                        problems.append(f"{where}: answer not shown after picking an option")
                 for sel in ["[data-act=next]", "[data-a=n]"]:
                     if page.locator(sel).count():
                         page.locator(sel).first.click()

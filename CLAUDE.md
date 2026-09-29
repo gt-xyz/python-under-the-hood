@@ -24,7 +24,7 @@ Always rebuild after editing src/page.html or src/helper.py, and run both test f
 - **Runnable boxes show their own bytecode.** After Run, every try box shows the learner's code's bytecode with a live stepper, and the call stack when the code called its own functions. Never collapse these by default; seeing the bytecode is the point of the page.
 - **Define terms before using them.** The language group (lessons 3 to 7) defines the words the rest of the course uses; put a new term's definition where it is first needed, in bold. docs/TERMS.md lists what is still undefined.
 - **Concepts over tools.** Teach the idea; tools are labeled examples. Tag every code example with its layer: `py` Python, `std` standard library, `np` NumPy, `pd` pandas, `jp` Jupyter, `sh` Terminal.
-- **Content is never gated.** A prediction (PRIMM) blurs only its answer (`.ans`, or the leading `.out` boxes, or the first paragraph of `.reveal`). Everything else in a section stays visible. Make sure visible content doesn't give the answer away.
+- **Predictions gate only their answer.** Everything passed to `reveal()` moves inside the prediction box and appears once the learner picks an option (no skip, no blur). Everything outside `reveal()` is always visible, so nothing outside it, including the section heading, may give the answer away. When a takeaway heading would answer its own prediction, ask a different question.
 - **Simplified layers are labeled.** CPU, cache and logic-gate material is simplified today; say so.
 - **Audience-neutral framing.** Don't assume data work in labels or headings ("In practice", not "In your data work"). Examples may use pandas.
 

@@ -21,7 +21,7 @@ The course teaches a "notional machine": a simplified but accurate model of what
 1a. **The language layer gets its own lessons.** Types, names, collections, functions, loops and modules are defined before any library or tool appears, each by what it is in the machine, each inspectable in the live stepper. Concise and accurate; no abstraction a construct doesn't need.
 2. **Concepts over tools.** Teach the idea, and use tools (pandas, Jupyter) as labeled examples of it. Every example carries a layer tag: Python, standard library, NumPy, pandas, Jupyter or Terminal.
 3. **Predict, run, investigate (PRIMM).** Most sections ask for a prediction, then show the real result, then let the learner look inside and change the code.
-4. **Content is never gated.** A prediction blurs only its answer; the explanation, diagrams and runnable code are always visible.
+4. **Predictions gate only their answer.** The answer and its explanation sit inside the prediction box and appear once the learner picks an option. Everything outside the answer stays visible, so nothing outside it may give the answer away.
 5. **Real outputs only.** Bytecode, bit patterns, tracebacks and library results are recorded by running real Python, never written from memory.
 6. **Depth on demand.** The main path stays short; deeper layers are always one click away.
 7. **Plain, consistent terms.** Lessons are split into sections; "Step" only means running one instruction. "Python" as a noun is qualified: a Python process, a Python installation.
@@ -136,6 +136,8 @@ Full-stack teaching exists; doing it top-down, from a language learners already 
 - **Not needed:** C++ or Go compiled to WebAssembly for the app itself; only for a heavy simulator if JavaScript proves too slow.
 
 ## Open questions
+
+- Section headings versus predictions. The rule "headings state the takeaway" means eighteen section headings answer their own prediction ("Numbers and text can't change in place" above "What does print(x) show?"). Two ways out: keep the headings and rewrite those predictions to test applying the principle rather than restating it, or keep the predictions and make those section headings name the topic without the outcome, leaving lesson titles as the takeaways. Decision pending.
 
 - Should the explorer accept whole notebook cells, and load NumPy and pandas in the page?
 - Free, paid, or both, and which modules sit where?
