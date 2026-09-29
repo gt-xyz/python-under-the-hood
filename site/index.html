@@ -47,7 +47,7 @@
 }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: var(--step-0); line-height: 1.55; }
-.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 64px; }
+.wrap { max-width: 1480px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 64px; }
 h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; text-wrap: balance; margin: 0; }
 h1 { font-size: var(--step-3); font-weight: 700; letter-spacing: -0.01em; }
 h2 { font-size: var(--step-2); font-weight: 700; }
@@ -62,7 +62,17 @@ button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus
 header.top { display: grid; gap: 10px; margin-bottom: 28px; }
 header.top p { color: var(--muted); font-size: var(--step-1); }
 
-.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 32px; align-items: start; }
+.layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 32px; align-items: start; }
+/* Desktop: the lesson list can fold into a narrow rail so the content gets the width. */
+.navhide { display: none; }
+@media (min-width: 881px) {
+  .navcol { display: grid; gap: 8px; }
+  .navhide { display: inline-block; justify-self: start; font-size: var(--step--1); padding: 4px 10px; }
+  .layout.nav-collapsed { grid-template-columns: 40px minmax(0, 1fr); }
+  .layout.nav-collapsed nav.lessons { display: none; }
+  .layout.nav-collapsed .navhide { padding: 4px 8px; }
+  .layout.nav-collapsed main { max-width: 1200px; width: 100%; justify-self: center; }
+}
 @media (max-width: 880px) { .layout { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
 
 nav.lessons { display: grid; gap: 4px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
@@ -328,7 +338,7 @@ footer.foot { margin-top: 40px; color: var(--muted); font-size: 0.88rem; display
     <p>An introduction for those new to computing: what your Python code is actually doing, from the code you write down to the bits.</p>
   </header>
   <div class="layout">
-    <div class="navcol"><button class="btn navtoggle" id="navtoggle" aria-expanded="false" aria-controls="lessonNav">All lessons</button><nav class="lessons" id="lessonNav" aria-label="Lessons"></nav></div>
+    <div class="navcol"><button class="btn navtoggle" id="navtoggle" aria-expanded="false" aria-controls="lessonNav">All lessons</button><button class="btn navhide" id="navhide" aria-expanded="true" aria-controls="lessonNav" title="Hide the lesson list">« Hide lessons</button><nav class="lessons" id="lessonNav" aria-label="Lessons"></nav></div>
     <main id="stage" aria-live="polite"></main>
   </div>
   <footer class="foot">
@@ -1558,6 +1568,17 @@ let cur = { l: 0, s: 0 };
 
 const tog = document.getElementById("navtoggle");
 tog.onclick = () => { const o = nav.classList.toggle("open"); tog.setAttribute("aria-expanded", o); };
+// Desktop: fold the lesson list into a rail. Remembered per browser; the page works without storage.
+const layout = document.querySelector(".layout"), navhide = document.getElementById("navhide");
+function setNav(collapsed) {
+  layout.classList.toggle("nav-collapsed", collapsed);
+  navhide.setAttribute("aria-expanded", String(!collapsed));
+  navhide.textContent = collapsed ? "»" : "« Hide lessons";
+  navhide.title = collapsed ? "Show the lesson list" : "Hide the lesson list";
+  try { localStorage.setItem("navCollapsed", collapsed ? "1" : "0"); } catch (e) {}
+}
+navhide.onclick = () => setNav(!layout.classList.contains("nav-collapsed"));
+try { if (localStorage.getItem("navCollapsed") === "1") setNav(true); } catch (e) {}
 function drawNav() {
   nav.innerHTML = LESSONS.map((L, i) => {
     const seen = (progress[L.id] || []).length, done = seen >= L.steps.length;
