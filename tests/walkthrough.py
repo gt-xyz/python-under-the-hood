@@ -32,9 +32,9 @@ with sync_playwright() as p:
                 if page.locator(".predict").count():
                     if page.locator(".veiled").count() == 0 and page.locator(".reveal .ans").count():
                         problems.append(f"{where}: answer not blurred before predicting")
-                    page.locator(".skip").click()
-                    if page.locator(".veiled").count():
-                        problems.append(f"{where}: answer still blurred after Show answer")
+                    page.locator(".veil").first.click()
+                    if page.locator(".veiled").count() or page.locator(".veil").count():
+                        problems.append(f"{where}: answer still blurred after tapping Show answer")
                 for sel in ["[data-act=next]", "[data-a=n]"]:
                     if page.locator(sel).count():
                         page.locator(sel).first.click()

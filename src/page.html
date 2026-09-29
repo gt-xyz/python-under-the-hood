@@ -118,7 +118,14 @@ nav.lessons { position: static; }
 .opt.wrong { border-color: var(--bad); color: var(--bad); opacity: 1; text-decoration: line-through; }
 .verdict { font-weight: 700; margin-top: -4px; }
 .ans { transition: filter 0.25s; }
-.ans.veiled { filter: blur(7px); user-select: none; pointer-events: none; }
+.ans { position: relative; }
+/* The blurred answer is itself the control: a button laid over it blurs what's behind and says what it does. */
+.veil { position: absolute; inset: -4px; z-index: 1; border: 0; border-radius: 8px; padding: 0; cursor: pointer; display: grid; place-items: center;
+  font: inherit; font-weight: 700; color: var(--accent); background: color-mix(in srgb, var(--bg) 40%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background 0.15s; }
+.veil:hover, .veil:focus-visible { background: color-mix(in srgb, var(--bg) 55%, transparent); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .veil { background: var(--surface); } }
+.ans.veiled { user-select: none; }
 .live { display: grid; gap: 8px; margin-top: 6px; }
 .live .bc-wrap { max-height: 340px; overflow-y: auto; }
 .dim { color: var(--muted); }
@@ -517,7 +524,7 @@ const bitLegend = `<div class="legend"><span><b class="s">sign</b> 1 bit, + or â
 
 // ---------- lesson components ----------
 function predict(q, options) {
-  return `<div class="predict"><span class="eyebrow">Predict</span><p class="pq">${q}</p><div class="opts">${options.map((o, i) => `<button class="opt" data-i="${i}">${o}</button>`).join("")}</div><button class="linkbtn skip">Show answer</button></div>`;
+  return `<div class="predict"><span class="eyebrow">Predict</span><p class="pq">${q}</p><div class="opts">${options.map((o, i) => `<button class="opt" data-i="${i}">${o}</button>`).join("")}</div></div>`;
 }
 // The section's content is always visible. Only the answer itself (elements marked .ans,
 // or else the leading result boxes) stays blurred until the reader predicts or skips.
@@ -528,21 +535,26 @@ function wirePredict(el, answer, onReveal) {
     for (const c of rev.children) { if (c.classList.contains("out")) ans.push(c); else break; }
     if (!ans.length && rev.firstElementChild && rev.firstElementChild.tagName === "P") ans = [rev.firstElementChild];
   }
-  ans.forEach(a => { a.classList.add("ans", "veiled"); a.setAttribute("aria-hidden", "true"); });
   const verdict = el.querySelector(".verdict");
-  verdict.textContent = "Pick an answer to see the result.";
-  verdict.className = "verdict wait";
+  verdict.textContent = "";
+  let done = false;
   const show = picked => {
+    if (done) return;
+    done = true;
     el.querySelectorAll(".opt").forEach(o => { o.disabled = true; o.classList.toggle("right", +o.dataset.i === answer); });
     if (picked !== null && picked !== answer) el.querySelector(`.opt[data-i="${picked}"]`).classList.add("wrong");
-    verdict.textContent = picked === null ? "Answer shown." : picked === answer ? "Right." : "Not quite.";
-    verdict.className = "verdict " + (picked === null ? "wait" : picked === answer ? "ok" : "no");
-    el.querySelector(".skip").hidden = true;
-    ans.forEach(a => { a.classList.remove("veiled"); a.removeAttribute("aria-hidden"); });
+    if (picked !== null) { verdict.textContent = picked === answer ? "Right." : "Not quite."; verdict.className = "verdict " + (picked === answer ? "ok" : "no"); }
+    ans.forEach(a => { a.classList.remove("veiled"); a.querySelectorAll(":scope > .veil").forEach(v => v.remove()); });
     if (onReveal) onReveal();
   };
+  ans.forEach(a => {
+    a.classList.add("ans", "veiled");
+    const v = document.createElement("button");
+    v.type = "button"; v.className = "veil"; v.textContent = "Show answer";
+    v.onclick = e => { e.stopPropagation(); show(null); };
+    a.appendChild(v);
+  });
   el.querySelectorAll(".opt").forEach(b => b.onclick = () => show(+b.dataset.i));
-  el.querySelector(".skip").onclick = () => show(null);
 }
 const reveal = (html) => `<p class="verdict" aria-live="polite"></p><div class="reveal">${html}</div>`;
 function tryIt(code, label, tag) {
