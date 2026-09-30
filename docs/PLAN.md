@@ -20,8 +20,8 @@ The course teaches a "notional machine": a simplified but accurate model of what
 1. **Top-down.** Start from code the learner already writes, then go down only as far as the answer needs.
 1a. **The language layer gets its own lessons.** Types, names, collections, functions, loops and modules are defined before any library or tool appears, each by what it is in the machine, each inspectable in the live stepper. Concise and accurate; no abstraction a construct doesn't need.
 2. **Concepts over tools.** Teach the idea, and use tools (pandas, Jupyter) as labeled examples of it. Every example carries a layer tag: Python, standard library, NumPy, pandas, Jupyter or Terminal.
-3. **Predict, run, investigate (PRIMM).** Most sections ask for a prediction, then show the real result, then let the learner look inside and change the code.
-4. **Predictions gate only their answer.** The answer (the result and its explanation) sits inside the prediction box and appears once the learner picks an option. Everything else, including every runnable box, diagram and table, stays visible, so nothing outside the answer may give it away.
+3. **Question, result, explanation, investigate.** Each section opens with the question its code raises, shows the real result at once, explains it, and ends in a runnable box the learner can step through and change. The earlier predict-first quiz was removed on 2026-09-29: it hid content and was inconsistent about what counted as the answer.
+4. **Nothing is hidden.** Results, explanations, diagrams and runnable boxes are all visible from the start.
 5. **Real outputs only.** Bytecode, bit patterns, tracebacks and library results are recorded by running real Python, never written from memory.
 6. **Depth on demand.** The main path stays short; deeper layers are always one click away.
 7. **Plain, consistent terms.** Lessons are split into sections; "Step" only means running one instruction. "Python" as a noun is qualified: a Python process, a Python installation.

@@ -116,6 +116,7 @@ nav.lessons { position: static; }
 .predict { border: 1px solid var(--accent); border-radius: 10px; padding: 12px 14px; display: grid; gap: 10px; background: var(--accent-soft); }
 .predict .eyebrow { color: var(--accent); }
 .pq { font-weight: 700; }
+.q { font-weight: 700; color: var(--accent); }
 .opts { display: flex; flex-wrap: wrap; gap: 8px; }
 .opt { max-width: 100%; overflow-wrap: anywhere; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 14px; font-family: var(--font-mono); font-size: 0.9rem; text-align: left; }
 .opt:hover:not(:disabled) { border-color: var(--accent); }
@@ -616,42 +617,15 @@ function bitsHtml(b, cmp) {
 const bitLegend = `<div class="legend"><span><b class="s">sign</b> 1 bit, + or −</span><span><b class="e">exponent</b> 11 bits, the scale (a power of 2)</span><span><b class="f">fraction</b> 52 bits, the digits</span></div>`;
 
 // ---------- lesson components ----------
+// Each section poses the question its code raises as a plain line, then shows the real result and explains it.
+// (There is no quiz: predict() is the question, reveal() the answer, both always visible.)
 function predict(q, options) {
-  return `<div class="predict"><span class="eyebrow">Predict</span><p class="pq">${q}</p><div class="opts">${options.map((o, i) => `<button class="opt" data-i="${i}">${o}</button>`).join("")}</div></div>`;
+  return `<p class="q">${q}</p>`;
 }
-// The answer (everything passed to reveal()) moves inside the prediction box and stays hidden until the
-// learner picks an option. Content outside reveal() is always visible, so nothing outside it may give
-// the answer away.
 function wirePredict(el, answer, onReveal) {
-  const box = el.querySelector(".predict"), rev = el.querySelector(".reveal"), verdict = el.querySelector(".verdict");
-  // The answer is the reveal's leading paragraphs and output boxes, plus anything marked .ans. Everything else
-  // (widgets, diagrams, tables, further text) moves out after the box and is visible from the start.
-  const rest = document.createElement("div");
-  rest.className = "reveal-rest";
-  let leading = true;
-  for (const e of [...rev.children]) {
-    const isAnswer = !e.classList.contains("show") && (e.classList.contains("ans") || (leading && (e.tagName === "P" || e.tagName === "UL" || e.tagName === "OL" || e.classList.contains("out"))));
-    if (!isAnswer) { leading = false; rest.appendChild(e); }
-  }
-  if (rest.children.length) box.insertAdjacentElement("afterend", rest);
-  const hint = document.createElement("p");
-  hint.className = "hint"; hint.textContent = "Select an answer.";
-  box.appendChild(hint); box.appendChild(verdict); box.appendChild(rev);
-  verdict.textContent = ""; rev.hidden = true;
-  let done = false;
-  const show = picked => {
-    if (done) return;
-    done = true;
-    el.querySelectorAll(".opt").forEach(o => { o.disabled = true; o.classList.toggle("right", +o.dataset.i === answer); });
-    if (picked !== answer) el.querySelector(`.opt[data-i="${picked}"]`).classList.add("wrong");
-    verdict.textContent = picked === answer ? "Right." : "Not quite.";
-    verdict.className = "verdict " + (picked === answer ? "ok" : "no");
-    hint.remove(); rev.hidden = false;
-    if (onReveal) onReveal();
-  };
-  el.querySelectorAll(".opt").forEach(b => b.onclick = () => show(+b.dataset.i));
+  if (onReveal) onReveal();
 }
-const reveal = (html) => `<p class="verdict" aria-live="polite"></p><div class="reveal">${html}</div>`;
+const reveal = (html) => `<div class="reveal">${html}</div>`;
 function tryIt(code, label, tag) {
   return `<div class="try"><div class="row"><span class="eyebrow">${label || "Change it and run"}</span>${tagPill(tag || "py")}</div><textarea class="try-src" spellcheck="false" aria-label="Python code" rows="${Math.min(12, code.split("\n").length + 1)}">${esc(code)}</textarea><div class="row"><button class="btn primary try-run">Run</button><span class="status try-st"></span></div><div class="try-out"></div></div>`;
 }
@@ -1503,6 +1477,7 @@ EXTRA.values = {
             <div><p><b>bool</b>: <code>True</code> or <code>False</code>, the result of every comparison. Underneath it is an int, 1 or 0 (lesson 14).</p></div>
             <div><p><b>None</b>: the value that means "no value". What a function gives back when it has nothing to give (next lesson).</p></div>
           </div>
+          <p>Numbers come with the usual <b>operators</b>: <code>+</code>, <code>-</code>, <code>*</code> and <code>/</code>, plus <code>//</code> for division that keeps only the whole part, <code>%</code> for the remainder, and <code>**</code> for powers. One of them has a surprise about types.</p>
           ${predict("What type is the result of 6 / 2?", ["int, because 6 divides evenly", "float, always"])}
           ${reveal(`
             <div class="out">3.0</div>

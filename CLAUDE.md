@@ -24,7 +24,7 @@ Always rebuild after editing src/page.html or src/helper.py, and run both test f
 - **One widget: the machine view.** Every example is a runnable box (`tryIt`) that shows its recorded run immediately (`DATA.seeds`, made by the same tracer on real CPython) and a live run after Run: output, the bytecode with a stepper, the stack, and the memory panels the lesson has earned (`panelsFor`: names, objects with addresses and sizes, and constants from lesson 3; the call-stack panel from lesson 5, where the stepper also steps into user functions; a bits toggle from lesson 11; a list-layout note from lesson 15). Never draw a curated stepper or a hand-made memory diagram beside it; seed the widget instead. Never collapse it by default.
 - **Define terms before using them.** The language group (lessons 3 to 7) defines the words the rest of the course uses; put a new term's definition where it is first needed, in bold. docs/TERMS.md lists what is still undefined.
 - **Concepts over tools.** Teach the idea; tools are labeled examples. Tag every code example with its layer: `py` Python, `std` standard library, `np` NumPy, `pd` pandas, `jp` Jupyter, `sh` Terminal.
-- **Predictions gate only their answer.** From what is passed to `reveal()`, the leading paragraphs and output boxes (plus anything marked `.ans`) move inside the prediction box and appear once the learner picks an option (no skip, no blur). Everything else in the reveal, and everything outside it, is visible from the start: runnable boxes, diagrams, tables, further text. Mark an element `.ans` if it would give the answer away, `.show` if it leads the reveal but isn't part of the answer. Never hide a runnable box behind a prediction. When a takeaway heading would answer its own prediction, ask a different question.
+- **No quizzes; nothing is hidden.** A section poses the question its code raises as one line (`predict()` renders just the question), then shows the real result and explains it (`reveal()`), then ends in a runnable box. Everything is visible from the start.
 - **Simplified layers are labeled.** CPU, cache and logic-gate material is simplified today; say so.
 - **Audience-neutral framing.** Don't assume data work in labels or headings ("In practice", not "In your data work"). Examples may use pandas.
 
@@ -34,7 +34,7 @@ Always rebuild after editing src/page.html or src/helper.py, and run both test f
 - **Step** only means running one instruction in a code runner (Step / Step back / Reset), as in a debugger.
 - Don't use "Python" as a count noun: say a **Python process** or a **Python installation**.
 - Don't use "floors" or "tours" (early prototype terms). The layers are Code, Bytecode, Memory, Bits, CPU, Logic gates.
-- Lesson titles state the takeaway. Section headings say what the section is about and keep their meaning, but never answer the section's own prediction ("Assigning through a filter", not "A filter builds a new object"). Never a question.
+- Lesson titles state the takeaway. Section headings say what the section is about ("Assigning through a filter"). Never a question.
 
 ## Writing style
 
