@@ -48,8 +48,8 @@ The bytecode stepper grows into the explorer: one component that takes a trace f
 
 | Lesson | Concept | Panel it adds |
 | --- | --- | --- |
-| 2 | Instructions, the stack, push and pop | Instruction table and stack pile (done) |
-| 3 | Objects with types, names, constants, lists | Objects row, names table, constants strip, a list drawn as pointers to its items, and a toggle for real addresses and sizes (done 2026-09-29; names and objects share a colour so sharing is visible) |
+| 2 | Instructions, the stack, push and pop | The program panel (source lines with the current line's instructions unfolded beneath it) and the stack pile (done) |
+| 3 | Objects with types, names, constants, lists | The memory view: objects in one column at their real addresses with sizes, coloured by type, constants included as the objects they are; names and constants on the left with arrows into memory; a list's cells arrow to its items (done 2026-09-29) |
 | 4 | Function objects, calls, jumps, modules | Function and module objects; jumps highlighted |
 | 5 | Frames and local slots | The stepper steps into user functions: the instruction table switches to the function's, its names appear as numbered slots, a call-stack panel shows the frames, and a "back from" step lands the result on the caller's stack (done 2026-09-29) |
 | 6 | Two names, one object | Uses the lesson 3 panels; the hand-drawn diagrams are gone (done) |

@@ -40,8 +40,8 @@ def instrs(src):
             arg = f"code for {i.argval.co_name}"  # instead of a repr with a memory address
         elif not arg and i.argval is not None and i.opname not in NO_ARG:
             arg = repr(i.argval)
-        out.append([i.opname, arg])
-    if out[-2:] == [["LOAD_CONST", "None"], ["RETURN_VALUE", ""]]:
+        out.append([i.opname, arg, i.line_number])
+    if [o[:2] for o in out[-2:]] == [["LOAD_CONST", "None"], ["RETURN_VALUE", ""]]:
         out = out[:-2]  # the implicit "return None" at the end of every module
     return out
 

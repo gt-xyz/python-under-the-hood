@@ -127,32 +127,64 @@ nav.lessons { position: static; }
 /* Grid items default to min-content width; a wide <pre> inside one would widen the phone's viewport. */
 .try, .try > *, .try-out > *, .live > *, .predict > *, .fs > * { min-width: 0; }
 .fs-code { overflow-x: auto; }
-/* The machine view: names, objects and constants panels under the instruction table and stack. */
-.mv-mem { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 10px; }
-.mpanel { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+/* The machine view. */
+.vm { grid-template-columns: minmax(0, 1fr) 250px; }
+.prog { font-family: var(--font-mono); font-size: 0.82rem; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.prog-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 6px 10px; border-bottom: 1px solid var(--line); font-family: var(--font-body); }
+.prog-head .dim { font-size: 0.72rem; }
+.prog .pl { display: grid; grid-template-columns: 2.2em minmax(0, 1fr) auto; gap: 8px; padding: 4px 10px; align-items: baseline; border-top: 1px solid var(--line); }
+.prog .pl:first-of-type { border-top: 0; }
+.prog .pl i { color: var(--muted); font-style: normal; text-align: right; user-select: none; }
+.prog .pl code { white-space: pre; overflow-x: auto; }
+.prog .pl.has { cursor: pointer; }
+.prog .pl.has:hover { background: var(--sunk); }
+.prog .pl.on { background: var(--accent-soft); }
+.prog .cnt { font-family: var(--font-body); font-size: 0.68rem; color: var(--muted); white-space: nowrap; }
+.prog .pins { display: grid; gap: 2px; padding: 4px 8px 8px calc(2.2em + 10px); background: var(--sunk); border-top: 1px dashed var(--line); }
+.prog .pi { display: grid; grid-template-columns: minmax(0, 11em) minmax(0, 7em) minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 3px 8px; border-radius: 6px; border: 1px solid transparent; }
+.prog .pi.hot { background: var(--surface); border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.prog .pi .op { font-weight: 700; overflow-wrap: anywhere; }
+.prog .pi .arg { color: var(--accent); overflow-wrap: anywhere; }
+.prog .pi .why { font-family: var(--font-body); font-size: 0.74rem; color: var(--muted); }
+@media (max-width: 700px) { .prog .pi { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .prog .pi .why { grid-column: 1 / -1; } }
+.mv-mem { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 28px; margin-top: 12px; }
+.mv-mem.stacked { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.mv-left { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.mv-arrows { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.mpanel { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: grid; gap: 6px; align-content: start; min-width: 0; background: var(--surface); }
 .mpanel .eyebrow { font-size: 0.7rem; }
-.mcells { display: flex; flex-wrap: wrap; gap: 6px; }
-.mcell { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.82rem; padding: 3px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); max-width: 100%; overflow-wrap: anywhere; transition: outline-color 0.15s; outline: 2px solid transparent; }
-.mcell.hot-r { outline-color: var(--accent); }
-.mcell.hot-w { outline-color: var(--good); }
-.mcell.none { border-style: dashed; color: var(--muted); }
-.mcell .mk { color: var(--muted); font-size: 0.72rem; }
-.mref { display: inline-block; border: 2px solid hsl(var(--h) var(--sat, 55%) 50%); border-radius: 6px; padding: 0 5px; line-height: 1.5; max-width: 100%; overflow-wrap: anywhere; }
-.mobj { display: grid; gap: 2px; justify-items: start; border: 2px solid hsl(var(--h) var(--sat, 55%) 50%); border-radius: 8px; padding: 4px 8px; background: var(--surface); font-family: var(--font-mono); font-size: 0.82rem; max-width: 100%; outline: 2px solid transparent; }
-.mobj.hot { outline-color: var(--accent); }
+.rows { display: grid; gap: 4px; }
+.mrow { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 8px; align-items: center; font-family: var(--font-mono); font-size: 0.82rem; padding: 3px 6px; border-radius: 6px; border: 1px solid transparent; }
+.mrow > b { justify-self: start; }
+.mrow > .mref { justify-self: end; }
+.mrow.two { grid-template-columns: auto minmax(0, 1fr); }
+.mrow.hot-r { border-color: var(--accent); background: var(--accent-soft); }
+.mrow.hot-w { border-color: var(--good); background: var(--surface); }
+.mrow.none { color: var(--muted); border-style: dashed; border-color: var(--line); grid-template-columns: 1fr; }
+.mk { color: var(--muted); font-size: 0.72rem; }
+.mref { display: inline-block; border: 2px solid hsl(var(--h) var(--sat, 55%) 50%); border-radius: 6px; padding: 0 5px; line-height: 1.5; max-width: 100%; overflow-wrap: anywhere; background: var(--surface); }
+.mref .addr, .mrow .addr { font-size: 0.68rem; color: var(--muted); }
+.slab .mref { border-width: 0 0 0 4px; border-radius: 3px; padding-left: 6px; background: transparent; }
+.frames-list { display: flex; flex-direction: column; gap: 6px; }
+.frame { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; display: grid; gap: 4px; }
+.frame.top { border-color: var(--accent); background: var(--accent-soft); }
+.frame .fn { font-weight: 700; font-size: 0.85rem; }
+.bank-list { display: grid; gap: 3px; }
+.mobj { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 8px; align-items: start; border: 1px solid var(--line); border-left: 6px solid hsl(var(--h) var(--sat, 55%) 50%); border-radius: 8px; padding: 4px 8px; background: var(--bg); font-family: var(--font-mono); font-size: 0.82rem; }
+.mobj.hot { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.maddr { font-size: 0.7rem; color: var(--muted); padding-top: 3px; }
+.mbody { display: grid; gap: 2px; justify-items: start; min-width: 0; }
 .mobj .mt { font-size: 0.68rem; color: var(--muted); font-family: var(--font-body); font-weight: 700; letter-spacing: 0.04em; }
-.mobj .mitems { display: flex; flex-wrap: wrap; gap: 3px; }
-.mobj .addr, .mcell .addr { font-size: 0.7rem; color: var(--muted); }
-.mlegend { width: 100%; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+.mobj .mval { overflow-wrap: anywhere; }
+.mobj .mitems { display: flex; flex-wrap: wrap; gap: 4px; }
+.mobj .mbar { height: 4px; border-radius: 2px; background: hsl(var(--h) var(--sat, 55%) 50%); opacity: 0.7; justify-self: stretch; }
+.mobj .bits, .mrow .bits { font-size: 0.7rem; letter-spacing: 0.02em; overflow-wrap: anywhere; display: block; width: 100%; }
+.gap { border-top: 1px dashed var(--line); margin: 3px 0 3px 66px; position: relative; height: 0; }
+.gap::after { content: "\22EF"; position: absolute; left: -22px; top: -0.75em; color: var(--muted); font-size: 0.8rem; }
+.mlegend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
 .mlegend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: hsl(var(--h) var(--sat, 55%) 50%); margin-right: 4px; vertical-align: -1px; }
-.slab .mref { border-width: 0 0 0 4px; border-radius: 3px; padding-left: 6px; }
-.mv-opts { display: flex; gap: 14px; flex-wrap: wrap; font-size: var(--step--1); color: var(--muted); }
-.mpanel.frames { grid-column: 1 / -1; }
-.mpanel.frames .frames-pile { display: flex; flex-direction: column-reverse; gap: 4px; padding: 6px; border: 2px solid var(--muted); border-top: 0; border-radius: 0 0 10px 10px; background: var(--sunk); min-height: 60px; width: auto; }
-.mpanel.frames .pilebase { justify-self: center; }
-.bc-cap { grid-column: 1 / -1; font-size: var(--step--1); font-weight: 700; }
-.bc-cap:empty { display: none; }
-.mobj .bits, .mcell .bits { font-size: 0.7rem; letter-spacing: 0.02em; overflow-wrap: anywhere; display: block; width: 100%; }
+.bank-note { font-size: 0.72rem; }
+.mv-opts { display: flex; gap: 14px; flex-wrap: wrap; font-size: var(--step--1); color: var(--muted); margin-top: 6px; }
 .try .status.rec { color: var(--muted); font-weight: 400; }
 .live .bc-wrap { max-height: 340px; overflow-y: auto; }
 .dim { color: var(--muted); }
@@ -503,13 +535,34 @@ function renderPile(el, items, prev, fmt, eq) {
 // Colour means type. Anything else (a function, a module, an iterator) is grey.
 const TYPE_HUE = { int: 215, float: 150, str: 30, bool: 280, NoneType: 0, list: 350, tuple: 330, dict: 190, set: 170 };
 const TYPE_LABEL = { NoneType: "None" };
-const hueStyle = t => t in TYPE_HUE ? (t === "NoneType" ? `--h:0;--sat:0%` : `--h:${TYPE_HUE[t]}`) : `--h:0;--sat:0%`;
+const hueStyle = t => t in TYPE_HUE && t !== "NoneType" ? `--h:${TYPE_HUE[t]}` : `--h:0;--sat:0%`;
 const shortAddr = id => "0x" + Number(id).toString(16).slice(-5);
+
+// The machine view: the program (source lines with their instructions), the stack, and from lesson 3 the
+// memory: names and constants on the left, objects at their addresses on the right, arrows between them.
+// steps[k] = { stack, ids, io, names, slots, frames, heap, note, i, code, line, error, into, ret }.
+const PANEL_FROM = { memory: 2, frames: 4, bits: 10, layout: 14 };  // lesson index (0-based) from which each panel is shown
+function panelsFor(l) { const n = l < 0 ? 99 : l; return Object.keys(PANEL_FROM).filter(k => n >= PANEL_FROM[k]); }
+function machineShell(panels) {
+  const left = panels.includes("frames")
+    ? `<div class="mpanel frames"><span class="eyebrow">Call stack: each frame and its names</span><div class="frames-list"></div></div>`
+    : `<div class="mpanel names"><span class="eyebrow">Names</span><div class="rows names-rows"></div></div>`;
+  const mem = panels.includes("memory") ? `<div class="mv-mem">
+      <div class="mv-left">${left}<div class="mpanel consts"><span class="eyebrow">Constants (kept with the code)</span><div class="rows consts-rows"></div></div></div>
+      <div class="mpanel bank"><span class="eyebrow">Memory: objects at their addresses</span><div class="bank-list"></div><div class="mlegend"></div><p class="note bank-note">Addresses and sizes are real. Objects are in address order; the distances between them are not to scale.</p></div>
+      <svg class="mv-arrows" aria-hidden="true"></svg>
+    </div>${panels.includes("bits") ? `<div class="mv-opts"><label><input type="checkbox" class="mv-bits"> Show bits</label></div>` : ""}` : "";
+  return `<div class="vm"><div class="prog-slot"></div><div class="pilebox"><span class="eyebrow">The stack</span><div class="pile stack-slot" aria-live="polite"></div><span class="pilebase">bottom</span><p class="op op-slot"></p><div class="row ctrls"><button class="btn primary" data-act="next">Step</button><button class="btn" data-act="prev">Step back</button><button class="btn" data-act="reset">Reset</button></div></div></div><p class="note note-slot"></p>${mem}`;
+}
 function stepper(root, instrs, steps, onStep, opts = {}) {
-  let i = -1, shown = [], shownFrames = [];
-  const panels = opts.panels || [], bitsBox = root.querySelector(".mv-bits");
+  let i = -1, shown = [];
+  const panels = opts.panels || [], bitsBox = root.querySelector(".mv-bits"), src = opts.src || "";
   const codes = opts.codes && opts.codes.length ? opts.codes : [{ name: "top level", instrs }];
-  const cap = root.querySelector(".bc-cap"), framesEl = root.querySelector(".frames .mcells");
+  const prog = root.querySelector(".prog-slot"), mem = root.querySelector(".mv-mem"), svg = root.querySelector(".mv-arrows");
+  const pile = root.querySelector(".stack-slot"), op = root.querySelector(".op-slot"), noteEl = root.querySelector(".note-slot");
+  const prev = root.querySelector("[data-act=prev]"), next = root.querySelector("[data-act=next]"), reset = root.querySelector("[data-act=reset]");
+  const expanded = new Set();
+  const bits = () => bitsBox && bitsBox.checked;
   const bitsOf = (type, label) => {
     try {
       if (type === "float") { const b = f64bits(parseFloat(label)); return `<span class="bits">${b.sign} ${b.exp} ${b.frac}</span>`; }
@@ -517,77 +570,112 @@ function stepper(root, instrs, steps, onStep, opts = {}) {
     } catch (e) {}
     return "";
   };
-  const tbl = root.querySelector(".bc-slot"), pile = root.querySelector(".stack-slot"), op = root.querySelector(".op-slot");
-  const noteEl = root.querySelector(".note-slot");
-  const prev = root.querySelector("[data-act=prev]"), next = root.querySelector("[data-act=next]"), reset = root.querySelector("[data-act=reset]");
-  const addrs = () => panels.includes("objects"), bits = () => bitsBox && bitsBox.checked;
-  const ref = (label, id, type) => id == null ? esc(label) : `<span class="mref" style="${hueStyle(type)}" title="${esc(type || "")}">${esc(label)}${addrs() ? ` <span class="addr">${shortAddr(id)}</span>` : ""}</span>`;
-  function drawPanels(s) {
-    const io = s ? s.io || [] : [];
+  const chip = (label, id, type) => id == null ? esc(label) : `<span class="mref" data-ref="${id}" style="${hueStyle(type)}" title="${esc(type || "")}">${esc(label)} <span class="addr">${shortAddr(id)}</span></span>`;
+
+  // The program: every source line, with the current code object's instructions for a line unfolded under it.
+  function drawProgram(s, hot) {
+    const ci = s ? s.code || 0 : 0, code = codes[ci], lines = src.split("\n"), byLine = {};
+    code.instrs.forEach(([opn, arg, line], k) => { (byLine[line || 0] = byLine[line || 0] || []).push(k); });
+    const row = k => { const [opn, arg] = code.instrs[k]; return `<div class="pi${k === hot ? " hot" : ""}"><span class="op">${esc(opn)}</span><span class="arg">${esc(cleanArg(opn, arg))}</span><span class="why">${esc(OPS[opn] || "")}</span></div>`; };
+    const group = (key, ins, on) => (on || expanded.has(ci + ":" + key)) && ins.length ? `<div class="pins">${ins.map(row).join("")}</div>` : "";
+    let html = lines.map((text, idx) => {
+      const n = idx + 1, ins = byLine[n] || [], on = !!s && s.line === n;
+      return `<div class="pl${on ? " on" : ""}${ins.length ? " has" : ""}" data-l="${n}"><i>${n}</i><code>${esc(text) || " "}</code>${ins.length ? `<span class="cnt">${ins.length} instr.</span>` : ""}</div>${group(n, ins, on)}`;
+    }).join("");
+    if (byLine[0]) html += `<div class="pl has" data-l="0"><i></i><code class="dim">clean-up, no line</code><span class="cnt">${byLine[0].length} instr.</span></div>${group(0, byLine[0], !!s && !s.line)}`;
+    prog.innerHTML = `<div class="prog"><div class="prog-head"><span class="eyebrow">${codes.length > 1 ? esc(code.name === "top level" ? "The program: top level" : `The program, inside ${code.name}`) : "The program"}</span><span class="dim">click a line to see its instructions</span></div>${html}</div>`;
+    prog.querySelectorAll(".pl.has").forEach(el => el.onclick = () => { const key = ci + ":" + el.dataset.l; expanded.has(key) ? expanded.delete(key) : expanded.add(key); draw(); });
+    const hotEl = prog.querySelector(".pi.hot");
+    if (hotEl && hotEl.scrollIntoView && !prefersStill()) hotEl.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+
+  // Memory: names (or frames) and constants on the left, objects in address order on the right.
+  function drawMemory(s) {
+    if (!mem) return;
+    const io = s ? s.io || [] : [], heap = s ? s.heap || {} : {};
     const hot = (table, key) => { const m = io.find(x => x[1] === table && String(x[2]) === String(key)); return m ? ` hot-${m[0]}` : ""; };
-    const heap = s ? s.heap || {} : {};
-    if (panels.includes("consts")) {
-      const cells = (opts.consts || []).map(([label, id, type], k) => `<span class="mcell${hot("const", k)}"><span class="mk">${k}</span>${ref(label, id, type)}${bits() ? bitsOf(type, label) : ""}</span>`).join("");
-      root.querySelector(".consts .mcells").innerHTML = cells || `<span class="mcell none">none</span>`;
-    }
-    if (panels.includes("names")) {
-      const names = s ? s.names || [] : [], slots = s && s.slots;
-      root.querySelector(".names .eyebrow").textContent = slots ? `Names in ${s.frames[s.frames.length - 1][0]}'s frame (numbered slots)` : "Names";
-      root.querySelector(".names .mcells").innerHTML = names.length ? names.map(([n, id], k) => `<span class="mcell${slots ? hot("slot", k) : hot("name", n)}">${slots ? `<span class="mk">${k}</span>` : ""}<b>${esc(n)}</b> → ${ref(heap[id] ? heap[id][1] : "?", id, heap[id] && heap[id][0])}</span>`).join("") : `<span class="mcell none">no names yet</span>`;
-    }
-    if (panels.includes("frames") && framesEl) {
+    const bank = {};
+    for (const [id, [type, label, size, items]] of Object.entries(heap)) bank[id] = { type, label, size, items };
+    const consts = (s && codes[s.code || 0].consts) || codes[0].consts || opts.consts || [];
+    for (const [label, id, type, size] of consts) if (!bank[id]) bank[id] = { type, label, size, items: null, konst: true };
+    const nameRows = (names, slots) => names.length ? names.map(([n, id], k) => `<div class="mrow${slots ? hot("slot", k) : hot("name", n)}">${slots ? `<span class="mk">${k}</span>` : ""}<b>${esc(n)}</b>${chip(bank[id] ? bank[id].label : "?", id, bank[id] && bank[id].type)}</div>`).join("") : `<div class="mrow none">no names yet</div>`;
+    const framesEl = root.querySelector(".frames-list"), namesEl = root.querySelector(".names-rows");
+    if (framesEl) {
       const fr = s ? s.frames || [] : [];
-      const d = renderPile(framesEl, fr, shownFrames, f => `<span class="fn">${esc(f[0])}</span>${f[1].map(([n, id]) => `<span class="fv"><b>${esc(n)}</b> → ${esc(heap[id] ? heap[id][1] : "?")}</span>`).join("") || `<span class="fv muted">no names yet</span>`}`, (a, b) => a[0] === b[0]);
-      shownFrames = fr.slice();
+      framesEl.innerHTML = fr.length ? fr.map((f, k) => `<div class="frame${k === fr.length - 1 ? " top" : ""}"><span class="fn">${esc(f[0])}${k === fr.length - 1 && fr.length > 1 ? " · running" : ""}</span>${nameRows(f[1], k > 0)}</div>`).reverse().join("") : `<div class="mrow none">no frames yet</div>`;
+    } else if (namesEl) namesEl.innerHTML = nameRows(s ? s.names || [] : [], false);
+    root.querySelector(".consts .eyebrow").textContent = s && (s.code || 0) ? `Constants kept with ${codes[s.code].name}'s code` : "Constants (kept with the code)";
+    root.querySelector(".consts-rows").innerHTML = consts.length ? consts.map(([label, id, type], k) => `<div class="mrow two${hot("const", k)}"><span class="mk">${k}</span>${chip(label, id, type)}</div>`).join("") : `<div class="mrow none">none</div>`;
+    // The bank.
+    const touched = new Set();
+    for (const [mode, table, key] of io) {
+      if (table === "name") { const m = (s.names || []).find(x => x[0] === key); if (m) touched.add(String(m[1])); }
+      if (table === "const" && consts[key]) touched.add(String(consts[key][1]));
     }
-    if (panels.includes("objects")) {
-      const touched = new Set();
-      if (s) { for (const [mode, table, key] of io) if (table === "name") { const m = (s.names || []).find(x => x[0] === key); if (m) touched.add(String(m[1])); } }
-      const pushedIds = s && s.ids ? s.ids.slice(shown.length) : [];
-      pushedIds.forEach(id => touched.add(String(id)));
-      const layout = (type, size, items) => {
-        if (!panels.includes("layout") || !items || (type !== "list" && type !== "tuple")) return "";
-        const kinds = new Set(items.map(x => heap[x] ? heap[x][0] : "?")), n = items.length;
-        const packed = kinds.size === 1 && (kinds.has("float") || kinds.has("int")) ? `; packed as a ${kinds.has("float") ? "float64" : "int64"} array these ${n} values would take ${8 * n} bytes in one block` : "";
-        return `<span class="mt">${size} bytes here: ${n} pointer${n === 1 ? "" : "s"} of 8 bytes plus a header; the values live in their own objects${packed}</span>`;
-      };
-      const objs = Object.entries(heap).map(([id, [type, label, size, items]]) => `<span class="mobj${touched.has(id) ? " hot" : ""}" style="${hueStyle(type)}"><span class="mt">${esc(TYPE_LABEL[type] || type)}${addrs() ? ` · ${shortAddr(id)} · ${size} bytes` : ""}</span>${items ? `<span class="mitems">${items.map(x => heap[x] ? ref(heap[x][1], x, heap[x][0]) : "…").join("")}</span>` : esc(label)}${bits() ? bitsOf(type, label) : ""}${layout(type, size, items)}</span>`).join("");
-      const types = [...new Set(Object.values(heap).map(o => o[0]))];
-      const legend = types.length ? `<div class="mlegend">${types.map(t => `<span><i style="${hueStyle(t)}"></i>${esc(TYPE_LABEL[t] || t)}</span>`).join("")}</div>` : "";
-      root.querySelector(".objects .mcells").innerHTML = (objs || `<span class="mcell none">nothing yet</span>`) + legend;
+    (s && s.ids ? s.ids.slice(shown.length) : []).forEach(id => touched.add(String(id)));
+    const ids = Object.keys(bank).sort((a, b) => Number(a) - Number(b));
+    const maxSize = Math.max(8, ...ids.map(id => bank[id].size || 0));
+    let html = "", lastEnd = null;
+    for (const id of ids) {
+      const o = bank[id], start = Number(id);
+      if (lastEnd !== null && start > lastEnd) html += `<div class="gap"></div>`;
+      lastEnd = start + (o.size || 0);
+      const layout = panels.includes("layout") && o.items && (o.type === "list" || o.type === "tuple") ? (() => {
+        const kinds = new Set(o.items.map(x => bank[x] ? bank[x].type : "?")), n = o.items.length;
+        const packed = kinds.size === 1 && (kinds.has("float") || kinds.has("int")) ? ` Packed as a ${kinds.has("float") ? "float64" : "int64"} array, these ${n} values would take ${8 * n} bytes in one block.` : "";
+        return `<span class="mt">${n} pointer${n === 1 ? "" : "s"} of 8 bytes plus a header; the values live in their own objects.${packed}</span>`;
+      })() : "";
+      html += `<div class="mobj${touched.has(id) ? " hot" : ""}" data-id="${id}" style="${hueStyle(o.type)}"><span class="maddr">${shortAddr(id)}</span><div class="mbody"><span class="mt">${esc(TYPE_LABEL[o.type] || o.type)} · ${o.size} bytes${o.konst ? " · constant" : ""}</span>${o.items ? `<span class="mitems">${o.items.map(x => bank[x] ? chip(bank[x].label, x, bank[x].type) : "…").join("")}</span>` : `<span class="mval">${esc(o.label)}</span>`}${bits() ? bitsOf(o.type, o.label) : ""}${layout}<span class="mbar" style="width:${Math.max(6, Math.round(100 * (o.size || 0) / maxSize))}%"></span></div></div>`;
     }
+    root.querySelector(".bank-list").innerHTML = html || `<div class="mrow none">nothing in memory yet</div>`;
+    const types = [...new Set(ids.map(id => bank[id].type))];
+    root.querySelector(".mlegend").innerHTML = types.map(t => `<span><i style="${hueStyle(t)}"></i>${esc(TYPE_LABEL[t] || t)}</span>`).join("");
+    drawArrows();
+  }
+  function drawArrows() {
+    if (!mem || !svg) return;
+    const box = mem.getBoundingClientRect(), stacked = box.width < 620;
+    mem.classList.toggle("stacked", stacked);
+    svg.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
+    svg.style.width = box.width + "px"; svg.style.height = box.height + "px";
+    if (stacked) { svg.innerHTML = ""; return; }
+    const targets = {};
+    mem.querySelectorAll(".bank-list [data-id]").forEach(el => { targets[el.dataset.id] = el; });
+    let paths = "";
+    mem.querySelectorAll("[data-ref]").forEach(el => {
+      const t = targets[el.dataset.ref]; if (!t) return;
+      const a = el.getBoundingClientRect(), b = t.getBoundingClientRect();
+      const x1 = a.right - box.left, y1 = a.top + a.height / 2 - box.top, x2 = b.left - box.left + 2, y2 = b.top + Math.min(b.height / 2, 14) - box.top;
+      const inBank = el.closest(".bank-list"), dx = Math.max(24, (x2 - x1) / 2);
+      const d = inBank ? `M${x1} ${y1} C${x1 + 30} ${y1} ${x2 - 30} ${y2} ${x2} ${y2}` : `M${x1} ${y1} C${x1 + dx} ${y1} ${x2 - dx} ${y2} ${x2} ${y2}`;
+      const hot = el.closest(".hot-r, .hot-w"), col = getComputedStyle(el).borderColor;
+      paths += `<path d="${d}" fill="none" stroke="${col}" stroke-width="${hot ? 2.5 : 1.25}" opacity="${hot ? 1 : 0.55}"/>`;
+    });
+    svg.innerHTML = paths;
   }
   function draw() {
-    const s = i < 0 ? null : steps[i], hot = s ? (s.i ?? i) : -1, code = codes[s ? s.code || 0 : 0];
-    tbl.innerHTML = bcTable(code.instrs, { hot });
-    if (cap) cap.textContent = codes.length > 1 ? (code.name === "top level" ? "Instructions of the top level" : `Instructions of ${code.name}`) : "";
-    const wrap = tbl.querySelector(".bc-wrap"), row = tbl.querySelector("tr.hot");
-    if (row && wrap.scrollHeight > wrap.clientHeight) wrap.scrollTop = row.offsetTop - wrap.clientHeight / 2;
-    const st = s ? s.stack.map((label, k) => ({ label, id: s.ids ? s.ids[k] : null })) : [];
+    const s = i < 0 ? null : steps[i], hot = s ? (s.i ?? i) : -1;
+    drawProgram(s, hot);
     const heapNow = s ? s.heap || {} : {};
-    const d = renderPile(pile, st, shown, it => ref(it.label, it.id, heapNow[it.id] && heapNow[it.id][0]), (a, b) => a.label === b.label && a.id === b.id);
-    drawPanels(s);
+    const st = s ? s.stack.map((label, k) => ({ label, id: s.ids ? s.ids[k] : null })) : [];
+    const d = renderPile(pile, st, shown, it => chip(it.label, it.id, heapNow[it.id] && heapNow[it.id][0]), (a, b) => a.label === b.label && a.id === b.id);
+    drawMemory(s);
     shown = st.slice();
     op.innerHTML = s ? [d.popped.length ? `<span class="pop">pop ${d.popped.map(x => esc(x.label)).join(", ")}</span>` : "", d.pushed.length ? `<span class="push">push ${d.pushed.map(x => esc(x.label)).join(", ")}</span>` : ""].filter(Boolean).join(" ") : "";
+    const code = codes[s ? s.code || 0 : 0];
     const text = s ? (s.note || OPS[code.instrs[hot][0]] || "") : "Press Step to run the first instruction.";
     noteEl.innerHTML = (s && s.line ? `<span class="dim">Line ${s.line}.</span> ` : "") + esc(text) + (s && s.error ? ` <span class="errtext">${esc(s.error)}</span>` : "");
     prev.disabled = i < 0; next.disabled = i >= steps.length - 1;
     if (onStep) onStep(i);
   }
   if (bitsBox) bitsBox.onchange = () => { shown = []; draw(); };
+  if (mem && window.ResizeObserver) new ResizeObserver(() => drawArrows()).observe(mem);
   prev.onclick = () => { i--; draw(); };
   next.onclick = () => { i++; draw(); };
-  reset.onclick = () => { i = -1; draw(); };
+  reset.onclick = () => { i = -1; shown = []; draw(); };
   draw();
 }
-// The machine view's markup: instruction table and stack, then the memory panels a lesson has earned.
-const PANEL_FROM = { names: 2, objects: 2, consts: 2, frames: 4, bits: 10, layout: 14 };  // lesson index (0-based) from which each panel is shown
-function panelsFor(l) { const n = l < 0 ? 99 : l; return Object.keys(PANEL_FROM).filter(k => n >= PANEL_FROM[k]); }
-function machineShell(panels) {
-  const mem = ["frames", "consts", "names", "objects"].filter(k => panels.includes(k)).map(k => `<div class="mpanel ${k}"><span class="eyebrow">${{ frames: "Call stack (frames)", consts: "Constants (in the code object)", names: "Names", objects: "Objects (in memory)" }[k]}</span><div class="mcells${k === "frames" ? " pile frames-pile" : ""}"></div>${k === "frames" ? `<span class="pilebase">bottom: the program's top level</span>` : ""}</div>`).join("");
-  const opts = [panels.includes("bits") ? `<label><input type="checkbox" class="mv-bits"> Show bits</label>` : ""].filter(Boolean).join("");
-  return `<div class="vm"><div class="bc-cap dim"></div><div class="bc-slot"></div><div class="pilebox"><span class="eyebrow">The stack</span><div class="pile stack-slot" aria-live="polite"></div><span class="pilebase">bottom</span><p class="op op-slot"></p><div class="row ctrls"><button class="btn primary" data-act="next">Step</button><button class="btn" data-act="prev">Step back</button><button class="btn" data-act="reset">Reset</button></div></div></div><p class="note note-slot"></p>${mem ? `<div class="mv-mem">${mem}</div>` : ""}${opts ? `<div class="mv-opts">${opts}</div>` : ""}`;
-}
+const prefersStill = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // Float bits, computed in the browser with the same IEEE 754 format Python uses.
 function f64bits(x) {
@@ -655,12 +743,12 @@ function liveViews(out, r, src) {
   const calls = r.frames && r.frames.some(s => s.frames.length > 1) && !(r.trace && r.trace.some(s => s.code));
   let html = "";
   const trace = r.trace && r.trace.length ? r.trace : null, panels = panelsFor(cur.l);
-  if (trace) html += `<div class="live"><span class="eyebrow">Step through the bytecode</span><div class="st">${machineShell(panels)}</div><p class="note">Real instructions and real values${panels.length ? ", real objects" : ""}. One simplification: the interpreter also keeps a few placeholder slots on its stack, and those are left out.</p></div>`;
+  if (trace) html += `<div class="live"><span class="eyebrow">Step through the bytecode</span><div class="st">${machineShell(panels)}</div><p class="note">Real instructions and real values${panels.includes("memory") ? ", real objects at real addresses" : ""}. One simplification: the interpreter also keeps a few placeholder slots on its stack, and those are left out.</p></div>`;
   else if (r.instrs.length) html += `<div class="live"><span class="eyebrow">Your code's bytecode</span>${bcTable(r.instrs)}<p class="note">Stepping isn't available for this code: ${esc(r.trace_why || "")}.</p></div>`;
   else if (!r.error) html += `<div class="live"><p class="note">No instructions: Python worked this out while compiling and kept only the result (constant folding).</p></div>`;
   if (calls) html += `<div class="live"><span class="eyebrow">Step through the calls</span><div class="fs-live"></div><p class="note">Recorded from the real run, one line at a time, with every frame that existed at that moment. (The stepper above could not step into this code's functions.)</p></div>`;
   out.insertAdjacentHTML("beforeend", html);
-  if (trace) stepper(out.querySelector(".st"), r.instrs, trace, null, { panels, consts: r.consts, codes: r.codes });
+  if (trace) stepper(out.querySelector(".st"), r.instrs, trace, null, { panels, consts: r.consts, codes: r.codes, src });
   if (calls) frameStepper(out.querySelector(".fs-live"), src, r.frames.map(s => ({ ...s, note: esc(s.note) })));
 }
 function runOutput(r) {
@@ -1444,6 +1532,7 @@ EXTRA.values = {
           ${reveal(`
             <div class="out">(&lt;class 'int'&gt;, &lt;class 'float'&gt;, &lt;class 'str'&gt;)</div>
             <p>Three. Python calls every value an <b>object</b>: a piece of memory that holds the value and a record of its <b>type</b>, the kind of value it is. The type decides what the value can do: <code>5 + 1</code> works, <code>'5' + 1</code> is an error. 5 and 5.0 print alike but are different objects of different types, stored in different ways (lesson 11).</p>
+            <p>From this lesson on, the box under each example also shows <b>memory</b>: every object the code has made, at its real <b>address</b> (the number lesson 1 gave each byte), in address order, coloured by type. Names sit on the left and point into it. Watch a value appear there as an instruction runs.</p>
             ${tryIt("5 + 1, 5.0 + 1, '5' + '1'", "Same operator, three types", "py")}`)}`;
         wirePredict(el, 2);
         wireTry(el);

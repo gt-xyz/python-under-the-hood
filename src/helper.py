@@ -107,7 +107,7 @@ def _instrs(full, strip=True):
             r = f"code for {i.argval.co_name}"
         elif not r and i.argval is not None and i.opname not in ("POP_TOP", "RETURN_VALUE", "GET_ITER", "END_FOR", "POP_ITER"):
             r = repr(i.argval)
-        rows.append([i.opname, r])
+        rows.append([i.opname, r, i.line_number])
     return rows
 
 
@@ -225,7 +225,8 @@ def _run_stack(code, ns):
     read and wrote, "names": [[name, object id]], "heap": reachable objects, "note": text} plus "error" on
     the last step if the code raised.
     """
-    codes = [{"name": "top level", "instrs": _instrs(list(dis.get_instructions(code, show_caches=False)))}]
+    consts_of = lambda c: [[_show(k), id(k), type(k).__name__, sys.getsizeof(k)] for k in c.co_consts]
+    codes = [{"name": "top level", "instrs": _instrs(list(dis.get_instructions(code, show_caches=False))), "consts": consts_of(code)}]
     code_index = {id(code): 0}
     frames = [_Frame(code, "top level", [_UNBOUND] * code.co_nlocals, 0)]
     steps = []
@@ -272,7 +273,7 @@ def _run_stack(code, ns):
             fast_[k] = bound.arguments[name]
         if id(c) not in code_index:
             code_index[id(c)] = len(codes)
-            codes.append({"name": fn.__name__, "instrs": _instrs(list(dis.get_instructions(c, show_caches=False)), strip=False)})
+            codes.append({"name": fn.__name__, "instrs": _instrs(list(dis.get_instructions(c, show_caches=False)), strip=False), "consts": consts_of(c)})
         return _Frame(c, fn.__name__, fast_, code_index[id(c)], call_pc=pc)
 
     entering = None
@@ -682,7 +683,7 @@ def _decompose(src):
     whole = compile(src, "<cell>", "exec")
     full = list(dis.get_instructions(whole, show_caches=False))
     res["instrs"] = _instrs(full)
-    res["consts"] = [[_show(c), id(c), type(c).__name__] for c in whole.co_consts]
+    res["consts"] = [[_show(c), id(c), type(c).__name__, sys.getsizeof(c)] for c in whole.co_consts]
     linecache.cache["<cell>"] = (len(src), None, src.splitlines(True), "<cell>")
 
     # The real run.
