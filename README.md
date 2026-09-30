@@ -1,6 +1,6 @@
 # Python Under the Hood
 
-[![tests](https://github.com/gtaylor214/python-under-the-hood/actions/workflows/test.yml/badge.svg)](https://github.com/gtaylor214/python-under-the-hood/actions/workflows/test.yml)
+[![tests](https://github.com/gt-xyz/python-under-the-hood/actions/workflows/test.yml/badge.svg)](https://github.com/gt-xyz/python-under-the-hood/actions/workflows/test.yml)
 
 An interactive introduction for people new to computing: what your Python code is actually doing, from the code you write down to the bits. Seventeen short lessons in four groups (the machine, the language, tools and libraries, bits and memory) plus a sandbox, running real CPython 3.14 in the browser via [Pyodide](https://pyodide.org/).
 
