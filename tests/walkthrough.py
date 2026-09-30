@@ -32,6 +32,8 @@ with sync_playwright() as p:
                 if page.locator(".predict").count():
                     if page.locator(".predict .reveal[hidden]").count() == 0:
                         problems.append(f"{where}: answer not inside the prediction box, or not hidden before picking")
+                    if page.locator(".predict .reveal .try, .predict .reveal .st").count():
+                        problems.append(f"{where}: a runnable box is hidden behind the prediction")
                     page.locator(".opt").first.click()
                     if page.locator(".reveal[hidden]").count() or not page.locator(".reveal").first.is_visible():
                         problems.append(f"{where}: answer not shown after picking an option")

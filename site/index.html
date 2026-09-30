@@ -126,6 +126,7 @@ nav.lessons { position: static; }
 /* The answer and its explanation sit inside the prediction box and appear once an option is picked. */
 .predict .reveal { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
 .predict .hint { color: var(--muted); font-size: 0.9rem; }
+.reveal-rest { display: grid; gap: 14px; min-width: 0; }
 .live { display: grid; gap: 8px; margin-top: 6px; }
 /* Grid items default to min-content width; a wide <pre> inside one would widen the phone's viewport. */
 .try, .try > *, .try-out > *, .live > *, .predict > *, .fs > * { min-width: 0; }
@@ -510,7 +511,7 @@ const hue = id => Math.round(((Number(id) / 16) * 137.508) % 360);
 const shortAddr = id => "0x" + Number(id).toString(16).slice(-5);
 function stepper(root, instrs, steps, onStep, opts = {}) {
   let i = -1, shown = [], shownFrames = [];
-  const panels = opts.panels || [], addrBox = root.querySelector(".mv-addr"), bitsBox = root.querySelector(".mv-bits");
+  const panels = opts.panels || [], bitsBox = root.querySelector(".mv-bits");
   const codes = opts.codes && opts.codes.length ? opts.codes : [{ name: "top level", instrs }];
   const cap = root.querySelector(".bc-cap"), framesEl = root.querySelector(".frames .mcells");
   const bitsOf = (type, label) => {
@@ -523,7 +524,7 @@ function stepper(root, instrs, steps, onStep, opts = {}) {
   const tbl = root.querySelector(".bc-slot"), pile = root.querySelector(".stack-slot"), op = root.querySelector(".op-slot");
   const noteEl = root.querySelector(".note-slot");
   const prev = root.querySelector("[data-act=prev]"), next = root.querySelector("[data-act=next]"), reset = root.querySelector("[data-act=reset]");
-  const addrs = () => addrBox && addrBox.checked, bits = () => bitsBox && bitsBox.checked;
+  const addrs = () => panels.includes("objects"), bits = () => bitsBox && bitsBox.checked;
   const ref = (label, id) => id == null ? esc(label) : `<span class="mref" style="--h:${hue(id)}">${esc(label)}${addrs() ? ` <span class="addr">${shortAddr(id)}</span>` : ""}</span>`;
   function drawPanels(s) {
     const io = s ? s.io || [] : [];
@@ -574,7 +575,6 @@ function stepper(root, instrs, steps, onStep, opts = {}) {
     prev.disabled = i < 0; next.disabled = i >= steps.length - 1;
     if (onStep) onStep(i);
   }
-  if (addrBox) addrBox.onchange = () => { shown = []; draw(); };
   if (bitsBox) bitsBox.onchange = () => { shown = []; draw(); };
   prev.onclick = () => { i--; draw(); };
   next.onclick = () => { i++; draw(); };
@@ -586,7 +586,7 @@ const PANEL_FROM = { names: 2, objects: 2, consts: 2, frames: 4, bits: 10, layou
 function panelsFor(l) { const n = l < 0 ? 99 : l; return Object.keys(PANEL_FROM).filter(k => n >= PANEL_FROM[k]); }
 function machineShell(panels) {
   const mem = ["frames", "consts", "names", "objects"].filter(k => panels.includes(k)).map(k => `<div class="mpanel ${k}"><span class="eyebrow">${{ frames: "Call stack (frames)", consts: "Constants (in the code object)", names: "Names", objects: "Objects (in memory)" }[k]}</span><div class="mcells${k === "frames" ? " pile frames-pile" : ""}"></div>${k === "frames" ? `<span class="pilebase">bottom: the program's top level</span>` : ""}</div>`).join("");
-  const opts = [panels.includes("objects") ? `<label><input type="checkbox" class="mv-addr"> Show addresses and sizes</label>` : "", panels.includes("bits") ? `<label><input type="checkbox" class="mv-bits"> Show bits</label>` : ""].filter(Boolean).join("");
+  const opts = [panels.includes("bits") ? `<label><input type="checkbox" class="mv-bits"> Show bits</label>` : ""].filter(Boolean).join("");
   return `<div class="vm"><div class="bc-cap dim"></div><div class="bc-slot"></div><div class="pilebox"><span class="eyebrow">The stack</span><div class="pile stack-slot" aria-live="polite"></div><span class="pilebase">bottom</span><p class="op op-slot"></p><div class="row ctrls"><button class="btn primary" data-act="next">Step</button><button class="btn" data-act="prev">Step back</button><button class="btn" data-act="reset">Reset</button></div></div></div><p class="note note-slot"></p>${mem ? `<div class="mv-mem">${mem}</div>` : ""}${opts ? `<div class="mv-opts">${opts}</div>` : ""}`;
 }
 
@@ -624,6 +624,16 @@ function predict(q, options) {
 // the answer away.
 function wirePredict(el, answer, onReveal) {
   const box = el.querySelector(".predict"), rev = el.querySelector(".reveal"), verdict = el.querySelector(".verdict");
+  // The answer is the reveal's leading paragraphs and output boxes, plus anything marked .ans. Everything else
+  // (widgets, diagrams, tables, further text) moves out after the box and is visible from the start.
+  const rest = document.createElement("div");
+  rest.className = "reveal-rest";
+  let leading = true;
+  for (const e of [...rev.children]) {
+    const isAnswer = !e.classList.contains("show") && (e.classList.contains("ans") || (leading && (e.tagName === "P" || e.tagName === "UL" || e.tagName === "OL" || e.classList.contains("out"))));
+    if (!isAnswer) { leading = false; rest.appendChild(e); }
+  }
+  if (rest.children.length) box.insertAdjacentElement("afterend", rest);
   const hint = document.createElement("p");
   hint.className = "hint"; hint.textContent = "Select an answer.";
   box.appendChild(hint); box.appendChild(verdict); box.appendChild(rev);
@@ -783,7 +793,7 @@ LESSONS.push({
           ${predict("What does print(a) show?", ["[1, 2, 3]", "[1, 2, 3, 4]"])}
           ${reveal(`
             <div class="out">[1, 2, 3, 4]</div>
-            <p><code>b = a</code> attached a second name to the one list; it did not make a second list. Step through and watch the names and objects: two names, one object, and <code>append</code> changes that object. Then change line 2 to <code>b = a.copy()</code> and run it again.</p>
+            <p><code>b = a</code> attached a second name to the one list; it did not make a second list. Step through and watch the names and objects: two names, one object, and <code>append</code> changes that object. The addresses show it: one list, one address, two names. Then change line 2 to <code>b = a.copy()</code> and run it again.</p>
             ${tryIt("a = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)", "Step through it; then try b = a.copy()", "py")}`)}`;
         wireTry(el);
         wirePredict(el, 1);
@@ -867,8 +877,8 @@ LESSONS.push({
           ${reveal(`
             <div class="out">${esc(DATA.t3_repr)}</div>
             <p>So <code>0.1 + 0.2 == 0.3</code> is False. In binary, 0.1 is 0.000110011… repeating forever, like 1/3 in decimal. With 52 bits of digits it must be rounded. Here is what's stored; highlighted bits are where the sum and 0.3 differ:</p>
-            <div>${["0.1", "0.2", "0.1 + 0.2", "0.3"].map(k => `<div class="bitrow"><span class="name">${k}</span>${bitsHtml(B[k], k === "0.1 + 0.2" ? B["0.3"] : k === "0.3" ? B["0.1 + 0.2"] : null)}<span class="exact">= ${B[k].exact}</span></div>`).join("")}</div>
-            <p>Below, tick "Show bits": the float constants and objects show their 64 bits, and the sum's last bits differ from 0.3's.</p>
+            <div class="ans">${["0.1", "0.2", "0.1 + 0.2", "0.3"].map(k => `<div class="bitrow"><span class="name">${k}</span>${bitsHtml(B[k], k === "0.1 + 0.2" ? B["0.3"] : k === "0.3" ? B["0.1 + 0.2"] : null)}<span class="exact">= ${B[k].exact}</span></div>`).join("")}</div>
+            <p class="show">Below, tick "Show bits": the float constants and objects show their 64 bits, and the sum's last bits differ from 0.3's.</p>
             ${tryIt("a = 0.1\nb = 0.2\ntotal = a + b\nprint(total)\ntotal == 0.3", "Step through it, then show bits", "py")}`)}`;
         wirePredict(el, 1);
         wireTry(el);
@@ -893,8 +903,8 @@ LESSONS.push({
             <div class="out">False</div>
             ${bitLegend}
             <div class="bitrow"><span class="name">nan</span>${bitsHtml(DATA.t6_bits)}</div>
-            <p>All exponent bits on and a nonzero fraction means "not a number." The float standard makes every comparison with it False, except <code>!=</code>:</p>
-            <div class="tbl-wrap"><table class="data"><tbody>
+            <p class="ans">All exponent bits on and a nonzero fraction means "not a number." The float standard makes every comparison with it False, except <code>!=</code>:</p>
+            <div class="tbl-wrap ans"><table class="data"><tbody>
               <tr><td>nan == nan</td><td class="f">False</td></tr><tr><td>nan != 0</td><td class="t">True</td></tr><tr><td>nan &gt; 0</td><td class="f">False</td></tr>
             </tbody></table></div>
             ${tryIt("nan = float('nan')\nnan == nan, nan != 0, nan > 0", null, "py")}`)}`;
@@ -912,8 +922,8 @@ LESSONS.push({
           ${predict("How many rows does <code>df[df.x != 0]</code> keep?", ["2", "3", "4"])}
           ${reveal(`
             <p>3. <code>NaN != 0</code> is True, so the missing row stays in. Compare the three filters:</p>
-            <div class="row" id="t6c">${Object.keys(conds).map((k, i) => `<label class="row"><input type="radio" name="t6" value="${esc(k)}" ${i === 1 ? "checked" : ""}> <code>${esc(k)}</code></label>`).join("")}</div>
-            <div class="tbl-wrap" id="t6tbl"></div><p class="note" id="t6msg"></p>`)}`;
+            <div class="row ans" id="t6c">${Object.keys(conds).map((k, i) => `<label class="row"><input type="radio" name="t6" value="${esc(k)}" ${i === 1 ? "checked" : ""}> <code>${esc(k)}</code></label>`).join("")}</div>
+            <div class="tbl-wrap ans" id="t6tbl"></div><p class="note ans" id="t6msg"></p>`)}`;
         const draw = () => {
           const k = el.querySelector("#t6c input:checked").value, kept = x.map(conds[k]);
           el.querySelector("#t6tbl").innerHTML = `<table class="data"><thead><tr><th>x</th><th>${esc(k)}</th></tr></thead><tbody>${x.map((v, i) => `<tr class="${kept[i] ? "kept" : ""}"><td class="${Number.isNaN(v) ? "nan" : ""}">${Number.isNaN(v) ? "NaN" : v.toFixed(1)}</td><td class="${kept[i] ? "t" : "f"}">${kept[i] ? "True" : "False"}</td></tr>`).join("")}</tbody></table>`;
@@ -1046,7 +1056,7 @@ LESSONS.push({
               <div><div class="row"><span class="eyebrow">float64 array</span>${tagPill("np")}</div><div class="cells" aria-hidden="true">${"<span></span>".repeat(8)}</div><p class="stat">8 MB</p><p class="note">The numbers themselves, packed side by side, 8 bytes each</p></div>
             </div>
             <p class="note">A list can hold anything, so it stores a pointer to each item. An array stores raw values because every item has the same type.</p>
-            <p>See it on a real list. Tick "Show addresses and sizes": the list object is small and holds three pointers, and each float is its own 24-byte object elsewhere. The objects panel also says what the same values would take packed as an array.</p>
+            <p class="show">See it on a real list: the list object is small and holds three pointers, and each float is its own 24-byte object elsewhere. The objects panel also says what the same values would take packed as an array.</p>
             ${tryIt("prices = [4.5, 3.0, 12.25]\ntotal = sum(prices)", "A list and its items", "py")}`)}`;
         wirePredict(el, 1);
         wireTry(el);
@@ -1062,7 +1072,6 @@ LESSONS.push({
             <div class="out">float64</div>
             <p>NumPy picks one type that fits everything, and every element gets the same number of bytes.</p>
             <div class="tbl-wrap"><table class="data"><thead><tr><th>made from</th><th>dtype</th><th>bytes each</th></tr></thead><tbody>
-              <tr><td>[1, 2.5]</td><td>float64</td><td>8</td></tr>
               <tr><td>[True, False]</td><td>bool</td><td>1</td></tr>
               <tr><td>dtype='int8'</td><td>int8</td><td>1</td></tr>
               <tr><td>[1, 'a']</td><td>&lt;U21 (text)</td><td>84</td></tr>
@@ -1257,7 +1266,7 @@ EXTRA.errors = {
         const rows = [
           ["NameError", "print(totl)", "name 'totl' is not defined", "A typo, or a notebook cell that hasn't run yet"],
           ["TypeError", "2 + '4'", "unsupported operand type(s) for +: 'int' and 'str'", "Numbers stored as text"],
-          ["ValueError", "int('3.5')", "invalid literal for int() with base 10: '3.5'", "Right type, wrong contents"],
+          ["ValueError", "int('abc')", "invalid literal for int() with base 10: 'abc'", "Right type, wrong contents"],
           ["KeyError", "{'score': 90}['Score']", "'Score'", "A column or key name that doesn't match exactly"],
           ["IndexError", "[1, 2, 3][3]", "list index out of range", "Positions start at 0"],
           ["AttributeError", "[1, 2].mean()", "'list' object has no attribute 'mean'", "The object isn't the type you think"],
@@ -1316,8 +1325,8 @@ EXTRA.text = {
           ${predict("In UTF-8, the standard text encoding, how many bytes does <code>é</code> take?", ["1", "2", "4"])}
           ${reveal(`
             <p>Two. UTF-8 gives every character a number, its <b>code point</b>, then stores it in 1 to 4 bytes: plain English letters take 1, accented letters 2, many symbols 3, emoji 4. Type anything:</p>
-            <input type="text" id="tin" value="Hi €5" aria-label="Text to encode">
-            <div class="tbl-wrap" id="tout"></div>
+            <input class="ans" type="text" id="tin" value="Hi €5" aria-label="Text to encode">
+            <div class="tbl-wrap ans" id="tout"></div>
             ${tryIt("'José'.encode('utf-8')")}`)}`;
         const tin = el.querySelector("#tin"), tout = el.querySelector("#tout"), enc = new TextEncoder();
         const draw = () => {
