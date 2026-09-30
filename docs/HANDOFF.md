@@ -4,7 +4,7 @@ State of the project as of 2026-09-29, the day it moved from a claude.ai convers
 
 ## Where things stand
 
-- A working 16-lesson course in four groups (the machine; the language; tools and libraries; bits, memory and the CPU) plus a sandbox, in one page (`src/page.html`, built to `site/index.html`).
+- A working 17-lesson course in four groups (the machine; the language; tools and libraries; bits, memory and the CPU) plus a sandbox, in one page (`src/page.html`, built to `site/index.html`).
 - Real CPython 3.14 runs in the page via Pyodide 314.0.7 for the runnable boxes and the sandbox.
 - Every example is one machine-view widget: an editable runnable box that shows its recorded run immediately (seeds in `data/recorded.json`, made by the same tracer on CPython 3.14.7) and a live run after Run: output, bytecode with a stepper, the stack, and, lesson by lesson, the panels the course has earned: from lesson 3 the memory view (objects in address order at their real addresses, sizes and type colours, with names and constants on the left drawing arrows into them; the program panel shows each source line with its instructions unfolded under the current one), from lesson 5 frames and stepping into user functions, from lesson 11 a bits toggle, from lesson 15 a list-layout note. The value stack comes from a small bytecode interpreter in `src/helper.py` that executes the cell's real bytecode on real objects and is checked against a plain run; the call stack is recorded from the real run with `sys.settrace`. The curated steppers and hand-drawn memory diagrams are gone.
 - `tests/test_helper.py` (13 tests on real CPython 3.14) and `tests/walkthrough.py` (Chromium, desktop and iPhone) both pass. `.github/workflows/test.yml` runs them on every push.
@@ -32,7 +32,7 @@ State of the project as of 2026-09-29, the day it moved from a claude.ai convers
 - **The value-stack stepper is a simplification in one way:** CPython keeps placeholder slots (NULL) on its stack around calls and method lookups; the display hides them and says so under the stepper. The tests account for them exactly.
 - **Stepping isn't available for code using try/except, with, match, nested scopes or t-strings.** Those show the bytecode table with a reason. Functions with *args, closures, generators or try/except inside run natively rather than being stepped into. An infinite loop in a runnable box still hangs the page, as before.
 - **The built page is about 400 KB** because every seeded example's recorded run, with a heap snapshot per step, is inlined. Worth trimming (share unchanged heaps between steps, or load seeds lazily) before adding many more examples.
-- **Terms are used before they are defined** throughout the course. `docs/TERMS.md` is the audit; the language lessons (3 to 7) and the pandas lesson now define the core terms, and the list needs re-checking against the new order.
+- **Terms are used before they are defined** throughout the course. `docs/TERMS.md` is the audit; the language lessons (3 to 8) and the pandas lesson now define the core terms and constructs, and the list needs re-checking against the new order.
 - **The CPU, cache and logic-gate sections are simplified** and labeled as such.
 - **Loop timing (29.9 ms vs 0.79 ms)** was measured once on the build machine and is labeled that way.
 - **One big file.** `src/page.html` is about 1,600 lines of HTML, CSS and JavaScript.

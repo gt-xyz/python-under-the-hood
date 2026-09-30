@@ -129,6 +129,7 @@ nav.lessons { position: static; }
 .fs-code { overflow-x: auto; }
 /* The machine view. */
 .vm { grid-template-columns: minmax(0, 1fr) 250px; }
+.prog, code, pre, .mref, .mobj, .mrow, textarea, .bc { font-variant-ligatures: none; }
 .prog { font-family: var(--font-mono); font-size: 0.82rem; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
 .prog-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 6px 10px; border-bottom: 1px solid var(--line); font-family: var(--font-body); }
 .prog-head .dim { font-size: 0.72rem; }
@@ -541,7 +542,7 @@ const shortAddr = id => "0x" + Number(id).toString(16).slice(-5);
 // The machine view: the program (source lines with their instructions), the stack, and from lesson 3 the
 // memory: names and constants on the left, objects at their addresses on the right, arrows between them.
 // steps[k] = { stack, ids, io, names, slots, frames, heap, note, i, code, line, error, into, ret }.
-const PANEL_FROM = { memory: 2, frames: 4, bits: 10, layout: 14 };  // lesson index (0-based) from which each panel is shown
+const PANEL_FROM = { memory: 2, frames: 5, bits: 11, layout: 15 };  // lesson index (0-based) from which each panel is shown
 function panelsFor(l) { const n = l < 0 ? 99 : l; return Object.keys(PANEL_FROM).filter(k => n >= PANEL_FROM[k]); }
 function machineShell(panels) {
   const left = panels.includes("frames")
@@ -802,7 +803,7 @@ LESSONS.push({
             <div><div class="row">${tagPill("np")}${tagPill("pd")}</div><p><b>Packages</b> other people wrote, installed separately with <code>pip</code> or <code>conda</code>. They add new kinds of values, like arrays and DataFrames, and decide what operators like <code>+</code> and <code>&amp;</code> do with them. Much of NumPy isn't written in Python at all but in C, compiled ahead of time.</p></div>
             <div>${tagPill("jp")}<p><b>Tools</b> that run Python for you: Jupyter, Colab, VS Code. They aren't Python; they send your code to it.</p></div>
           </div>
-          <p class="note">From here on, every example carries a tag showing which layer it comes from. The words in this table (types, modules, packages, import) are just labels for now; lessons 3 and 4 define each one.</p>
+          <p class="note">From here on, every example carries a tag showing which layer it comes from. The words in this table (types, modules, packages, import) are just labels for now; lessons 3 to 5 define each one.</p>
           ${predict("Check: which of these comes with Python when you install it?", ["<code>pandas</code>", "<code>math</code>", "Jupyter"])}
           ${reveal(`<p>Only <code>math</code>, from the standard library. pandas is a package you install, and Jupyter is a tool that runs Python.</p>`)}`;
         wirePredict(el, 1);
@@ -1260,7 +1261,7 @@ EXTRA.functions = {
         el.innerHTML = `
           ${codeBlock(src, "py")}
           ${predict("While <code>total</code> is adding up the numbers, how many frames exist?", ["1", "2", "3"])}
-          ${reveal(`<p>Three: the top level, <code>mean</code>, and <code>total</code> on top. Step through and watch the call stack panel as the frames stack up and come back down:</p>${tryIt("def total(xs):\n    s = 0\n    for x in xs:\n        s += x\n    return s\n\ndef mean(xs):\n    return total(xs) / len(xs)\n\nm = mean([2, 4, 9])", "Step through the calls")}<p class="note">Both functions have a name <code>xs</code>. They are different names in different frames, pointing at the same list. Lesson 6 looks closely at names that share one object.</p>`)}`;
+          ${reveal(`<p>Three: the top level, <code>mean</code>, and <code>total</code> on top. Step through and watch the call stack panel as the frames stack up and come back down:</p>${tryIt("def total(xs):\n    s = 0\n    for x in xs:\n        s += x\n    return s\n\ndef mean(xs):\n    return total(xs) / len(xs)\n\nm = mean([2, 4, 9])", "Step through the calls")}<p class="note">Both functions have a name <code>xs</code>. They are different names in different frames, pointing at the same list. Lesson 7 looks closely at names that share one object.</p>`)}`;
         wireTry(el);
         wirePredict(el, 2);
       }
@@ -1531,7 +1532,8 @@ EXTRA.values = {
           ${predict("Three fives. How many different types?", ["One: they are all 5", "Two: numbers and text", "Three"])}
           ${reveal(`
             <div class="out">(&lt;class 'int'&gt;, &lt;class 'float'&gt;, &lt;class 'str'&gt;)</div>
-            <p>Three. Python calls every value an <b>object</b>: a piece of memory that holds the value and a record of its <b>type</b>, the kind of value it is. The type decides what the value can do: <code>5 + 1</code> works, <code>'5' + 1</code> is an error. 5 and 5.0 print alike but are different objects of different types, stored in different ways (lesson 11).</p>
+            <p>Three. Python calls every value an <b>object</b>: a piece of memory that holds the value and a record of its <b>type</b>, the kind of value it is. The type decides what the value can do: <code>5 + 1</code> works, <code>'5' + 1</code> is an error. 5 and 5.0 print alike but are different objects of different types, stored in different ways (lesson 12).</p>
+            <p class="note">Two things about these boxes. A line with commas between values, like the one above, packs them into a tuple, a fixed group that section 5 covers; the box shows that group as the result. And the box always shows the value of the last line; <code>print(x)</code> writes a value out explicitly, which matters in a script where nothing is shown otherwise.</p>
             <p>From this lesson on, the box under each example also shows <b>memory</b>: every object the code has made, at its real <b>address</b> (the number lesson 1 gave each byte), in address order, coloured by type. Names sit on the left and point into it. Watch a value appear there as an instruction runs.</p>
             ${tryIt("5 + 1, 5.0 + 1, '5' + '1'", "Same operator, three types", "py")}`)}`;
         wirePredict(el, 2);
@@ -1559,9 +1561,9 @@ EXTRA.values = {
         el.innerHTML = `
           <div class="stackl">
             <div><p><b>int</b>: a whole number, of any size. <code>90</code>, <code>-3</code>, <code>2 ** 100</code>.</p></div>
-            <div><p><b>float</b>: a number with a fractional part, stored in 64 bits, so close to exact but not always exact (lesson 11). <code>4.5</code>, <code>0.1</code>.</p></div>
+            <div><p><b>float</b>: a number with a fractional part, stored in 64 bits, so close to exact but not always exact (lesson 12). <code>4.5</code>, <code>0.1</code>.</p></div>
             <div><p><b>str</b>: text, in quotes. <code>'Ana'</code>. Once made, a string never changes; operations build new ones.</p></div>
-            <div><p><b>bool</b>: <code>True</code> or <code>False</code>, the result of every comparison. Underneath it is an int, 1 or 0 (lesson 14).</p></div>
+            <div><p><b>bool</b>: <code>True</code> or <code>False</code>, the result of every comparison. Underneath it is an int, 1 or 0 (lesson 15).</p></div>
             <div><p><b>None</b>: the value that means "no value". What a function gives back when it has nothing to give (next lesson).</p></div>
           </div>
           <p>Numbers come with the usual <b>operators</b>: <code>+</code>, <code>-</code>, <code>*</code> and <code>/</code>, plus <code>//</code> for division that keeps only the whole part, <code>%</code> for the remainder, and <code>**</code> for powers. One of them has a surprise about types.</p>
@@ -1582,7 +1584,8 @@ EXTRA.values = {
           ${predict("What is prices[1]?", ["4.5", "3.0"])}
           ${reveal(`
             <div class="out">3.0</div>
-            <p>Positions count from 0, so <code>[1]</code> is the second item. A <b>list</b> is an ordered collection of any values. The list is one object that holds a <b>pointer</b> to each item, the address where that item lives, which is why items can be of any type and why <code>append</code> can add one at the end. That one-pointer-per-item design is also what makes lists slow for big numeric work, which is where arrays come in (lesson 9).</p>
+            <p>Positions count from 0, so <code>[1]</code> is the second item. A <b>list</b> is an ordered collection of any values. The list is one object that holds a <b>pointer</b> to each item, the address where that item lives, which is why items can be of any type and why <code>append</code> can add one at the end. That one-pointer-per-item design is also what makes lists slow for big numeric work, which is where arrays come in (lesson 10).</p>
+            <p>The ways to reach into a list: an <b>index</b> in brackets picks one item, and a negative index counts from the end, so <code>[-1]</code> is the last. A <b>slice</b> <code>[1:3]</code> is a new list of the items from position 1 up to, not including, 3. <code>len(prices)</code> is how many items, <code>sum(prices)</code> their total. <code>prices.append(1.0)</code> adds an item at the end: append is a function that belongs to the list, reached with a dot, which lesson 4 names a method.</p>
             ${tryIt("prices = [4.5, 3.0, 12.25]\nprices.append(1.0)\nprices[-1], prices[1:3], len(prices), sum(prices)", "Last item, a slice, length, sum", "py")}`)}`;
         wirePredict(el, 1);
         wireTry(el);
@@ -1601,7 +1604,7 @@ EXTRA.values = {
           ${predict("Which expression gets the 90?", ["record[1]", "record['score']", "record.score"])}
           ${reveal(`
             <div class="out">90</div>
-            <p>A dict is indexed by key, so <code>record['score']</code>. <code>record[1]</code> looks for the key 1, which doesn't exist. <code>record.score</code> is attribute syntax, which plain dicts don't offer; pandas columns do (lesson 9).</p>
+            <p>A dict is indexed by key, so <code>record['score']</code>. <code>record[1]</code> looks for the key 1, which doesn't exist. <code>record.score</code> is attribute syntax, which plain dicts don't offer; pandas columns do (lesson 10). In the box below, <code>'name' in record</code> asks whether a key exists: <code>in</code> is a test that gives True or False, which lesson 5 uses for choosing.</p>
             ${tryIt("record = {'name': 'Ana', 'score': 90}\nrecord['score'] = 95\nlist(record.keys()), record['score'], 'name' in record", null, "py")}`)}`;
         wirePredict(el, 1);
         wireTry(el);
@@ -1612,8 +1615,8 @@ EXTRA.values = {
 
 // Functions, loops and modules
 EXTRA.flow = {
-  id: "flow", title: "Functions, loops and modules",
-  summary: "A function is a named block of code that runs when called and hands back a value. Loops repeat a block, conditions choose, and import loads a file of code.",
+  id: "flow", title: "Functions and modules",
+  summary: "A function is a named block of code that runs when called and hands back a value. Dots reach inside objects, and import loads a file of code.",
   practice: "Keep the result: <code>total = add_tax(100)</code>, <code>df = df.dropna()</code>. What a call gives back vanishes unless a name catches it.",
   steps: [
     {
@@ -1645,19 +1648,6 @@ EXTRA.flow = {
       }
     },
     {
-      layer: "Bytecode", title: "if chooses; for repeats",
-      render(el) {
-        el.innerHTML = `
-          ${codeBlock("values = [3, -1, 2]\ncount = 0\nfor v in values:\n    if v > 0:\n        count += 1", "py")}
-          ${predict("How many times does the line count += 1 run?", ["3", "2", "1"])}
-          ${reveal(`
-            <p>Twice, for 3 and 2. A <b>for</b> loop asks an <b>iterator</b> for one item at a time and runs its block for each. <b>if</b> turns its condition into True or False and runs its block only for True. In bytecode both are jumps: <code>FOR_ITER</code> pushes the next item or leaves the loop, and <code>POP_JUMP_IF_FALSE</code> skips the block. Run it and step; you will see the same instructions come round three times.</p>
-            ${tryIt("values = [3, -1, 2]\ncount = 0\nfor v in values:\n    if v > 0:\n        count += 1\ncount", "Step through the loop", "py")}`)}`;
-        wirePredict(el, 1);
-        wireTry(el);
-      }
-    },
-    {
       layer: "Memory", title: "Dots reach inside an object",
       render(el) {
         el.innerHTML = `
@@ -1665,7 +1655,7 @@ EXTRA.flow = {
           ${predict("name is 'ANA'. What is text now?", ["'ANA'", "'ana'"])}
           ${reveal(`
             <div class="out">'ana'</div>
-            <p>Still 'ana'. An <b>attribute</b> is a value that belongs to an object, reached with a dot. A <b>method</b> is an attribute that is a function: <code>text.upper</code> is the str type's upper function bound to this text, and the <code>()</code> calls it. upper builds a new string, because a string can never change (next lesson). Every <code>df.something</code> in pandas is this same dot.</p>
+            <p>Still 'ana'. An <b>attribute</b> is a value that belongs to an object, reached with a dot. A <b>method</b> is an attribute that is a function: <code>text.upper</code> is the str type's upper function bound to this text, and the <code>()</code> calls it. upper builds a new string, because a string can never change (lesson 7). Every <code>df.something</code> in pandas is this same dot.</p>
             ${tryIt("text = 'ana'\nname = text.upper()\ntext, name, text.count('a'), text.startswith('a')", null, "py")}`)}`;
         wirePredict(el, 1);
         wireTry(el);
@@ -1679,9 +1669,89 @@ EXTRA.flow = {
           ${predict("Where does sqrt come from?", ["It is part of the language, like +", "From a module named math that import loaded", "From pandas"])}
           ${reveal(`
             <div class="out">1.4142135623730951</div>
-            <p>A <b>module</b> is a file of code that defines names. <code>import math</code> finds it, runs it once, and gives you the name math; <code>math.sqrt</code> is an attribute, the same dot as the last section. A second import in the same process reuses the loaded module. The <b>standard library</b> is the set of modules that ship with Python. A <b>package</b> is a bundle of modules; packages like pandas are installed separately (lesson 10).</p>
+            <p>A <b>module</b> is a file of code that defines names. <code>import math</code> finds it, runs it once, and gives you the name math; <code>math.sqrt</code> is an attribute, the same dot as the last section. A second import in the same process reuses the loaded module. The <b>standard library</b> is the set of modules that ship with Python. A <b>package</b> is a bundle of modules; packages like pandas are installed separately (lesson 11).</p>
             ${tryIt("import math\nmath.pi, math.sqrt(2), math.floor(2.7)", null, "std")}`)}`;
         wirePredict(el, 1);
+        wireTry(el);
+      }
+    },
+  ]
+};
+
+
+// Choosing and repeating
+EXTRA.control = {
+  id: "control", title: "Choosing and repeating",
+  summary: "A comparison gives True or False. if runs a block only when its condition is True, while repeats a block as long as one holds, and for takes items one at a time.",
+  practice: "When a loop or a condition surprises you, step it in the box below: every choice is a jump in the bytecode, and you can watch which way it went.",
+  steps: [
+    {
+      layer: "Code", title: "A comparison is an expression that gives True or False",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("score = 72\nscore > 60, score == 60, score != 60", "py")}
+          ${predict("What does the second line give?", [])}
+          ${reveal(`
+            <div class="out">(True, False, True)</div>
+            <p>A <b>comparison</b> is an expression whose value is a bool: <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>, <code>==</code> (equal, two signs, because one <code>=</code> attaches a name) and <code>!=</code> (not equal). <code>in</code> is a comparison too: it asks whether a value is in a collection. <b>and</b>, <b>or</b> and <b>not</b> combine bools: <code>score &gt; 60 and score &lt; 90</code> is True only when both parts are. In the box, <code>COMPARE_OP</code> pops two values and pushes the bool.</p>
+            ${tryIt("score = 72\npassing = score >= 60\nmiddle = score > 60 and score < 90\npassing, middle, not passing, 72 in [70, 72]", "Comparisons and and, or, not", "py")}`)}`;
+        wirePredict(el, 0);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Bytecode", title: "if runs a block only when its condition is True",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("score = 72\nif score >= 90:\n    grade = 'A'\nelif score >= 60:\n    grade = 'pass'\nelse:\n    grade = 'fail'\ngrade", "py")}
+          ${predict("Which line sets grade, and what is it?", [])}
+          ${reveal(`
+            <div class="out">'pass'</div>
+            <p>Line 5. <b>if</b> turns its condition into True or False and runs the indented <b>block</b> under it only for True. <b>elif</b> ("else if") is tried only when the conditions above it were False, and <b>else</b> runs when none was True. Exactly one block runs. In bytecode a condition is a <b>jump</b>: <code>POP_JUMP_IF_FALSE</code> pops the bool and, if it is False, skips ahead past the block. Step through and watch the first test fail, the second succeed, and the else block get skipped.</p>
+            ${tryIt("score = 72\nif score >= 90:\n    grade = 'A'\nelif score >= 60:\n    grade = 'pass'\nelse:\n    grade = 'fail'\ngrade", "Change the score and step", "py")}`)}`;
+        wirePredict(el, 0);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Bytecode", title: "while repeats a block as long as its condition holds",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("n = 1\nwhile n < 100:\n    n = n * 2\nn", "py")}
+          ${predict("How many times does the block run, and what is n at the end?", [])}
+          ${reveal(`
+            <div class="out">128</div>
+            <p>Seven times: 2, 4, 8, 16, 32, 64, 128. <b>while</b> tests its condition, runs the block if it is True, then jumps back and tests again; the loop ends the first time the test is False. In bytecode that is the same conditional jump as <code>if</code> plus a <code>JUMP_BACKWARD</code> at the end of the block. A while loop whose condition never becomes False never ends; in this page it would freeze the box, so change the numbers with care.</p>
+            ${tryIt("n = 1\nsteps = 0\nwhile n < 100:\n    n = n * 2\n    steps += 1\nn, steps", "Count the repetitions", "py")}`)}`;
+        wirePredict(el, 0);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Bytecode", title: "for takes items one at a time",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("values = [3, -1, 2]\ncount = 0\nfor v in values:\n    if v > 0:\n        count += 1\ncount", "py")}
+          ${predict("How many times does count += 1 run?", [])}
+          ${reveal(`
+            <div class="out">2</div>
+            <p>Twice, for 3 and 2. <b>for</b> asks an <b>iterator</b> over the collection for one item at a time, gives it the name after <code>for</code>, and runs the block for each; when the items run out the loop ends. <code>count += 1</code> is short for <code>count = count + 1</code>. In bytecode, <code>GET_ITER</code> makes the iterator and <code>FOR_ITER</code> either pushes the next item or leaves the loop. To repeat a fixed number of times, loop over <code>range(n)</code>, which hands out 0, 1, … up to but not including n.</p>
+            ${tryIt("values = [3, -1, 2]\ncount = 0\nfor v in values:\n    if v > 0:\n        count += 1\ntotal = 0\nfor k in range(4):\n    total += k\ncount, total", "Step through both loops", "py")}`)}`;
+        wirePredict(el, 0);
+        wireTry(el);
+      }
+    },
+    {
+      layer: "Code", title: "break leaves a loop early; continue skips to the next item",
+      render(el) {
+        el.innerHTML = `
+          ${codeBlock("values = [3, -1, 2]\nfor v in values:\n    if v < 0:\n        break\n    print(v)", "py")}
+          ${predict("What is printed?", [])}
+          ${reveal(`
+            <div class="out">3</div>
+            <p>Only 3. <b>break</b> ends the loop at once, so -1 and 2 are never reached. <b>continue</b> instead abandons the current item and moves on to the next, so with <code>continue</code> in place of <code>break</code> the output would be 3 and 2. Both are jumps: break to the instruction after the loop, continue back to <code>FOR_ITER</code>.</p>
+            ${tryIt("values = [3, -1, 2]\nfor v in values:\n    if v < 0:\n        continue   # try break instead\n    print(v)", "Swap continue for break and step", "py")}`)}`;
+        wirePredict(el, 0);
         wireTry(el);
       }
     },
@@ -1764,7 +1834,7 @@ EXTRA.pandas = {
 dtype: float64</div>
           ${predict("A list of those three floats, or this Series: which one stores the numbers side by side as raw 64-bit values?", ["The list", "The Series", "Both"])}
           ${reveal(`
-            <p>The Series. A list holds a pointer to each float object, and each object lives wherever it was created. A <b>Series</b> keeps its values in one packed block of memory, an <b>array</b>, 24 bytes for these three, plus a label for each row (the <b>index</b>, 0 to 2 here) and one <b>dtype</b>, the type shared by the whole column. One block, one type: that is what lets pandas hand a whole column to compiled code instead of looping in Python. Lesson 15 draws the two layouts and counts the bytes.</p>
+            <p>The Series. A list holds a pointer to each float object, and each object lives wherever it was created. A <b>Series</b> keeps its values in one packed block of memory, an <b>array</b>, 24 bytes for these three, plus a label for each row (the <b>index</b>, 0 to 2 here) and one <b>dtype</b>, the type shared by the whole column. One block, one type: that is what lets pandas hand a whole column to compiled code instead of looping in Python. Lesson 16 draws the two layouts and counts the bytes.</p>
             <p class="note">Outputs in this lesson were recorded from pandas 3.0.6; pandas isn't loaded in the page's Python yet.</p>`)}`;
         wirePredict(el, 1);
       }
@@ -1796,7 +1866,7 @@ Name: score, dtype: int64</div>
           ${predict("What dtype does the last one, [1, 'a'], get?", ["int64", "str", "object"])}
           ${reveal(`
             <div class="out">(dtype('int64'), dtype('float64'), dtype('O'))</div>
-            <p><code>object</code>, shown as <code>'O'</code>. A column has to pick one packed type for every value. Whole numbers pack as <b>int64</b>; one 2.5 turns the column into <b>float64</b>, 64-bit floats. When no single type fits, pandas falls back to a column of pointers to ordinary Python objects, like a list, and loses the speed. That is what an object column is. A missing value does the same to an int column (lesson 12), and text columns get pandas' own <code>str</code> dtype.</p>`)}`;
+            <p><code>object</code>, shown as <code>'O'</code>. A column has to pick one packed type for every value. Whole numbers pack as <b>int64</b>; one 2.5 turns the column into <b>float64</b>, 64-bit floats. When no single type fits, pandas falls back to a column of pointers to ordinary Python objects, like a list, and loses the speed. That is what an object column is. A missing value does the same to an int column (lesson 13), and text columns get pandas' own <code>str</code> dtype.</p>`)}`;
         wirePredict(el, 2);
       }
     },
@@ -1815,7 +1885,7 @@ Name: score, dtype: bool</div>
             ${codeBlock("df[df.score > 86]", "pd")}
             <div class="out">  name  score
 0  Ana     90</div>
-            <p>Both steps run in compiled code over the packed array: one operation for the whole column instead of a Python loop over each value. Lesson 16 measures the difference.</p>`)}`;
+            <p>Both steps run in compiled code over the packed array: one operation for the whole column instead of a Python loop over each value. Lesson 17 measures the difference.</p>`)}`;
         wirePredict(el, 1);
       }
     },
@@ -1905,7 +1975,7 @@ Name: score, dtype: bool</div>
   const b = LESSONS.splice(0);
   const groups = [
     ["The machine", [b[0], b[1]]],
-    ["The language", [EXTRA.values, EXTRA.flow, EXTRA.functions, b[2], EXTRA.errors]],
+    ["The language", [EXTRA.values, EXTRA.flow, EXTRA.control, EXTRA.functions, b[2], EXTRA.errors]],
     ["Tools and libraries", [EXTRA.notebooks, EXTRA.pandas, EXTRA.packages]],
     ["Bits, memory and the CPU", [b[3], b[4], EXTRA.text, b[5], b[6], b[7]]],
   ];

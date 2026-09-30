@@ -51,11 +51,11 @@ The bytecode stepper grows into the explorer: one component that takes a trace f
 | 2 | Instructions, the stack, push and pop | The program panel (source lines with the current line's instructions unfolded beneath it) and the stack pile (done) |
 | 3 | Objects with types, names, constants, lists | The memory view: objects in one column at their real addresses with sizes, coloured by type, constants included as the objects they are; names and constants on the left with arrows into memory; a list's cells arrow to its items (done 2026-09-29) |
 | 4 | Function objects, calls, jumps, modules | Function and module objects; jumps highlighted |
-| 5 | Frames and local slots | The stepper steps into user functions: the instruction table switches to the function's, its names appear as numbered slots, a call-stack panel shows the frames, and a "back from" step lands the result on the caller's stack (done 2026-09-29) |
-| 6 | Two names, one object | Uses the lesson 3 panels; the hand-drawn diagrams are gone (done) |
-| 11 | Bit patterns | "Show bits" toggle: int and float constants and objects show their bits (done) |
-| 15 | Pointers vs. packed values | A list object reports its bytes and pointers and what the same values would take packed as an array (done; the array side is arithmetic, since NumPy isn't in the page) |
-| 16 | CPU and cache | Stays a labeled simulation for now |
+| 6 | Frames and local slots | The stepper steps into user functions: the instruction table switches to the function's, its names appear as numbered slots, a call-stack panel shows the frames, and a "back from" step lands the result on the caller's stack (done 2026-09-29) |
+| 7 | Two names, one object | Uses the lesson 3 panels; the hand-drawn diagrams are gone (done) |
+| 12 | Bit patterns | "Show bits" toggle: int and float constants and objects show their bits (done) |
+| 16 | Pointers vs. packed values | A list object reports its bytes and pointers and what the same values would take packed as an array (done; the array side is arithmetic, since NumPy isn't in the page) |
+| 17 | CPU and cache | Stays a labeled simulation for now |
 
 The tracer records, per step, which table was read or written (constants, names, a frame slot, an attribute), the names with their object identities, and the reachable objects with id, type, size and items. Every example is one widget, seeded from a recorded run and live after Run. The interpreter steps into plain functions defined in the cell (no *args, closures, generators or try/except inside; those run natively). Every panel in the table is built; what remains is making the lower layers real: object layouts from the C source, a steppable CPU, a cache model.
 
@@ -66,21 +66,22 @@ Revised 2026-09-29. The first version went from hardware straight to bytecode an
 | # | Lesson | What it covers | Layers | Status |
 | --- | --- | --- | --- | --- |
 | 1 | What a computer does | Processor, memory and addresses, storage, processes; the four software layers | Hardware, software | Done |
-| 2 | How Python runs your code | Bytecode and the stack; push and pop; the live stepper | Bytecode, memory | Done (notebook sections move to 8) |
-| 3 | Values, names and collections | Every value is an object with a type; int, float, str, bool, None; names and assignment; expressions and statements; list, tuple, dict, set and what each costs | Memory, bytecode | Done |
-| 4 | Functions, loops and modules | def, call, arguments, return; if; for as iterator plus jump; attributes and methods; modules and import | Bytecode, memory | Done |
-| 5 | Functions and the call stack | Frames, local names, arguments as shared objects | Memory | Done (moved up) |
-| 6 | Names, objects and copies | Assignment, mutability, copies (pure Python; the pandas sections move to 9) | Memory, bytecode | Done |
-| 7 | Reading errors | Tracebacks as the call stack, common error types, finding your line in library errors | Memory, code | Done (library example to become standard library) |
-| 8 | Notebooks and scripts | Script vs. kernel; one process across cells; run order | Software, memory | Done (moved from 2) |
-| 9 | What pandas adds, and why | Series, DataFrame, dtype and array as new types; why a packed column beats a list; DataFrame aliasing; filters and chained assignment | Memory | Done |
-| 10 | Packages and environments | import and site-packages, one Python installation per environment, versions changing behavior | Software | Done (moved up) |
-| 11 | Numbers as bits | Binary integers, int8 overflow, the float format, why 0.1 + 0.2 ≠ 0.3 | Bits | Done |
-| 12 | Missing values | NaN's bit pattern and comparisons, filters that keep NaN, nullable integers | Bits | Done |
-| 13 | Text and files | UTF-8, encoding errors, CSV as text and dtype guessing, paths and working directory | Bits, hardware | Done |
-| 14 | True, False and logic | Booleans as bits, logic gates, masks with &, \| and ~, precedence | Bits, logic gates | Done |
-| 15 | Collections in memory | List of pointers vs. packed array in detail, dtypes, DataFrames as column arrays | Memory | Done (motivation moves to 9) |
-| 16 | Why vectorized code is fast | Bytecode per value vs. compiled loops, cache lines and packed data | Bytecode, CPU | Done |
+| 2 | How Python runs your code | Bytecode and the stack; push and pop; the live stepper | Bytecode, memory | Done |
+| 3 | Values, names and collections | Every value is an object with a type; int, float, str, bool, None; names and assignment; expressions and statements; operators; list, index, slice; tuple, dict, set | Memory, bytecode | Done |
+| 4 | Functions and modules | def, call, arguments, return, None; attributes and methods; modules and import | Bytecode, memory | Done |
+| 5 | Choosing and repeating | Comparisons, in, and/or/not; if, elif, else; while; for, iterators, range; break and continue; each a jump in bytecode | Bytecode | Done |
+| 6 | Functions and the call stack | Frames, local names, arguments as shared objects | Memory | Done |
+| 7 | Names, objects and copies | Assignment, mutability, copies (pure Python) | Memory, bytecode | Done |
+| 8 | Reading errors | Tracebacks as the call stack, common error types, finding your line in library errors | Memory, code | Done |
+| 9 | Notebooks and scripts | Script vs. kernel; one process across cells; run order | Software, memory | Done |
+| 10 | What pandas adds, and why | Series, DataFrame, dtype and array as new types; why a packed column beats a list; DataFrame aliasing; filters and chained assignment | Memory | Done |
+| 11 | Packages and environments | import and site-packages, one Python installation per environment, versions changing behavior | Software | Done |
+| 12 | Numbers as bits | Binary integers, int8 overflow, the float format, why 0.1 + 0.2 ≠ 0.3 | Bits | Done |
+| 13 | Missing values | NaN's bit pattern and comparisons, filters that keep NaN, nullable integers | Bits | Done |
+| 14 | Text and files | UTF-8, encoding errors, CSV as text and dtype guessing, paths and working directory | Bits, hardware | Done |
+| 15 | True, False and logic | Booleans as bits, logic gates, masks with &, \| and ~, precedence | Bits, logic gates | Done |
+| 16 | Collections in memory | List of pointers vs. packed array in detail, dtypes, DataFrames as column arrays | Memory | Done |
+| 17 | Why vectorized code is fast | Bytecode per value vs. compiled loops, cache lines and packed data | Bytecode, CPU | Done |
 
 ### Groups
 
@@ -89,7 +90,7 @@ The lesson list shows four groups, for a sense of progress. A group heading has 
 | Group | Lessons |
 | --- | --- |
 | The machine | What a computer does · How Python runs your code |
-| The language | Values, names and collections · Functions, loops and modules · Functions and the call stack · Names, objects and copies · Reading errors |
+| The language | Values, names and collections · Functions and modules · Choosing and repeating · Functions and the call stack · Names, objects and copies · Reading errors |
 | Tools and libraries | Notebooks and scripts · What pandas adds, and why · Packages and environments |
 | Bits, memory and the CPU | Numbers as bits · Missing values · Text and files · True, False and logic · Collections in memory · Why vectorized code is fast |
 
@@ -107,7 +108,7 @@ Each section: a takeaway heading, a prediction, the real result, a runnable box 
 4. *A list holds anything, in order.* Indexing from 0, append, len. The list is a block of pointers, so items can be any type; that is its cost too, which lesson 7 returns to.
 5. *Tuples, dicts and sets are lists with a rule.* Tuple: can't change. Dict: look up by key, not position. Set: no duplicates, no order. One prediction each, then when to reach for which.
 
-**4. Functions, loops and modules**
+**4. Functions and modules** (as shipped; the loop section moved to lesson 5, "Choosing and repeating": comparisons, if/elif/else, while, for and range, break and continue)
 
 1. *What def does, and what a call does.* def creates a function object and does not run it; calling runs it; return hands back a value. MAKE_FUNCTION and CALL in the stepper. Arguments are the inputs; parameters are their names inside.
 2. *What a call gives back.* `print` returns None; `len` returns a number. The most common data-work bug: `df.dropna()` without keeping the result.
