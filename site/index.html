@@ -625,7 +625,7 @@ function predict(q, options) {
 function wirePredict(el, answer, onReveal) {
   const box = el.querySelector(".predict"), rev = el.querySelector(".reveal"), verdict = el.querySelector(".verdict");
   const hint = document.createElement("p");
-  hint.className = "hint"; hint.textContent = "Pick one to see what happens and why.";
+  hint.className = "hint"; hint.textContent = "Select an answer.";
   box.appendChild(hint); box.appendChild(verdict); box.appendChild(rev);
   verdict.textContent = ""; rev.hidden = true;
   let done = false;
