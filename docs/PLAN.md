@@ -42,6 +42,23 @@ The product has two parts. The **explorer** shows any code at every layer, as de
 
 The top four layers show real data: CPython compiled to WebAssembly (Pyodide) runs in the page, so bytecode, object ids and bit patterns come from the real interpreter, and lesson examples are recorded from real runs. Making the lower layers real, with object layouts from CPython's C source, a steppable CPU and a cache model, is where the course can stand out.
 
+## The machine view, one panel per lesson
+
+The bytecode stepper grows into the explorer: one component that takes a trace from the page's tracer and shows a chosen set of panels. Each lesson turns on the panel for the thing it has just defined, so the live view never assumes more than the lesson has taught, and by the end the learner has met every part of the whole. The curated examples and the learner's own code use the same component and the same panel set within a section; the sandbox shows everything.
+
+| Lesson | Concept | Panel it adds |
+| --- | --- | --- |
+| 2 | Instructions, the stack, push and pop | Instruction table and stack pile (today's stepper) |
+| 3 | Objects with types, names, constants, lists | Objects row; names table with arrows to objects; constants strip; a list drawn as pointers |
+| 4 | Function objects, calls, jumps, modules | Function and module objects; jumps highlighted |
+| 5 | Frames and local slots | Frames panel: the stepper steps into user functions, each with its own table and numbered slots |
+| 6 | Two names, one object | Address toggle: real ids on names and slabs; sharing shows as the same address twice |
+| 11 | Bit patterns | Bits view on int and float objects |
+| 15 | Pointers vs. packed values | Lists as pointer blocks, arrays as packed blocks, with byte sizes |
+| 16 | CPU and cache | Stays a labeled simulation for now |
+
+What the tracer must add: per step, which table was read or written (constants, names, a frame slot, an attribute); a snapshot of names to object identities; the objects with id, type and size; and stepping into user functions instead of calling them natively. Build order, each step shippable: refactor the stepper into the panelled component with today's two panels (no visible change); extend the tracer; add panels in lesson order with the section text adjusted alongside.
+
 ## Curriculum
 
 Revised 2026-09-29. The first version went from hardware straight to bytecode and treated the language itself as known. That left the language layer, the one between the machine and the libraries, with no lesson: types, names, collections, functions, loops and modules were used but never defined. Three lessons fill that gap. The rule for them is the rule for the whole course: say concisely and accurately what is there, define each construct by what it is in the machine, and add no abstraction the construct doesn't need. A learner who already has the model answers each section's opening prediction and moves on.
@@ -119,7 +136,7 @@ Full-stack teaching exists; doing it top-down, from a language learners already 
 3. Watch the first learner use it; that is the first real curriculum data.
 4. Move to a repo with TypeScript modules, lesson content as data, and the recording script as a build step.
 5. Separate the explorer from the course.
-6. Make the lower layers real: object layouts, the evaluation loop, a steppable CPU, a cache model.
+6. Build the machine view panel by panel (see above), then make the lower layers real: object layouts, a steppable CPU, a cache model.
 7. Publish the intro free, then decide on paid modules or licensing.
 
 ## Risks
