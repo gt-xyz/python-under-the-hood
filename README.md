@@ -17,7 +17,7 @@ An interactive introduction for people new to computing: what your Python code i
     src/helper.py            the Python that runs in the page: runs a cell, records its bytecode,
                              value stack (a small bytecode interpreter checked against the real run)
                              and call stack (sys.settrace)
-    data/recorded.json       bytecode, stack states and bit patterns recorded from real CPython
+    data/recorded.json       recorded runs of every example (bytecode, stack, objects, call stack) and bit patterns
     site/index.html          built output (generated, but committed so site/ deploys as is)
     site/py/                 Pyodide runtime, about 13 MB
     scripts/build.py         src/page.html + src/helper.py + data -> site/index.html

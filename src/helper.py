@@ -109,12 +109,71 @@ def _instrs(full):
     return rows
 
 
+def _io_for(op, arg, val, ns):
+    """Where an instruction reads from and writes to: [mode, table, key] triples. Real for every op listed."""
+    if op == "LOAD_CONST":
+        return [["r", "const", arg]]
+    if op == "LOAD_SMALL_INT":
+        return [["r", "small", arg]]
+    if op in ("LOAD_NAME", "LOAD_GLOBAL"):
+        return [["r", "name" if val in ns else "builtin", val]]
+    if op in ("STORE_NAME", "STORE_GLOBAL", "DELETE_NAME", "DELETE_GLOBAL"):
+        return [["w", "name", val]]
+    if op in ("LOAD_FAST", "LOAD_FAST_BORROW", "LOAD_FAST_CHECK", "LOAD_FAST_AND_CLEAR"):
+        return [["r", "slot", arg]]
+    if op in ("LOAD_FAST_LOAD_FAST", "LOAD_FAST_BORROW_LOAD_FAST_BORROW"):
+        return [["r", "slot", arg >> 4], ["r", "slot", arg & 15]]
+    if op in ("STORE_FAST", "DELETE_FAST"):
+        return [["w", "slot", arg]]
+    if op == "STORE_FAST_STORE_FAST":
+        return [["w", "slot", arg >> 4], ["w", "slot", arg & 15]]
+    if op == "STORE_FAST_LOAD_FAST":
+        return [["w", "slot", arg >> 4], ["r", "slot", arg & 15]]
+    if op == "LOAD_ATTR":
+        return [["r", "attr", val]]
+    if op in ("STORE_ATTR", "DELETE_ATTR"):
+        return [["w", "attr", val]]
+    if op == "IMPORT_NAME":
+        return [["r", "module", val]]
+    if op == "IMPORT_FROM":
+        return [["r", "attr", val]]
+    return []
+
+
+def _heap(ns, stack):
+    """Objects reachable from the names and the stack, one level of items deep: id -> [type, label, size, item ids]."""
+    out = {}
+    def add(v, deep=True):
+        if v is _NULL or v is _UNBOUND:
+            return
+        k = id(v)
+        if k in out:
+            return
+        items = None
+        if deep and isinstance(v, (list, tuple)):
+            items = [id(x) for x in v[:12]]
+        elif deep and isinstance(v, dict):
+            items = [id(x) for x in list(v.values())[:12]]
+        out[k] = [type(v).__name__, _show(v), sys.getsizeof(v), items]
+        if items is not None:
+            src = v[:12] if isinstance(v, (list, tuple)) else list(v.values())[:12]
+            for x in src:
+                add(x, deep=False)
+    for k, v in ns.items():
+        if not k.startswith("__"):
+            add(v)
+    for v in stack:
+        add(v)
+    return out
+
+
 def _run_stack(code, ns):
     """Execute module-level bytecode on real objects, recording the stack after each instruction.
 
     Returns (steps, why). steps is None when the code uses something unsupported, and why says what.
-    A step is {"i": table row, "line": source line, "stack": labels, "note": text} plus "error" on the last
-    step if the code raised.
+    A step is {"i": table row, "line": source line, "stack": labels, "ids": stack object ids, "io": where it
+    read and wrote, "names": [[name, object id]], "heap": reachable objects, "note": text} plus "error" on
+    the last step if the code raised.
     """
     full = list(dis.get_instructions(code, show_caches=False))
     at = {ins.offset: k for k, ins in enumerate(full)}
@@ -123,6 +182,15 @@ def _run_stack(code, ns):
     fast = [_UNBOUND] * code.co_nlocals
     stack, steps = [], []
     pc = 0
+
+    def emit(note, live=None, **extra):
+        if live is None:
+            live = [v for v in stack if v is not _NULL]
+        step = {"i": disp[pc], "line": ins.line_number, "stack": [_show(v) for v in live], "ids": [id(v) for v in live],
+                "io": _io_for(op, arg, val, ns), "names": [[k, id(v)] for k, v in ns.items() if not k.startswith("__")],
+                "heap": _heap(ns, live), "note": note}
+        step.update(extra)
+        steps.append(step)
 
     def pop():
         return stack.pop()
@@ -146,7 +214,7 @@ def _run_stack(code, ns):
         ins = full[pc]
         op, arg, val = ins.opname, ins.arg, ins.argval
         before = len(stack)
-        snapshot = [_show(v) for v in stack if v is not _NULL]
+        snapshot = [v for v in stack if v is not _NULL]  # what was on the stack if this instruction fails
         jumped = False
         note = ""
         nxt = pc + 1
@@ -377,8 +445,7 @@ def _run_stack(code, ns):
             if any(h.start <= ins.offset < h.end for h in handlers):
                 return None, "it uses try/except or with, and something raised inside it"
             if pc in disp:
-                steps.append({"i": disp[pc], "line": ins.line_number, "stack": snapshot, "note": "This instruction failed.",
-                              "error": f"{type(e).__name__}: {e}"})
+                emit("This instruction failed.", live=snapshot, error=f"{type(e).__name__}: {e}")
             return steps, None
         expected = dis.stack_effect(ins.opcode, arg, jump=jumped) if op not in SKIP else 0
         if op == "FOR_ITER" and jumped:
@@ -388,7 +455,7 @@ def _run_stack(code, ns):
         if len(stack) - before != expected:
             return None, f"the stepper hit an internal mismatch at {op}"
         if pc in disp:
-            steps.append({"i": disp[pc], "line": ins.line_number, "stack": [_show(v) for v in stack if v is not _NULL], "note": note})
+            emit(note)
             if len(steps) >= MAX_STACK_STEPS:
                 steps[-1]["note"] += f" Stopped here after {MAX_STACK_STEPS} instructions."
                 steps[-1]["truncated"] = True
@@ -502,7 +569,7 @@ def _collect_vars(ns):
 
 
 def _decompose(src):
-    res = {"instrs": [], "stdout": "", "error": None, "value": None, "vars": [], "frames": [], "trace": None, "trace_why": None}
+    res = {"instrs": [], "stdout": "", "error": None, "value": None, "vars": [], "frames": [], "trace": None, "trace_why": None, "consts": []}
     try:
         tree = ast.parse(src, "<cell>")
     except SyntaxError as e:
@@ -515,6 +582,7 @@ def _decompose(src):
     whole = compile(src, "<cell>", "exec")
     full = list(dis.get_instructions(whole, show_caches=False))
     res["instrs"] = _instrs(full)
+    res["consts"] = [[_show(c), id(c)] for c in whole.co_consts]
     linecache.cache["<cell>"] = (len(src), None, src.splitlines(True), "<cell>")
 
     # The real run.

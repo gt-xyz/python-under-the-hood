@@ -3,13 +3,18 @@
 Run with the same Python version the site's Pyodide uses (currently CPython 3.14):
 
     python3.14 scripts/record_outputs.py            # writes data/recorded.json
-    python3 scripts/record_outputs.py --pandas      # prints pandas results to compare with lesson text
+    python3.14 scripts/record_outputs.py --check    # re-records and compares, ignoring object addresses (CI)
+    python3.14 scripts/record_outputs.py --pandas   # prints pandas results to compare with lesson text
 
-Bytecode differs between Python versions, so re-run this whenever Pyodide is upgraded.
+Bytecode differs between Python versions, so re-run this whenever Pyodide is upgraded. "seeds" holds a
+full run (output, bytecode, stack trace, call stack, objects) of every example seeded in a runnable box,
+made by the same tracer the page uses, so the machine view can show it before Python has started in the
+browser.
 """
 import ast
 import dis
 import json
+import re
 import struct
 import sys
 import types
@@ -50,6 +55,34 @@ def stacks(src, names):
     return [s["stack"] for s in steps]
 
 
+def seeded_examples():
+    """Every snippet a learner can run: tryIt("...") boxes and the sandbox's default code, from src/page.html."""
+    page = (ROOT / "src" / "page.html").read_text()
+    found = {json.loads('"' + m + '"') for m in re.findall(r'tryIt\("((?:[^"\\]|\\.)*)"', page)}
+    sandbox = re.search(r'<textarea id="src"[^>]*>([^<]*)</textarea>', page)
+    if sandbox:
+        found.add(sandbox.group(1).replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&"))
+    return sorted(found)
+
+
+def depends_on_environment(src):
+    """Examples whose output is about the machine they run on; they are only shown live, in the page."""
+    return "os.getcwd" in src or "sys.path" in src
+
+
+def normalized(d):
+    """The recorded data with object addresses blanked, so two runs can be compared."""
+    if isinstance(d, dict):  # JSON turns the heap's integer keys (object ids) into strings
+        return {("0" if k.isdigit() and int(k) >= 1 << 24 else k): normalized(v) for k, v in d.items()}
+    if isinstance(d, list):
+        return [normalized(v) for v in d]
+    if isinstance(d, int) and not isinstance(d, bool) and d >= 1 << 24:
+        return 0
+    if isinstance(d, str):
+        return re.sub(r"0x[0-9a-fA-F]+", "0x", d)
+    return d
+
+
 def fbits(x):
     s = format(struct.unpack(">Q", struct.pack(">d", x))[0], "064b")
     return {"sign": s[0], "exp": s[1:12], "frac": s[12:],
@@ -77,10 +110,27 @@ def record():
     d["t7"] = instrs("df[df.x > 0]['y'] = 5")
     d["t7_good"] = instrs("df.loc[df.x > 0, 'y'] = 5")
     d["imm"] = instrs("y = x\ny += 1")
+    d["seeds"] = {src: json.loads(helper._decompose(src)) for src in seeded_examples() if not depends_on_environment(src)}
     d["t_names"] = instrs("x = 5\nx = 'five'")
     d["t_def"] = instrs("def add_tax(price):\n    return price * 1.25\n\ntotal = add_tax(100)")
+    return d
+
+
+def write():
+    d = record()
     OUT.write_text(json.dumps(d, indent=1) + "\n")
-    print(f"Wrote {OUT} with Python {d['python']}")
+    print(f"Wrote {OUT} with Python {d['python']} ({len(d['seeds'])} seeds)")
+
+
+def check():
+    old = json.loads(OUT.read_text())
+    new = record()
+    if normalized(old) != normalized(new):
+        for k in sorted(set(old) | set(new)):
+            if normalized(old.get(k)) != normalized(new.get(k)):
+                print("differs:", k)
+        raise SystemExit(f"{OUT} is out of date: run scripts/record_outputs.py")
+    print(f"{OUT} is current ({len(new['seeds'])} seeds)")
 
 
 def pandas_report():
@@ -119,4 +169,4 @@ def pandas_report():
 
 
 if __name__ == "__main__":
-    pandas_report() if "--pandas" in sys.argv else record()
+    pandas_report() if "--pandas" in sys.argv else check() if "--check" in sys.argv else write()

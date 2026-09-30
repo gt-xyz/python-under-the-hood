@@ -15,10 +15,8 @@ jobs:
           python-version: "3.14"
       - name: Unit tests (bytecode, stack states, call stacks)
         run: python tests/test_helper.py
-      - name: Recorded data is current
-        run: |
-          python scripts/record_outputs.py
-          git diff --exit-code data/recorded.json
+      - name: Recorded data is current (object addresses aside)
+        run: python scripts/record_outputs.py --check
       - name: Build is current
         run: |
           python scripts/build.py

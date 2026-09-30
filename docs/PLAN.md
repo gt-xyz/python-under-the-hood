@@ -48,16 +48,16 @@ The bytecode stepper grows into the explorer: one component that takes a trace f
 
 | Lesson | Concept | Panel it adds |
 | --- | --- | --- |
-| 2 | Instructions, the stack, push and pop | Instruction table and stack pile (today's stepper) |
-| 3 | Objects with types, names, constants, lists | Objects row; names table with arrows to objects; constants strip; a list drawn as pointers |
+| 2 | Instructions, the stack, push and pop | Instruction table and stack pile (done) |
+| 3 | Objects with types, names, constants, lists | Objects row, names table, constants strip, a list drawn as pointers to its items, and a toggle for real addresses and sizes (done 2026-09-29; names and objects share a colour so sharing is visible) |
 | 4 | Function objects, calls, jumps, modules | Function and module objects; jumps highlighted |
 | 5 | Frames and local slots | Frames panel: the stepper steps into user functions, each with its own table and numbered slots |
-| 6 | Two names, one object | Address toggle: real ids on names and slabs; sharing shows as the same address twice |
+| 6 | Two names, one object | Uses the lesson 3 panels; the hand-drawn diagrams are gone (done) |
 | 11 | Bit patterns | Bits view on int and float objects |
 | 15 | Pointers vs. packed values | Lists as pointer blocks, arrays as packed blocks, with byte sizes |
 | 16 | CPU and cache | Stays a labeled simulation for now |
 
-What the tracer must add: per step, which table was read or written (constants, names, a frame slot, an attribute); a snapshot of names to object identities; the objects with id, type and size; and stepping into user functions instead of calling them natively. Build order, each step shippable: refactor the stepper into the panelled component with today's two panels (no visible change); extend the tracer; add panels in lesson order with the section text adjusted alongside.
+The tracer records, per step, which table was read or written (constants, names, a frame slot, an attribute), the names with their object identities, and the reachable objects with id, type, size and items. Every example is one widget, seeded from a recorded run and live after Run. Still to do: stepping into user functions instead of calling them natively (lesson 5's frames panel), the bits view (lesson 11) and the packed-array view (lesson 15).
 
 ## Curriculum
 

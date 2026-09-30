@@ -40,6 +40,8 @@ with sync_playwright() as p:
                         page.locator(sel).first.click()
                 if RUN_PYTHON and name == "desktop" and page.locator(".try-run").count():
                     page.locator(".try-run").first.click()
+                    # A seeded box already shows its recorded run; wait until the live run has replaced it.
+                    page.wait_for_function("(() => { const s = document.querySelector('.try-st'); return s && s.textContent === '' && !s.classList.contains('rec'); })()", timeout=90000)
                     page.locator(".try-out > *").first.wait_for(timeout=90000)
                     text = page.inner_text(".try-out")
                     if "couldn't start" in text:
@@ -55,7 +57,8 @@ with sync_playwright() as p:
                         if page.inner_text(".try-out .note-slot") == before:
                             problems.append(f"{where}: live stepper did not step")
                 if page.evaluate("document.documentElement.scrollWidth") > width:
-                    problems.append(f"{where}: page scrolls sideways")
+                    wide = page.evaluate("Array.from(document.querySelectorAll('main *')).filter(e => e.getBoundingClientRect().right > innerWidth + 1).slice(0, 3).map(e => e.className || e.tagName).join(', ')")
+                    problems.append(f"{where}: page scrolls sideways ({wide})")
         print(f"{name}: done")
     browser.close()
 
