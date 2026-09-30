@@ -12,11 +12,12 @@ _decompose(src) runs a cell of code and returns JSON for the page:
 
 Test it outside the page with python3.14 tests/test_helper.py.
 """
-import ast, builtins, contextlib, dis, io, json, linecache, operator, struct, sys, traceback, types
+import ast, builtins, contextlib, dis, inspect, io, json, linecache, operator, struct, sys, traceback, types
 
 _NULL = object()      # a placeholder slot on the value stack, hidden in the display
 _UNBOUND = object()   # a fast local with no value yet
-MAX_STACK_STEPS = 300
+MAX_STACK_STEPS = 400
+MAX_FRAMES_DEEP = 12
 MAX_FRAME_STEPS = 400
 SKIP = ("RESUME", "NOP", "NOT_TAKEN", "CACHE", "EXTENDED_ARG")
 
@@ -88,17 +89,18 @@ _UNSUPPORTED_WHY = {
 }
 
 
-def _display_indices(full):
-    """Map each instruction's position to its row in the displayed table, or None."""
+def _display_indices(full, strip=True):
+    """Map each instruction's position to its row in the displayed table, or None. A module's implicit
+    "return None" is stripped; a function's is kept, because it is how the call ends."""
     shown = [k for k, ins in enumerate(full) if ins.opname not in SKIP]
-    if len(shown) >= 2 and full[shown[-2]].opname == "LOAD_CONST" and full[shown[-2]].argval is None and full[shown[-1]].opname == "RETURN_VALUE":
+    if strip and len(shown) >= 2 and full[shown[-2]].opname == "LOAD_CONST" and full[shown[-2]].argval is None and full[shown[-1]].opname == "RETURN_VALUE":
         shown = shown[:-2]
     return {k: d for d, k in enumerate(shown)}
 
 
-def _instrs(full):
+def _instrs(full, strip=True):
     rows = []
-    for k in sorted(_display_indices(full), key=lambda k: k):
+    for k in sorted(_display_indices(full, strip), key=lambda k: k):
         i = full[k]
         r = i.argrepr
         if isinstance(i.argval, types.CodeType):
@@ -140,8 +142,9 @@ def _io_for(op, arg, val, ns):
     return []
 
 
-def _heap(ns, stack):
-    """Objects reachable from the names and the stack, one level of items deep: id -> [type, label, size, item ids]."""
+def _heap(named, stack):
+    """Objects reachable from the names (a list of values) and the stack, one level of items deep:
+    id -> [type, label, size, item ids]."""
     out = {}
     def add(v, deep=True):
         if v is _NULL or v is _UNBOUND:
@@ -159,12 +162,59 @@ def _heap(ns, stack):
             src = v[:12] if isinstance(v, (list, tuple)) else list(v.values())[:12]
             for x in src:
                 add(x, deep=False)
-    for k, v in ns.items():
-        if not k.startswith("__"):
-            add(v)
+    for v in named:
+        add(v)
     for v in stack:
         add(v)
     return out
+
+
+# Opcodes the interpreter handles. A user function is stepped into only if its body uses nothing else.
+_HANDLED = frozenset("""LOAD_CONST LOAD_SMALL_INT LOAD_NAME LOAD_GLOBAL STORE_NAME STORE_GLOBAL DELETE_NAME DELETE_GLOBAL
+LOAD_FAST LOAD_FAST_BORROW LOAD_FAST_CHECK LOAD_FAST_AND_CLEAR LOAD_FAST_LOAD_FAST LOAD_FAST_BORROW_LOAD_FAST_BORROW
+STORE_FAST STORE_FAST_STORE_FAST STORE_FAST_LOAD_FAST DELETE_FAST POP_TOP PUSH_NULL COPY SWAP BINARY_OP BINARY_SLICE
+STORE_SLICE STORE_SUBSCR DELETE_SUBSCR LOAD_ATTR STORE_ATTR DELETE_ATTR COMPARE_OP CONTAINS_OP IS_OP TO_BOOL
+UNARY_NEGATIVE UNARY_NOT UNARY_INVERT BUILD_TUPLE BUILD_LIST BUILD_SET BUILD_MAP BUILD_STRING BUILD_SLICE LIST_APPEND
+SET_ADD MAP_ADD LIST_EXTEND SET_UPDATE DICT_UPDATE DICT_MERGE UNPACK_SEQUENCE UNPACK_EX FORMAT_SIMPLE FORMAT_WITH_SPEC
+CONVERT_VALUE CALL CALL_KW CALL_FUNCTION_EX GET_ITER FOR_ITER END_FOR POP_ITER JUMP_FORWARD JUMP_BACKWARD
+JUMP_BACKWARD_NO_INTERRUPT POP_JUMP_IF_FALSE POP_JUMP_IF_TRUE POP_JUMP_IF_NONE POP_JUMP_IF_NOT_NONE RETURN_VALUE
+IMPORT_NAME IMPORT_FROM MAKE_FUNCTION SET_FUNCTION_ATTRIBUTE LOAD_BUILD_CLASS LOAD_COMMON_CONSTANT RAISE_VARARGS
+CALL_INTRINSIC_1""".split()) | set(SKIP)
+
+
+def _steppable(fn):
+    """A plain function defined in the cell whose body the interpreter can run as its own frame."""
+    if not isinstance(fn, types.FunctionType):
+        return False
+    c = fn.__code__
+    if c.co_filename != "<cell>" or c.co_freevars or c.co_cellvars or c.co_flags & 0x3AC:  # *args, **kw, generator, coroutine, async gen
+        return False
+    if list(dis._parse_exception_table(c)):
+        return False
+    return all(ins.opname in _HANDLED for ins in dis.get_instructions(c, show_caches=False))
+
+
+class _Frame:
+    """One running code object: its instructions, fast locals and value stack."""
+
+    def __init__(self, code, label, fast, code_index, call_pc=None):
+        self.code, self.label, self.fast, self.code_index, self.call_pc = code, label, fast, code_index, call_pc
+        self.full = list(dis.get_instructions(code, show_caches=False))
+        self.at = {ins.offset: k for k, ins in enumerate(self.full)}
+        self.disp = _display_indices(self.full, strip=code.co_name == "<module>")
+        self.handlers = list(dis._parse_exception_table(code))
+        self.stack = []
+        self.pc = 0
+
+    def names(self, ns):
+        if self.code.co_name == "<module>":
+            return [[k, id(v)] for k, v in ns.items() if not k.startswith("__")]
+        return [[n, id(v)] for n, v in zip(self.code.co_varnames, self.fast) if v is not _UNBOUND]
+
+    def named_values(self, ns):
+        if self.code.co_name == "<module>":
+            return [v for k, v in ns.items() if not k.startswith("__")]
+        return [v for v in self.fast if v is not _UNBOUND]
 
 
 def _run_stack(code, ns):
@@ -175,20 +225,22 @@ def _run_stack(code, ns):
     read and wrote, "names": [[name, object id]], "heap": reachable objects, "note": text} plus "error" on
     the last step if the code raised.
     """
-    full = list(dis.get_instructions(code, show_caches=False))
-    at = {ins.offset: k for k, ins in enumerate(full)}
-    disp = _display_indices(full)
-    handlers = list(dis._parse_exception_table(code))
-    fast = [_UNBOUND] * code.co_nlocals
-    stack, steps = [], []
-    pc = 0
+    codes = [{"name": "top level", "instrs": _instrs(list(dis.get_instructions(code, show_caches=False)))}]
+    code_index = {id(code): 0}
+    frames = [_Frame(code, "top level", [_UNBOUND] * code.co_nlocals, 0)]
+    steps = []
+    f = frames[0]
+    stack, fast, full, at, disp, handlers, pc = f.stack, f.fast, f.full, f.at, f.disp, f.handlers, 0
+    ins = op = arg = val = None
 
-    def emit(note, live=None, **extra):
+    def emit(note, live=None, at_pc=None, **extra):
         if live is None:
             live = [v for v in stack if v is not _NULL]
-        step = {"i": disp[pc], "line": ins.line_number, "stack": [_show(v) for v in live], "ids": [id(v) for v in live],
-                "io": _io_for(op, arg, val, ns), "names": [[k, id(v)] for k, v in ns.items() if not k.startswith("__")],
-                "heap": _heap(ns, live), "note": note}
+        named = [v for fr in frames for v in fr.named_values(ns)]
+        step = {"i": disp[pc if at_pc is None else at_pc], "code": f.code_index, "line": ins.line_number,
+                "stack": [_show(v) for v in live], "ids": [id(v) for v in live], "io": _io_for(op, arg, val, ns),
+                "names": f.names(ns), "slots": f.code.co_name != "<module>",
+                "frames": [[fr.label, fr.names(ns)] for fr in frames], "heap": _heap(named, live), "note": note}
         step.update(extra)
         steps.append(step)
 
@@ -210,10 +262,31 @@ def _run_stack(code, ns):
             args = [self_or_null] + list(args)
         return fn(*args, **(kwargs or {}))
 
-    while pc < len(full):
+    def enter(fn, args, kwargs):
+        """Bind the arguments and make a frame for a steppable function (the CALL's pc is remembered)."""
+        c = fn.__code__
+        bound = inspect.signature(fn).bind(*args, **kwargs)
+        bound.apply_defaults()
+        fast_ = [_UNBOUND] * c.co_nlocals
+        for k, name in enumerate(c.co_varnames[: c.co_argcount + c.co_kwonlyargcount]):
+            fast_[k] = bound.arguments[name]
+        if id(c) not in code_index:
+            code_index[id(c)] = len(codes)
+            codes.append({"name": fn.__name__, "instrs": _instrs(list(dis.get_instructions(c, show_caches=False)), strip=False)})
+        return _Frame(c, fn.__name__, fast_, code_index[id(c)], call_pc=pc)
+
+    entering = None
+
+    while frames:
+        f = frames[-1]
+        stack, fast, full, at, disp, handlers, pc = f.stack, f.fast, f.full, f.at, f.disp, f.handlers, f.pc
+        if pc >= len(full):
+            return None, "the stepper ran off the end of a code object", codes
         ins = full[pc]
         op, arg, val = ins.opname, ins.arg, ins.argval
         before = len(stack)
+        entering = None
+        returned = None
         snapshot = [v for v in stack if v is not _NULL]  # what was on the stack if this instruction fails
         jumped = False
         note = ""
@@ -355,12 +428,22 @@ def _run_stack(code, ns):
             elif op == "CONVERT_VALUE":
                 stack[-1] = _CONVERT[arg](stack[-1]); note = f"Convert the top item with {_CONVERT[arg].__name__}()."
             elif op == "CALL":
-                args = take(arg); sn = pop(); fn = pop(); r = call(fn, sn, args); push(r)
-                note = f"Call {_show(fn)} with {arg} argument{'s' if arg != 1 else ''}; push what it returns, {_show(r)}."
+                args = take(arg); sn = pop(); fn = pop()
+                if sn is _NULL and _steppable(fn) and len(frames) < MAX_FRAMES_DEEP:
+                    entering = enter(fn, args, {})
+                    note = f"Call {_show(fn)} with {arg} argument{'s' if arg != 1 else ''}: a new frame for it, with its own names."
+                else:
+                    r = call(fn, sn, args); push(r)
+                    note = f"Call {_show(fn)} with {arg} argument{'s' if arg != 1 else ''}; push what it returns, {_show(r)}."
             elif op == "CALL_KW":
                 names = pop(); args = take(arg); k = len(names)
-                kwargs = dict(zip(names, args[arg - k:])); sn = pop(); fn = pop(); r = call(fn, sn, args[:arg - k], kwargs); push(r)
-                note = f"Call {_show(fn)} with {arg} argument{'s' if arg != 1 else ''} ({k} by keyword); push {_show(r)}."
+                kwargs = dict(zip(names, args[arg - k:])); sn = pop(); fn = pop()
+                if sn is _NULL and _steppable(fn) and len(frames) < MAX_FRAMES_DEEP:
+                    entering = enter(fn, args[:arg - k], kwargs)
+                    note = f"Call {_show(fn)} with {arg} argument{'s' if arg != 1 else ''} ({k} by keyword): a new frame for it."
+                else:
+                    r = call(fn, sn, args[:arg - k], kwargs); push(r)
+                    note = f"Call {_show(fn)} with {arg} argument{'s' if arg != 1 else ''} ({k} by keyword); push {_show(r)}."
             elif op == "CALL_FUNCTION_EX":
                 kw = pop(); a = pop(); sn = pop(); fn = pop()
                 r = call(fn, sn, list(a), {} if kw is _NULL else dict(kw)); push(r)
@@ -386,7 +469,9 @@ def _run_stack(code, ns):
                     jumped = True; nxt = at[val]
                 note = f"Pop {_show(v)}: {'jump' if go else 'carry on to the next instruction'}."
             elif op == "RETURN_VALUE":
-                pop(); note = "The end of the cell."; nxt = len(full)
+                returned = [pop()]
+                note = "The end of the cell." if len(frames) == 1 else f"Return {_show(returned[0])} to the caller and drop this frame."
+                nxt = len(full)
             elif op == "IMPORT_NAME":
                 fromlist = pop(); level = pop(); m = builtins.__import__(val, ns, ns, fromlist, level); push(m)
                 note = f"Load the module {val} (running it first if this is its first import) and push it."
@@ -398,20 +483,20 @@ def _run_stack(code, ns):
                     v = sys.modules[f"{m.__name__}.{val}"]
                 push(v); note = f"Push {val} from the module."
             elif op == "MAKE_FUNCTION":
-                c = pop(); f = types.FunctionType(c, ns); push(f); note = f"Wrap the code of {c.co_name} in a function object. Nothing inside it runs yet."
+                c = pop(); fnobj = types.FunctionType(c, ns); push(fnobj); note = f"Wrap the code of {c.co_name} in a function object. Nothing inside it runs yet."
             elif op == "SET_FUNCTION_ATTRIBUTE":
-                f = pop(); a = pop()
+                fnobj = pop(); a = pop()
                 if arg == 1:
-                    f.__defaults__ = a
+                    fnobj.__defaults__ = a
                 elif arg == 2:
-                    f.__kwdefaults__ = a
+                    fnobj.__kwdefaults__ = a
                 elif arg == 4:
-                    f.__annotations__ = a
+                    fnobj.__annotations__ = a
                 elif arg == 16:
-                    f.__annotate__ = a
+                    fnobj.__annotate__ = a
                 else:
                     raise _Unsupported("a nested scope")
-                push(f); note = f"Attach the {ins.argrepr} to the function."
+                push(fnobj); note = f"Attach the {ins.argrepr} to the function."
             elif op == "LOAD_BUILD_CLASS":
                 push(builtins.__build_class__); note = "Push the built-in helper that builds classes."
             elif op == "LOAD_COMMON_CONSTANT":
@@ -440,28 +525,43 @@ def _run_stack(code, ns):
             else:
                 raise _Unsupported(_UNSUPPORTED_WHY.get(op, op))
         except _Unsupported as u:
-            return None, f"it uses {u}"
+            return None, f"it uses {u}", codes
         except Exception as e:
             if any(h.start <= ins.offset < h.end for h in handlers):
-                return None, "it uses try/except or with, and something raised inside it"
+                return None, "it uses try/except or with, and something raised inside it", codes
             if pc in disp:
                 emit("This instruction failed.", live=snapshot, error=f"{type(e).__name__}: {e}")
-            return steps, None
+            return steps, None, codes
         expected = dis.stack_effect(ins.opcode, arg, jump=jumped) if op not in SKIP else 0
         if op == "FOR_ITER" and jumped:
             expected = 0  # the iterator stays; END_FOR is skipped and POP_ITER drops it
         elif op == "RETURN_VALUE":
             expected = -1  # dis counts the returned value as still there
+        elif entering is not None:
+            expected -= 1  # the result arrives when the callee returns
         if len(stack) - before != expected:
-            return None, f"the stepper hit an internal mismatch at {op}"
+            return None, f"the stepper hit an internal mismatch at {op}", codes
+        f.pc = nxt
+        if entering is not None:
+            frames.append(entering)
         if pc in disp:
-            emit(note)
+            emit(note, into=True) if entering is not None else emit(note)
             if len(steps) >= MAX_STACK_STEPS:
                 steps[-1]["note"] += f" Stopped here after {MAX_STACK_STEPS} instructions."
                 steps[-1]["truncated"] = True
-                return steps, None
-        pc = nxt
-    return steps, None
+                return steps, None, codes
+        if returned is not None:
+            done = frames.pop()
+            if not frames:
+                break
+            f = frames[-1]
+            stack, fast, full, at, disp, handlers = f.stack, f.fast, f.full, f.at, f.disp, f.handlers
+            pc = done.call_pc
+            ins = full[pc]
+            op, arg, val = ins.opname, ins.arg, ins.argval
+            push(returned[0])
+            emit(f"Back from {done.label}: its result, {_show(returned[0])}, is pushed here.", ret=True)
+    return steps, None, codes
 
 
 # ---------- the call-stack recorder (real execution under sys.settrace) ----------
@@ -582,7 +682,7 @@ def _decompose(src):
     whole = compile(src, "<cell>", "exec")
     full = list(dis.get_instructions(whole, show_caches=False))
     res["instrs"] = _instrs(full)
-    res["consts"] = [[_show(c), id(c)] for c in whole.co_consts]
+    res["consts"] = [[_show(c), id(c), type(c).__name__] for c in whole.co_consts]
     linecache.cache["<cell>"] = (len(src), None, src.splitlines(True), "<cell>")
 
     # The real run.
@@ -614,11 +714,13 @@ def _decompose(src):
     # The stack trace: a second run through the small interpreter, checked against the first.
     ns2 = {}
     out2 = io.StringIO()
+    codes = None
     try:
         with contextlib.redirect_stdout(out2):
-            steps, why = _run_stack(whole, ns2)
+            steps, why, codes = _run_stack(whole, ns2)
     except Exception as e:  # a bug in the interpreter must never break the page
         steps, why = None, f"an internal error ({type(e).__name__})"
+    res["codes"] = codes or [{"name": "top level", "instrs": res["instrs"]}]
     if steps is None:
         res["trace_why"] = why
     else:

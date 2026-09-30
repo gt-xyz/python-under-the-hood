@@ -46,15 +46,6 @@ def instrs(src):
     return out
 
 
-def stacks(src, names):
-    """The value stack after each instruction, from the page's own tracer, starting with these names defined."""
-    steps, why = helper._run_stack(compile(src, "<cell>", "exec"), dict(names))
-    if steps is None:
-        raise SystemExit(f"could not trace {src!r}: {why}")
-    assert helper._instrs(list(dis.get_instructions(compile(src, "<cell>", "exec")))) == instrs(src)
-    return [s["stack"] for s in steps]
-
-
 def seeded_examples():
     """Every snippet a learner can run: tryIt("...") boxes and the sandbox's default code, from src/page.html."""
     page = (ROOT / "src" / "page.html").read_text()
@@ -92,9 +83,7 @@ def fbits(x):
 def record():
     d = {"python": sys.version.split()[0]}
     d["t1"] = instrs("total = price * qty")
-    d["t1_stacks"] = stacks("total = price * qty", {"price": 2.5, "qty": 4})
     d["t2"] = instrs("b = a\nb.append(4)")
-    d["t2_stacks"] = stacks("b = a\nb.append(4)", {"a": [1, 2, 3]})
     d["t3"] = instrs("x = a + b")
     d["t3_folded"] = instrs("x = 0.1 + 0.2")
     d["t3_bits"] = {k: fbits(v) for k, v in {"0.1": 0.1, "0.2": 0.2, "0.1 + 0.2": 0.1 + 0.2, "0.3": 0.3}.items()}

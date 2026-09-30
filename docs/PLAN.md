@@ -51,13 +51,13 @@ The bytecode stepper grows into the explorer: one component that takes a trace f
 | 2 | Instructions, the stack, push and pop | Instruction table and stack pile (done) |
 | 3 | Objects with types, names, constants, lists | Objects row, names table, constants strip, a list drawn as pointers to its items, and a toggle for real addresses and sizes (done 2026-09-29; names and objects share a colour so sharing is visible) |
 | 4 | Function objects, calls, jumps, modules | Function and module objects; jumps highlighted |
-| 5 | Frames and local slots | Frames panel: the stepper steps into user functions, each with its own table and numbered slots |
+| 5 | Frames and local slots | The stepper steps into user functions: the instruction table switches to the function's, its names appear as numbered slots, a call-stack panel shows the frames, and a "back from" step lands the result on the caller's stack (done 2026-09-29) |
 | 6 | Two names, one object | Uses the lesson 3 panels; the hand-drawn diagrams are gone (done) |
-| 11 | Bit patterns | Bits view on int and float objects |
-| 15 | Pointers vs. packed values | Lists as pointer blocks, arrays as packed blocks, with byte sizes |
+| 11 | Bit patterns | "Show bits" toggle: int and float constants and objects show their bits (done) |
+| 15 | Pointers vs. packed values | A list object reports its bytes and pointers and what the same values would take packed as an array (done; the array side is arithmetic, since NumPy isn't in the page) |
 | 16 | CPU and cache | Stays a labeled simulation for now |
 
-The tracer records, per step, which table was read or written (constants, names, a frame slot, an attribute), the names with their object identities, and the reachable objects with id, type, size and items. Every example is one widget, seeded from a recorded run and live after Run. Still to do: stepping into user functions instead of calling them natively (lesson 5's frames panel), the bits view (lesson 11) and the packed-array view (lesson 15).
+The tracer records, per step, which table was read or written (constants, names, a frame slot, an attribute), the names with their object identities, and the reachable objects with id, type, size and items. Every example is one widget, seeded from a recorded run and live after Run. The interpreter steps into plain functions defined in the cell (no *args, closures, generators or try/except inside; those run natively). Every panel in the table is built; what remains is making the lower layers real: object layouts from the C source, a steppable CPU, a cache model.
 
 ## Curriculum
 

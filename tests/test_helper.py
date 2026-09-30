@@ -94,6 +94,7 @@ class RecordedSeeds(unittest.TestCase):
                     self.assertEqual(len(step["ids"]), len(step["stack"]))
                     for oid in step["ids"] + [oid for _, oid in step["names"]]:
                         self.assertIn(str(oid), step["heap"])
+                    self.assertEqual(len(step["frames"]) >= 1, True)
                     for mode, table, key in step["io"]:
                         self.assertIn(mode, ("r", "w"))
                         self.assertIn(table, ("const", "small", "name", "builtin", "slot", "attr", "module"))
@@ -101,27 +102,48 @@ class RecordedSeeds(unittest.TestCase):
                             self.assertLess(key, len(r["consts"]))
 
     def test_stack_depth_matches_cpython(self):
-        """Each displayed stack's depth equals the running total of CPython's own stack effects, minus the
-        placeholder slots the display hides (one per PUSH_NULL or method lookup, used up by the call)."""
+        """In each code object, the displayed stack's depth equals the running total of CPython's own stack
+        effects, minus the placeholder slots the display hides (one per PUSH_NULL or method lookup, used up by
+        the call). A call the stepper enters holds its result back until the "back from" step."""
         for src, r in RECORDED["seeds"].items():
             if not r["trace"] or r["error"]:
                 continue
-            code = compile(src, "<cell>", "exec")
-            shown = [i for i in dis.get_instructions(code) if i.opname not in helper.SKIP]
+            tables = {0: [i for i in dis.get_instructions(compile(src, "<cell>", "exec")) if i.opname not in helper.SKIP]}
             with self.subTest(src=src):
-                depth = hidden = 0
+                depth, hidden = {0: 0}, {0: 0}
                 for step in r["trace"]:
-                    ins = shown[step["i"]]
-                    depth += dis.stack_effect(ins.opcode, ins.arg, jump=None) if ins.opname != "FOR_ITER" else 0
-                    if ins.opname == "FOR_ITER":
-                        depth += 1 if len(step["stack"]) + hidden > depth else 0
-                    if ins.opname == "RETURN_VALUE":
-                        depth -= 1
-                    if ins.opname == "PUSH_NULL" or (ins.opname == "LOAD_ATTR" and ins.arg & 1):
-                        hidden += 1
-                    elif ins.opname in ("CALL", "CALL_KW", "CALL_FUNCTION_EX"):
-                        hidden -= 1
-                    self.assertEqual(len(step["stack"]), depth - hidden, f"{ins.opname} at step {step['i']}")
+                    c = step.get("code", 0)
+                    if c != 0:
+                        continue  # function bodies are checked by the interpreter's own effect check
+                    ins = tables[0][step["i"]]
+                    if step.get("ret"):
+                        depth[c] += 1
+                    else:
+                        depth[c] += dis.stack_effect(ins.opcode, ins.arg, jump=None) if ins.opname != "FOR_ITER" else 0
+                        if ins.opname == "FOR_ITER":
+                            depth[c] += 1 if len(step["stack"]) + hidden[c] > depth[c] else 0
+                        if ins.opname == "RETURN_VALUE":
+                            depth[c] -= 1
+                        if step.get("into"):
+                            depth[c] -= 1
+                        if ins.opname == "PUSH_NULL" or (ins.opname == "LOAD_ATTR" and ins.arg & 1):
+                            hidden[c] += 1
+                        elif ins.opname in ("CALL", "CALL_KW", "CALL_FUNCTION_EX"):
+                            hidden[c] -= 1
+                    self.assertEqual(len(step["stack"]), depth[c] - hidden[c], f"{ins.opname} at step {step['i']}")
+
+    def test_steps_into_functions(self):
+        r = RECORDED["seeds"]["def add_tax(price):\n    tax = price * 0.25\n    return price + tax\n\ntotal = add_tax(100)\nprint(tax)"]
+        self.assertEqual([c["name"] for c in r["codes"]], ["top level", "add_tax"])
+        inside = [s for s in r["trace"] if s["code"] == 1]
+        self.assertTrue(inside)
+        self.assertEqual([f[0] for f in inside[0]["frames"]], ["top level", "add_tax"])
+        self.assertTrue(inside[0]["slots"])
+        self.assertEqual([n for n, _ in inside[-1]["names"]], ["price", "tax"])
+        back = [s for s in r["trace"] if s.get("ret")]
+        self.assertEqual(back[0]["stack"], ["125.0"])
+        self.assertEqual([f[0] for f in back[0]["frames"]], ["top level"])
+        self.assertEqual(r["error"], "NameError: name 'tax' is not defined")
 
     def test_two_names_one_object(self):
         r = RECORDED["seeds"]["x = 5\ny = x\ny += 1\nprint(x)"]
