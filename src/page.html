@@ -137,12 +137,14 @@ nav.lessons { position: static; }
 .mcell.hot-w { outline-color: var(--good); }
 .mcell.none { border-style: dashed; color: var(--muted); }
 .mcell .mk { color: var(--muted); font-size: 0.72rem; }
-.mref { display: inline-block; border: 2px solid hsl(var(--h) 55% 50%); border-radius: 6px; padding: 0 5px; line-height: 1.5; max-width: 100%; overflow-wrap: anywhere; }
-.mobj { display: grid; gap: 2px; justify-items: start; border: 2px solid hsl(var(--h) 55% 50%); border-radius: 8px; padding: 4px 8px; background: var(--surface); font-family: var(--font-mono); font-size: 0.82rem; max-width: 100%; outline: 2px solid transparent; }
+.mref { display: inline-block; border: 2px solid hsl(var(--h) var(--sat, 55%) 50%); border-radius: 6px; padding: 0 5px; line-height: 1.5; max-width: 100%; overflow-wrap: anywhere; }
+.mobj { display: grid; gap: 2px; justify-items: start; border: 2px solid hsl(var(--h) var(--sat, 55%) 50%); border-radius: 8px; padding: 4px 8px; background: var(--surface); font-family: var(--font-mono); font-size: 0.82rem; max-width: 100%; outline: 2px solid transparent; }
 .mobj.hot { outline-color: var(--accent); }
 .mobj .mt { font-size: 0.68rem; color: var(--muted); font-family: var(--font-body); font-weight: 700; letter-spacing: 0.04em; }
 .mobj .mitems { display: flex; flex-wrap: wrap; gap: 3px; }
 .mobj .addr, .mcell .addr { font-size: 0.7rem; color: var(--muted); }
+.mlegend { width: 100%; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+.mlegend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: hsl(var(--h) var(--sat, 55%) 50%); margin-right: 4px; vertical-align: -1px; }
 .slab .mref { border-width: 0 0 0 4px; border-radius: 3px; padding-left: 6px; }
 .mv-opts { display: flex; gap: 14px; flex-wrap: wrap; font-size: var(--step--1); color: var(--muted); }
 .mpanel.frames { grid-column: 1 / -1; }
@@ -498,7 +500,10 @@ function renderPile(el, items, prev, fmt, eq) {
 // (a live trace revisits instructions in loops), ids the objects on the stack, io where the instruction read
 // and wrote, names and heap the namespace and reachable objects after it, error the message if it failed.
 // opts.panels lists the memory panels to draw (names, objects, consts); opts.consts is the constants table.
-const hue = id => Math.round(((Number(id) / 16) * 137.508) % 360);
+// Colour means type. Anything else (a function, a module, an iterator) is grey.
+const TYPE_HUE = { int: 215, float: 150, str: 30, bool: 280, NoneType: 0, list: 350, tuple: 330, dict: 190, set: 170 };
+const TYPE_LABEL = { NoneType: "None" };
+const hueStyle = t => t in TYPE_HUE ? (t === "NoneType" ? `--h:0;--sat:0%` : `--h:${TYPE_HUE[t]}`) : `--h:0;--sat:0%`;
 const shortAddr = id => "0x" + Number(id).toString(16).slice(-5);
 function stepper(root, instrs, steps, onStep, opts = {}) {
   let i = -1, shown = [], shownFrames = [];
@@ -516,19 +521,19 @@ function stepper(root, instrs, steps, onStep, opts = {}) {
   const noteEl = root.querySelector(".note-slot");
   const prev = root.querySelector("[data-act=prev]"), next = root.querySelector("[data-act=next]"), reset = root.querySelector("[data-act=reset]");
   const addrs = () => panels.includes("objects"), bits = () => bitsBox && bitsBox.checked;
-  const ref = (label, id) => id == null ? esc(label) : `<span class="mref" style="--h:${hue(id)}">${esc(label)}${addrs() ? ` <span class="addr">${shortAddr(id)}</span>` : ""}</span>`;
+  const ref = (label, id, type) => id == null ? esc(label) : `<span class="mref" style="${hueStyle(type)}" title="${esc(type || "")}">${esc(label)}${addrs() ? ` <span class="addr">${shortAddr(id)}</span>` : ""}</span>`;
   function drawPanels(s) {
     const io = s ? s.io || [] : [];
     const hot = (table, key) => { const m = io.find(x => x[1] === table && String(x[2]) === String(key)); return m ? ` hot-${m[0]}` : ""; };
     const heap = s ? s.heap || {} : {};
     if (panels.includes("consts")) {
-      const cells = (opts.consts || []).map(([label, id, type], k) => `<span class="mcell${hot("const", k)}"><span class="mk">${k}</span>${ref(label, id)}${bits() ? bitsOf(type, label) : ""}</span>`).join("");
+      const cells = (opts.consts || []).map(([label, id, type], k) => `<span class="mcell${hot("const", k)}"><span class="mk">${k}</span>${ref(label, id, type)}${bits() ? bitsOf(type, label) : ""}</span>`).join("");
       root.querySelector(".consts .mcells").innerHTML = cells || `<span class="mcell none">none</span>`;
     }
     if (panels.includes("names")) {
       const names = s ? s.names || [] : [], slots = s && s.slots;
       root.querySelector(".names .eyebrow").textContent = slots ? `Names in ${s.frames[s.frames.length - 1][0]}'s frame (numbered slots)` : "Names";
-      root.querySelector(".names .mcells").innerHTML = names.length ? names.map(([n, id], k) => `<span class="mcell${slots ? hot("slot", k) : hot("name", n)}">${slots ? `<span class="mk">${k}</span>` : ""}<b>${esc(n)}</b> → ${ref(heap[id] ? heap[id][1] : "?", id)}</span>`).join("") : `<span class="mcell none">no names yet</span>`;
+      root.querySelector(".names .mcells").innerHTML = names.length ? names.map(([n, id], k) => `<span class="mcell${slots ? hot("slot", k) : hot("name", n)}">${slots ? `<span class="mk">${k}</span>` : ""}<b>${esc(n)}</b> → ${ref(heap[id] ? heap[id][1] : "?", id, heap[id] && heap[id][0])}</span>`).join("") : `<span class="mcell none">no names yet</span>`;
     }
     if (panels.includes("frames") && framesEl) {
       const fr = s ? s.frames || [] : [];
@@ -546,8 +551,10 @@ function stepper(root, instrs, steps, onStep, opts = {}) {
         const packed = kinds.size === 1 && (kinds.has("float") || kinds.has("int")) ? `; packed as a ${kinds.has("float") ? "float64" : "int64"} array these ${n} values would take ${8 * n} bytes in one block` : "";
         return `<span class="mt">${size} bytes here: ${n} pointer${n === 1 ? "" : "s"} of 8 bytes plus a header; the values live in their own objects${packed}</span>`;
       };
-      const objs = Object.entries(heap).map(([id, [type, label, size, items]]) => `<span class="mobj${touched.has(id) ? " hot" : ""}" style="--h:${hue(id)}"><span class="mt">${esc(type)}${addrs() ? ` · ${shortAddr(id)} · ${size} bytes` : ""}</span>${items ? `<span class="mitems">${items.map(x => heap[x] ? ref(heap[x][1], x) : "…").join("")}</span>` : esc(label)}${bits() ? bitsOf(type, label) : ""}${layout(type, size, items)}</span>`).join("");
-      root.querySelector(".objects .mcells").innerHTML = objs || `<span class="mcell none">nothing yet</span>`;
+      const objs = Object.entries(heap).map(([id, [type, label, size, items]]) => `<span class="mobj${touched.has(id) ? " hot" : ""}" style="${hueStyle(type)}"><span class="mt">${esc(TYPE_LABEL[type] || type)}${addrs() ? ` · ${shortAddr(id)} · ${size} bytes` : ""}</span>${items ? `<span class="mitems">${items.map(x => heap[x] ? ref(heap[x][1], x, heap[x][0]) : "…").join("")}</span>` : esc(label)}${bits() ? bitsOf(type, label) : ""}${layout(type, size, items)}</span>`).join("");
+      const types = [...new Set(Object.values(heap).map(o => o[0]))];
+      const legend = types.length ? `<div class="mlegend">${types.map(t => `<span><i style="${hueStyle(t)}"></i>${esc(TYPE_LABEL[t] || t)}</span>`).join("")}</div>` : "";
+      root.querySelector(".objects .mcells").innerHTML = (objs || `<span class="mcell none">nothing yet</span>`) + legend;
     }
   }
   function draw() {
@@ -557,7 +564,8 @@ function stepper(root, instrs, steps, onStep, opts = {}) {
     const wrap = tbl.querySelector(".bc-wrap"), row = tbl.querySelector("tr.hot");
     if (row && wrap.scrollHeight > wrap.clientHeight) wrap.scrollTop = row.offsetTop - wrap.clientHeight / 2;
     const st = s ? s.stack.map((label, k) => ({ label, id: s.ids ? s.ids[k] : null })) : [];
-    const d = renderPile(pile, st, shown, it => ref(it.label, it.id), (a, b) => a.label === b.label && a.id === b.id);
+    const heapNow = s ? s.heap || {} : {};
+    const d = renderPile(pile, st, shown, it => ref(it.label, it.id, heapNow[it.id] && heapNow[it.id][0]), (a, b) => a.label === b.label && a.id === b.id);
     drawPanels(s);
     shown = st.slice();
     op.innerHTML = s ? [d.popped.length ? `<span class="pop">pop ${d.popped.map(x => esc(x.label)).join(", ")}</span>` : "", d.pushed.length ? `<span class="push">push ${d.pushed.map(x => esc(x.label)).join(", ")}</span>` : ""].filter(Boolean).join(" ") : "";
@@ -757,7 +765,7 @@ LESSONS.push({
           ${predict("What does print(a) show?", ["[1, 2, 3]", "[1, 2, 3, 4]"])}
           ${reveal(`
             <div class="out">[1, 2, 3, 4]</div>
-            <p><code>b = a</code> attached a second name to the one list; it did not make a second list. Step through and watch the names and objects: two names, one object, and <code>append</code> changes that object. The addresses show it: one list, one address, two names. Then change line 2 to <code>b = a.copy()</code> and run it again.</p>
+            <p><code>b = a</code> attached a second name to the one list; it did not make a second list. Step through and watch the names and objects: two names, one object, and <code>append</code> changes that object. The addresses show it: one list, one address, two names, and colours mean types. Then change line 2 to <code>b = a.copy()</code> and run it again.</p>
             ${tryIt("a = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)", "Step through it; then try b = a.copy()", "py")}`)}`;
         wireTry(el);
         wirePredict(el, 1);
@@ -1164,7 +1172,7 @@ EXTRA.functions = {
         el.innerHTML = `
           ${codeBlock(src, "py")}
           ${predict("While <code>total</code> is adding up the numbers, how many frames exist?", ["1", "2", "3"])}
-          ${reveal(`<p>Three: the top level, <code>mean</code>, and <code>total</code> on top. Step through and watch the call stack panel as the frames stack up and come back down:</p>${tryIt(src, "Step through the calls")}<p class="note">Both functions have a name <code>xs</code>. They are different names in different frames, pointing at the same list. Lesson 6 looks closely at names that share one object.</p>`)}`;
+          ${reveal(`<p>Three: the top level, <code>mean</code>, and <code>total</code> on top. Step through and watch the call stack panel as the frames stack up and come back down:</p>${tryIt("def total(xs):\n    s = 0\n    for x in xs:\n        s += x\n    return s\n\ndef mean(xs):\n    return total(xs) / len(xs)\n\nm = mean([2, 4, 9])", "Step through the calls")}<p class="note">Both functions have a name <code>xs</code>. They are different names in different frames, pointing at the same list. Lesson 6 looks closely at names that share one object.</p>`)}`;
         wireTry(el);
         wirePredict(el, 2);
       }

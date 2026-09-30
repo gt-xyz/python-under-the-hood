@@ -59,7 +59,7 @@ class SeededExamples(unittest.TestCase):
                 if not r["instrs"]:
                     continue  # a bare constant expression compiles to nothing
                 self.assertIsNotNone(r["trace"], r["trace_why"])
-                self.assertEqual([s["i"] for s in r["trace"] if s["i"] >= len(r["instrs"])], [])
+                self.assertEqual([s["i"] for s in r["trace"] if s["i"] >= len(r["codes"][s.get("code", 0)]["instrs"])], [])
 
     def test_bytecode_matches_dis(self):
         for src in seeded_examples():
