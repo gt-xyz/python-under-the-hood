@@ -62,7 +62,9 @@ def depends_on_environment(src):
 
 
 def normalized(d):
-    """The recorded data with object addresses blanked, so two runs can be compared."""
+    """The recorded data with what depends on the machine blanked, so two runs can be compared: object
+    addresses, and where a module was loaded from (math is built into some CPython builds and a shared
+    library in others, so its repr says "(built-in)" on one machine and "from '/.../math...so'" on another)."""
     if isinstance(d, dict):  # JSON turns the heap's integer keys (object ids) into strings
         return {("0" if k.isdigit() and int(k) >= 1 << 24 else k): normalized(v) for k, v in d.items()}
     if isinstance(d, list):
@@ -70,7 +72,8 @@ def normalized(d):
     if isinstance(d, int) and not isinstance(d, bool) and d >= 1 << 24:
         return 0
     if isinstance(d, str):
-        return re.sub(r"0x[0-9a-fA-F]+", "0x", d)
+        d = re.sub(r"0x[0-9a-fA-F]+", "0x", d)
+        return re.sub(r"<module '([^']*)'[^>]*>?", r"<module '\1'>", d)  # the repr may be cut off before its ">"
     return d
 
 

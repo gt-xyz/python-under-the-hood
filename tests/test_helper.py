@@ -81,6 +81,15 @@ class RecordedSeeds(unittest.TestCase):
                 else:
                     self.assertIn(src, RECORDED["seeds"])
 
+    def test_normalized_ignores_the_machine(self):
+        """Object addresses and where a module was loaded from differ between machines (math is built into one
+        CPython build and a shared library in another); the comparison of two recordings ignores both."""
+        here = {"repr": "<module 'math' (built-in)>", "id": "0x7f3a1c2d", "heap": {str(1 << 40): [1 << 40]}}
+        so = "/opt/hostedtoolcache/Python/3.14.7/x64/lib/python3.14/lib-dynload/math.cpython-314-x86_64-linux-gnu.so"
+        there = {"repr": f"<module 'math' from '{so}'>"[:120], "id": "0x55aa", "heap": {str(1 << 41): [1 << 41]}}
+        self.assertEqual(record_outputs.normalized(here), record_outputs.normalized(there))
+        self.assertEqual(record_outputs.normalized(here)["repr"], "<module 'math'>")
+
     def test_recording_is_current(self):
         self.assertEqual(record_outputs.normalized(RECORDED["seeds"]),
                          record_outputs.normalized(json.loads(json.dumps(record_outputs.record()["seeds"]))))
